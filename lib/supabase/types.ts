@@ -58,6 +58,7 @@ export interface Database {
           tier?: 'free' | 'pro';
           created_at?: string;
         };
+        Relationships: [];
       };
       properties: {
         Row: {
@@ -87,6 +88,15 @@ export interface Database {
           is_active?: boolean;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'properties_landlord_id_fkey';
+            columns: ['landlord_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       contracts: {
         Row: {
@@ -140,6 +150,29 @@ export interface Database {
           status?: 'active' | 'expired' | 'terminated';
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'contracts_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
+            referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'contracts_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'contracts_landlord_id_fkey';
+            columns: ['landlord_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       penalties: {
         Row: {
@@ -205,6 +238,22 @@ export interface Database {
           created_at?: string;
           resolved_at?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'penalties_contract_id_fkey';
+            columns: ['contract_id'];
+            isOneToOne: false;
+            referencedRelation: 'contracts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'penalties_raised_by_fkey';
+            columns: ['raised_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       payments: {
         Row: {
@@ -243,6 +292,15 @@ export interface Database {
           notes?: string | null;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'payments_contract_id_fkey';
+            columns: ['contract_id'];
+            isOneToOne: false;
+            referencedRelation: 'contracts';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       maintenance_requests: {
         Row: {
@@ -275,6 +333,22 @@ export interface Database {
           status?: 'open' | 'in_progress' | 'resolved';
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'maintenance_requests_contract_id_fkey';
+            columns: ['contract_id'];
+            isOneToOne: false;
+            referencedRelation: 'contracts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'maintenance_requests_raised_by_fkey';
+            columns: ['raised_by'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       notifications: {
         Row: {
@@ -328,6 +402,15 @@ export interface Database {
           sent_at?: string;
           read_at?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_recipient_id_fkey';
+            columns: ['recipient_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Views: Record<string, never>;
