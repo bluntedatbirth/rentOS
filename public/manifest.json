@@ -1,6 +1,6 @@
 {
-  "name": "Rental Manager | จัดการเช่า",
-  "short_name": "RentMgr",
+  "name": "RentOS | จัดการเช่า",
+  "short_name": "RentOS",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

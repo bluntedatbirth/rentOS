@@ -1,5 +1,5 @@
 -- ============================================================
--- Rental Contract Manager — Initial Schema
+-- RentOS — Initial Schema
 -- ============================================================
 
 -- Profiles (extends Supabase auth.users)

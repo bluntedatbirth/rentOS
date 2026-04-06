@@ -4,12 +4,12 @@ import { t, setLocale, getLocale } from '@/lib/i18n';
 describe('i18n', () => {
   it('returns Thai string by default', () => {
     setLocale('th');
-    expect(t('app.title')).toBe('จัดการเช่า');
+    expect(t('app.title')).toBe('RentOS');
   });
 
   it('returns English string when locale is en', () => {
     setLocale('en');
-    expect(t('app.title')).toBe('Rental Manager');
+    expect(t('app.title')).toBe('RentOS');
   });
 
   it('returns the key if not found', () => {

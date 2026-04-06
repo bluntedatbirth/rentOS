@@ -15,8 +15,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'Rental Manager | จัดการเช่า',
-  description: 'Bilingual Thai/English rental property management',
+  title: 'RentOS | จัดการเช่า',
+  description: 'Bilingual Thai/English rental property management by RentOS',
 };
 
 export default function RootLayout({
