@@ -1,11 +1,14 @@
 'use client';
 
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 
 export default function TenantLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading, signOut } = useAuth();
   const { t, locale, setLocale } = useI18n();
+  const pathname = usePathname();
 
   if (loading) {
     return (
@@ -30,7 +33,9 @@ export default function TenantLayout({ children }: { children: React.ReactNode }
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-          <h1 className="text-lg font-bold text-gray-900">{t('app.title')}</h1>
+          <Link href="/tenant/dashboard" className="text-lg font-bold text-gray-900">
+            {t('app.title')}
+          </Link>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -48,6 +53,31 @@ export default function TenantLayout({ children }: { children: React.ReactNode }
             </button>
           </div>
         </div>
+        <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pb-2">
+          {[
+            { href: '/tenant/dashboard', label: t('nav.dashboard') },
+            { href: '/tenant/contract/view', label: t('nav.my_contract') },
+            { href: '/tenant/maintenance', label: t('nav.maintenance') },
+            { href: '/tenant/penalties/appeal', label: t('nav.penalties') },
+          ].map((link) => {
+            const isActive =
+              pathname === link.href ||
+              (link.href !== '/tenant/dashboard' && pathname.startsWith(link.href));
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`min-h-[44px] whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium ${
+                  isActive
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+        </nav>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
     </div>

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// DEV ONLY — create a test landlord user with password auth
-export async function POST() {
+// DEV ONLY — create test users with password auth
+export async function POST(request: Request) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
@@ -10,15 +10,31 @@ export async function POST() {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const email = 'landlord@rentos.dev';
-  const password = 'test123456';
+  const { searchParams } = new URL(request.url);
+  const role = searchParams.get('role') === 'tenant' ? 'tenant' : 'landlord';
 
-  // Try to create the user
+  const users = {
+    landlord: {
+      email: 'landlord@rentos.dev',
+      password: 'test123456',
+      full_name: 'Demo Landlord',
+      phone: '081-234-5678',
+    },
+    tenant: {
+      email: 'tenant@rentos.dev',
+      password: 'test123456',
+      full_name: 'Demo Tenant',
+      phone: '089-876-5432',
+    },
+  };
+
+  const u = users[role];
+
   const { data: user, error: createError } = await admin.auth.admin.createUser({
-    email,
-    password,
+    email: u.email,
+    password: u.password,
     email_confirm: true,
-    user_metadata: { role: 'landlord', full_name: 'Demo Landlord', phone: '081-234-5678' },
+    user_metadata: { role, full_name: u.full_name, phone: u.phone },
   });
 
   if (createError && !createError.message.includes('already been registered')) {
@@ -27,20 +43,18 @@ export async function POST() {
 
   const userId = user?.user?.id;
 
-  // Ensure profile exists
   if (userId) {
     await admin.from('profiles').upsert({
       id: userId,
-      role: 'landlord',
-      full_name: 'Demo Landlord',
-      phone: '081-234-5678',
+      role,
+      full_name: u.full_name,
+      phone: u.phone,
     });
   }
 
   return NextResponse.json({
-    message: 'Test user ready',
-    email,
-    password,
-    hint: 'Use POST /api/dev/signin with { email, password } to get a session',
+    message: `Test ${role} user ready`,
+    email: u.email,
+    password: u.password,
   });
 }

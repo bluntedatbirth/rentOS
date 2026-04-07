@@ -96,21 +96,38 @@ export default function LoginPage() {
 
             {/* Dev login — remove before production */}
             {process.env.NODE_ENV === 'development' && (
-              <button
-                type="button"
-                onClick={async () => {
-                  setLoading(true);
-                  const { error: err } = await signInWithPassword(
-                    'landlord@rentos.dev',
-                    'test123456'
-                  );
-                  if (err) setError(err.message);
-                  setLoading(false);
-                }}
-                className="mt-3 min-h-[44px] w-full rounded-lg border-2 border-dashed border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-500 hover:border-blue-400 hover:text-blue-600"
-              >
-                Dev Login (Demo Landlord)
-              </button>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setLoading(true);
+                    const { error: err } = await signInWithPassword(
+                      'landlord@rentos.dev',
+                      'test123456'
+                    );
+                    if (err) setError(err.message);
+                    setLoading(false);
+                  }}
+                  className="min-h-[44px] flex-1 rounded-lg border-2 border-dashed border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-500 hover:border-blue-400 hover:text-blue-600"
+                >
+                  Dev: Landlord
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setLoading(true);
+                    const { error: err } = await signInWithPassword(
+                      'tenant@rentos.dev',
+                      'test123456'
+                    );
+                    if (err) setError(err.message);
+                    setLoading(false);
+                  }}
+                  className="min-h-[44px] flex-1 rounded-lg border-2 border-dashed border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-500 hover:border-green-400 hover:text-green-600"
+                >
+                  Dev: Tenant
+                </button>
+              </div>
             )}
           </div>
         )}
