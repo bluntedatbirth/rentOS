@@ -92,6 +92,14 @@ export function useAuth() {
     [supabase]
   );
 
+  const signInWithPassword = useCallback(
+    async (email: string, password: string) => {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      return { error };
+    },
+    [supabase]
+  );
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setState({ user: null, profile: null, loading: false });
@@ -100,6 +108,7 @@ export function useAuth() {
   return {
     ...state,
     signInWithOtp,
+    signInWithPassword,
     signUp,
     signOut,
   };

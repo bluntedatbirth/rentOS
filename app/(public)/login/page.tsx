@@ -1,17 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 
 export default function LoginPage() {
-  const { signInWithOtp } = useAuth();
+  const router = useRouter();
+  const { user, profile, signInWithOtp, signInWithPassword } = useAuth();
   const { t, locale, setLocale } = useI18n();
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Redirect after successful sign-in
+  useEffect(() => {
+    if (user && profile) {
+      const dest = profile.role === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
+      router.push(dest);
+    }
+  }, [user, profile, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +93,25 @@ export default function LoginPage() {
                 {t('app.signup')}
               </Link>
             </p>
+
+            {/* Dev login — remove before production */}
+            {process.env.NODE_ENV === 'development' && (
+              <button
+                type="button"
+                onClick={async () => {
+                  setLoading(true);
+                  const { error: err } = await signInWithPassword(
+                    'landlord@rentos.dev',
+                    'test123456'
+                  );
+                  if (err) setError(err.message);
+                  setLoading(false);
+                }}
+                className="mt-3 min-h-[44px] w-full rounded-lg border-2 border-dashed border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-500 hover:border-blue-400 hover:text-blue-600"
+              >
+                Dev Login (Demo Landlord)
+              </button>
+            )}
           </div>
         )}
       </div>

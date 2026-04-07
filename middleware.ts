@@ -39,6 +39,11 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
+  // API routes — skip middleware (handled by route handlers)
+  if (pathname.startsWith('/api/')) {
+    return response;
+  }
+
   // Public routes — allow access without auth
   if (
     pathname === '/' ||
