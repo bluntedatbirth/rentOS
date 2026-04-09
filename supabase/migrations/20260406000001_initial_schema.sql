@@ -1,4 +1,27 @@
 -- ============================================================
+-- RentOS — Migration Sequence Summary
+-- ============================================================
+-- 20260406000001_initial_schema.sql  (this file)
+--   Creates all base tables: profiles, properties, contracts, penalties,
+--   payments, maintenance_requests, notifications.
+--   Enables RLS and sets up all policies.
+--
+-- 20260408000001_pairing_notifications_cotenants.sql
+--   profiles:  ADD notification_preferences JSONB
+--   contracts: ADD pairing_code TEXT, pairing_expires_at TIMESTAMPTZ, co_tenants JSONB
+--   Index:     idx_contracts_pairing_code
+--
+-- 20260408000002_payment_confirmation.sql
+--   payments:  ADD confirmation_date TIMESTAMPTZ, confirmed_by UUID
+--
+-- 20260408000003_billing.sql
+--   profiles:  ADD omise_customer_id TEXT, omise_schedule_id TEXT,
+--                  tier_expires_at TIMESTAMPTZ, billing_cycle TEXT
+--
+-- All ALTER TABLE statements use ADD COLUMN IF NOT EXISTS — safe to re-run.
+-- ============================================================
+
+-- ============================================================
 -- RentOS — Initial Schema
 -- ============================================================
 

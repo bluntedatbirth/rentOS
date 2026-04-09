@@ -6,8 +6,11 @@ import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardTitle, CardValue } from '@/components/ui/Card';
+
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+
+const supabase = createClient();
 
 interface ContractSummary {
   id: string;
@@ -37,11 +40,10 @@ export default function TenantDashboard() {
   const { user, profile } = useAuth();
   const { t } = useI18n();
   const [contract, setContract] = useState<ContractSummary | null>(null);
+  const [pendingRenewal, setPendingRenewal] = useState<ContractSummary | null>(null);
   const [maintenance, setMaintenance] = useState<MaintenanceSummary[]>([]);
   const [penalties, setPenalties] = useState<PenaltySummary[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const supabase = createClient();
 
   useEffect(() => {
     if (!user) return;
@@ -56,6 +58,20 @@ export default function TenantDashboard() {
 
       const activeContract = (contracts?.[0] as unknown as ContractSummary) ?? null;
       setContract(activeContract);
+
+      // Check for pending renewal offer
+      const { data: renewals } = await (
+        supabase
+          .from('contracts')
+          .select(
+            'id, status, lease_start, lease_end, monthly_rent, property_id, properties(name)'
+          ) as unknown as { eq: (...args: unknown[]) => unknown }
+      )
+        .eq('tenant_id', user.id)
+        .eq('status', 'pending')
+        .not('renewed_from', 'is', null)
+        .limit(1);
+      setPendingRenewal((renewals?.[0] as unknown as ContractSummary) ?? null);
 
       if (activeContract) {
         // Get recent maintenance requests
@@ -79,7 +95,7 @@ export default function TenantDashboard() {
       setLoading(false);
     };
     load();
-  }, [user, supabase]);
+  }, [user]);
 
   if (loading) return <LoadingSkeleton count={4} />;
 
@@ -97,6 +113,48 @@ export default function TenantDashboard() {
       <p className="mb-6 text-sm text-gray-500">
         {t('dashboard.welcome')}, {profile?.full_name ?? ''}
       </p>
+
+      {/* Pending renewal attention card */}
+      {pendingRenewal && (
+        <Link href="/tenant/contract/view" className="block mb-4">
+          <div className="flex items-center justify-between rounded-lg border border-orange-200 bg-orange-50 p-4 transition-shadow hover:shadow-md">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="h-5 w-5 text-orange-600"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-orange-900">
+                  {t('tenant.renewal_pending')}
+                </p>
+                <p className="text-xs text-orange-700">{t('tenant.renewal_pending_hint')}</p>
+              </div>
+            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="h-5 w-5 text-orange-400"
+            >
+              <path
+                fillRule="evenodd"
+                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+        </Link>
+      )}
 
       {/* Contract summary */}
       {contract ? (
@@ -134,7 +192,7 @@ export default function TenantDashboard() {
       )}
 
       {/* Stats grid */}
-      <div className="mb-6 grid grid-cols-2 gap-4">
+      <div className="mb-6 grid grid-cols-2 gap-3">
         <Card>
           <CardTitle>{t('tenant.maintenance_open')}</CardTitle>
           <CardValue>{maintenance.filter((m) => m.status !== 'resolved').length}</CardValue>
@@ -178,12 +236,18 @@ export default function TenantDashboard() {
       </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <Link
           href="/tenant/maintenance"
           className="min-h-[44px] flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
           {t('tenant.submit_request')}
+        </Link>
+        <Link
+          href="/tenant/payments"
+          className="min-h-[44px] flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+        >
+          {t('nav.payments')}
         </Link>
         <Link
           href="/tenant/contract/view"

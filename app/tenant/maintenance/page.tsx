@@ -5,7 +5,10 @@ import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { createClient } from '@/lib/supabase/client';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+
+const supabase = createClient();
 
 interface MaintenanceRequest {
   id: string;
@@ -27,8 +30,6 @@ export default function TenantMaintenancePage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
-
-  const supabase = createClient();
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -54,7 +55,7 @@ export default function TenantMaintenancePage() {
     }
 
     setLoading(false);
-  }, [user, supabase]);
+  }, [user]);
 
   useEffect(() => {
     loadData();

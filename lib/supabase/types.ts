@@ -36,7 +36,12 @@ export interface Database {
           language: 'th' | 'en';
           fcm_token: string | null;
           tier: 'free' | 'pro';
+          notification_preferences: Json | null;
           created_at: string;
+          omise_customer_id: string | null;
+          omise_schedule_id: string | null;
+          tier_expires_at: string | null;
+          billing_cycle: string | null;
         };
         Insert: {
           id: string;
@@ -46,7 +51,12 @@ export interface Database {
           language?: 'th' | 'en';
           fcm_token?: string | null;
           tier?: 'free' | 'pro';
+          notification_preferences?: Json | null;
           created_at?: string;
+          omise_customer_id?: string | null;
+          omise_schedule_id?: string | null;
+          tier_expires_at?: string | null;
+          billing_cycle?: string | null;
         };
         Update: {
           id?: string;
@@ -56,7 +66,12 @@ export interface Database {
           language?: 'th' | 'en';
           fcm_token?: string | null;
           tier?: 'free' | 'pro';
+          notification_preferences?: Json | null;
           created_at?: string;
+          omise_customer_id?: string | null;
+          omise_schedule_id?: string | null;
+          tier_expires_at?: string | null;
+          billing_cycle?: string | null;
         };
         Relationships: [];
       };
@@ -114,6 +129,9 @@ export interface Database {
           monthly_rent: number | null;
           security_deposit: number | null;
           status: 'active' | 'expired' | 'terminated';
+          pairing_code: string | null;
+          pairing_expires_at: string | null;
+          co_tenants: Json | null;
           created_at: string;
         };
         Insert: {
@@ -131,6 +149,9 @@ export interface Database {
           monthly_rent?: number | null;
           security_deposit?: number | null;
           status?: 'active' | 'expired' | 'terminated';
+          pairing_code?: string | null;
+          pairing_expires_at?: string | null;
+          co_tenants?: Json | null;
           created_at?: string;
         };
         Update: {
@@ -148,6 +169,9 @@ export interface Database {
           monthly_rent?: number | null;
           security_deposit?: number | null;
           status?: 'active' | 'expired' | 'terminated';
+          pairing_code?: string | null;
+          pairing_expires_at?: string | null;
+          co_tenants?: Json | null;
           created_at?: string;
         };
         Relationships: [
@@ -266,6 +290,8 @@ export interface Database {
           status: 'pending' | 'paid' | 'overdue';
           promptpay_ref: string | null;
           notes: string | null;
+          confirmation_date: string | null;
+          confirmed_by: string | null;
           created_at: string;
         };
         Insert: {
@@ -278,6 +304,8 @@ export interface Database {
           status?: 'pending' | 'paid' | 'overdue';
           promptpay_ref?: string | null;
           notes?: string | null;
+          confirmation_date?: string | null;
+          confirmed_by?: string | null;
           created_at?: string;
         };
         Update: {
@@ -290,6 +318,8 @@ export interface Database {
           status?: 'pending' | 'paid' | 'overdue';
           promptpay_ref?: string | null;
           notes?: string | null;
+          confirmation_date?: string | null;
+          confirmed_by?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -298,6 +328,76 @@ export interface Database {
             columns: ['contract_id'];
             isOneToOne: false;
             referencedRelation: 'contracts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      documents: {
+        Row: {
+          id: string;
+          property_id: string | null;
+          contract_id: string | null;
+          landlord_id: string;
+          category: 'contract' | 'tenant_id' | 'inspection' | 'receipt' | 'other';
+          storage_path: string;
+          public_url: string;
+          file_name: string;
+          file_size: number | null;
+          mime_type: string | null;
+          version: number;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          property_id?: string | null;
+          contract_id?: string | null;
+          landlord_id: string;
+          category: 'contract' | 'tenant_id' | 'inspection' | 'receipt' | 'other';
+          storage_path: string;
+          public_url: string;
+          file_name: string;
+          file_size?: number | null;
+          mime_type?: string | null;
+          version?: number;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          property_id?: string | null;
+          contract_id?: string | null;
+          landlord_id?: string;
+          category?: 'contract' | 'tenant_id' | 'inspection' | 'receipt' | 'other';
+          storage_path?: string;
+          public_url?: string;
+          file_name?: string;
+          file_size?: number | null;
+          mime_type?: string | null;
+          version?: number;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'documents_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
+            referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'documents_contract_id_fkey';
+            columns: ['contract_id'];
+            isOneToOne: false;
+            referencedRelation: 'contracts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'documents_landlord_id_fkey';
+            columns: ['landlord_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
         ];
@@ -311,6 +411,11 @@ export interface Database {
           description: string | null;
           photo_urls: string[];
           status: 'open' | 'in_progress' | 'resolved';
+          assigned_to: string | null;
+          estimated_cost: number | null;
+          actual_cost: number | null;
+          sla_deadline: string | null;
+          completed_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -321,6 +426,11 @@ export interface Database {
           description?: string | null;
           photo_urls?: string[];
           status?: 'open' | 'in_progress' | 'resolved';
+          assigned_to?: string | null;
+          estimated_cost?: number | null;
+          actual_cost?: number | null;
+          sla_deadline?: string | null;
+          completed_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -331,6 +441,11 @@ export interface Database {
           description?: string | null;
           photo_urls?: string[];
           status?: 'open' | 'in_progress' | 'resolved';
+          assigned_to?: string | null;
+          estimated_cost?: number | null;
+          actual_cost?: number | null;
+          sla_deadline?: string | null;
+          completed_at?: string | null;
           created_at?: string;
         };
         Relationships: [
@@ -406,6 +521,57 @@ export interface Database {
           {
             foreignKeyName: 'notifications_recipient_id_fkey';
             columns: ['recipient_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      property_images: {
+        Row: {
+          id: string;
+          property_id: string;
+          landlord_id: string;
+          category: 'move_in' | 'move_out';
+          storage_path: string;
+          public_url: string;
+          file_name: string | null;
+          file_size: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          property_id: string;
+          landlord_id: string;
+          category: 'move_in' | 'move_out';
+          storage_path: string;
+          public_url: string;
+          file_name?: string | null;
+          file_size?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          property_id?: string;
+          landlord_id?: string;
+          category?: 'move_in' | 'move_out';
+          storage_path?: string;
+          public_url?: string;
+          file_name?: string | null;
+          file_size?: number | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'property_images_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
+            referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'property_images_landlord_id_fkey';
+            columns: ['landlord_id'];
             isOneToOne: false;
             referencedRelation: 'profiles';
             referencedColumns: ['id'];

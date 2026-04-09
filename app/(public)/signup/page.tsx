@@ -9,6 +9,7 @@ export default function SignupPage() {
   const { signUp } = useAuth();
   const { t, locale, setLocale } = useI18n();
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState<'landlord' | 'tenant'>('landlord');
@@ -19,13 +20,23 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (password && password.length < 8) {
+      setError(t('auth.password_min_length'));
+      return;
+    }
+
     setLoading(true);
 
-    const { error: authError } = await signUp(email, {
-      role,
-      full_name: fullName,
-      phone,
-    });
+    const { error: authError } = await signUp(
+      email,
+      {
+        role,
+        full_name: fullName,
+        phone,
+      },
+      password || undefined
+    );
 
     if (authError) {
       setError(authError.message);
@@ -43,10 +54,17 @@ export default function SignupPage() {
           <button
             type="button"
             onClick={() => setLocale(locale === 'th' ? 'en' : 'th')}
+            aria-label={locale === 'th' ? t('auth.switch_to_en') : t('auth.switch_to_th')}
             className="min-h-[44px] min-w-[44px] rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
           >
             {locale === 'th' ? t('auth.switch_to_en') : t('auth.switch_to_th')}
           </button>
+        </div>
+
+        {/* Beta disclaimer */}
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-medium text-amber-800">{t('auth.beta_title')}</p>
+          <p className="mt-0.5 text-xs text-amber-700">{t('auth.beta_description')}</p>
         </div>
 
         {sent ? (
@@ -68,6 +86,7 @@ export default function SignupPage() {
                   <button
                     type="button"
                     onClick={() => setRole('landlord')}
+                    aria-pressed={role === 'landlord'}
                     className={`min-h-[44px] rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
                       role === 'landlord'
                         ? 'border-blue-600 bg-blue-50 text-blue-700'
@@ -79,6 +98,7 @@ export default function SignupPage() {
                   <button
                     type="button"
                     onClick={() => setRole('tenant')}
+                    aria-pressed={role === 'tenant'}
                     className={`min-h-[44px] rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
                       role === 'tenant'
                         ? 'border-blue-600 bg-blue-50 text-blue-700'
@@ -132,6 +152,21 @@ export default function SignupPage() {
                   placeholder={t('auth.email_placeholder')}
                   className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700">
+                  {t('auth.password')}
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t('auth.password_placeholder')}
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <p className="mt-1 text-xs text-gray-400">{t('auth.password_hint')}</p>
               </div>
 
               {error && <p className="text-sm text-red-600">{error}</p>}

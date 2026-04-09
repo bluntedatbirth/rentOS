@@ -1,14 +1,15 @@
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { getAuthenticatedUser, unauthorized, badRequest } from '@/lib/supabase/api';
-import { extractAndTranslateContract } from '@/lib/claude/extractContract';
+import { extractContractWithProgress } from '@/lib/claude/extractContract';
+import { rateLimit, rateLimitResponse } from '@/lib/rateLimit';
 import type { Database } from '@/lib/supabase/types';
 
 const ocrRequestSchema = z.object({
   contract_id: z.string().uuid(),
   file_url: z.string(),
   file_type: z.enum(['image', 'pdf']),
+  property_id: z.string().uuid().optional(),
 });
 
 function getMimeType(
@@ -25,6 +26,9 @@ export async function POST(request: Request) {
   const { user } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
+  const rl = rateLimit(`ocr:${user.id}`, 5, 60000);
+  if (!rl.success) return rateLimitResponse();
+
   const body: unknown = await request.json();
   const parsed = ocrRequestSchema.safeParse(body);
   if (!parsed.success) {
@@ -33,61 +37,139 @@ export async function POST(request: Request) {
 
   const { contract_id, file_url, file_type } = parsed.data;
 
-  // Use service role client to bypass RLS for admin operations
+  if (file_url.includes('..') || file_url.includes('//')) {
+    return badRequest('Invalid file path');
+  }
+
   const adminClient = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  try {
-    // Download file from Supabase Storage
-    const { data: fileData, error: downloadError } = await adminClient.storage
-      .from('contracts')
-      .download(file_url);
+  // Stream progress via SSE
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      function send(data: Record<string, unknown>) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+      }
 
-    if (downloadError || !fileData) {
-      return NextResponse.json(
-        { error: 'Failed to download file: ' + (downloadError?.message ?? 'unknown') },
-        { status: 500 }
-      );
-    }
+      try {
+        // Step 1: Download file
+        send({ step: 'downloading', progress: 5, message: 'ocr.step_downloading' });
 
-    // Convert to base64
-    const arrayBuffer = await fileData.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString('base64');
-    const mimeType = getMimeType(file_type, file_url);
+        const { data: fileData, error: downloadError } = await adminClient.storage
+          .from('contracts')
+          .download(file_url);
 
-    // Call Claude OCR
-    const extracted = await extractAndTranslateContract(base64, mimeType);
+        if (downloadError || !fileData) {
+          send({ step: 'error', error: 'Failed to download file' });
+          controller.close();
+          return;
+        }
 
-    // Save results to contracts table
-    const { error: updateError } = await adminClient
-      .from('contracts')
-      .update({
-        raw_text_th: extracted.raw_text_th,
-        translated_text_en: extracted.translated_text_en,
-        structured_clauses: extracted.clauses,
-        lease_start: extracted.lease_start,
-        lease_end: extracted.lease_end,
-        monthly_rent: extracted.monthly_rent,
-        security_deposit: extracted.security_deposit,
-      })
-      .eq('id', contract_id);
+        if (fileData.size > 20 * 1024 * 1024) {
+          send({ step: 'error', error: 'File too large' });
+          controller.close();
+          return;
+        }
 
-    if (updateError) {
-      return NextResponse.json(
-        { error: 'Failed to save results: ' + updateError.message },
-        { status: 500 }
-      );
-    }
+        const arrayBuffer = await fileData.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const mimeType = getMimeType(file_type, file_url);
 
-    return NextResponse.json({
-      success: true,
-      contract_id,
-      clauses_count: extracted.clauses.length,
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'OCR processing failed';
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+        send({ step: 'pass1', progress: 15, message: 'ocr.step_analyzing' });
+
+        // Step 2-3: Claude OCR with progress callback
+        const extracted = await extractContractWithProgress(base64, mimeType, (step) => {
+          if (step === 'pass1_done') {
+            send({ step: 'pass2', progress: 40, message: 'ocr.step_extracting' });
+          } else if (step === 'pass2_done') {
+            send({ step: 'saving', progress: 85, message: 'ocr.step_saving' });
+          }
+        });
+
+        // Step 4: Update property
+        if (extracted.property) {
+          const { data: currentContract } = await adminClient
+            .from('contracts')
+            .select('property_id')
+            .eq('id', contract_id)
+            .single();
+
+          if (currentContract?.property_id) {
+            const prop = extracted.property;
+            const propertyName =
+              prop.name_en || prop.name_th || prop.address_en || 'Unnamed Property';
+            const propertyAddress = prop.address_en || prop.address_th || '';
+
+            const { data: existingProp } = await adminClient
+              .from('properties')
+              .select('name')
+              .eq('id', currentContract.property_id)
+              .single();
+
+            if (existingProp?.name === 'Detecting from contract...') {
+              await adminClient
+                .from('properties')
+                .update({
+                  name: propertyName,
+                  address: propertyAddress,
+                  unit_number: prop.unit_number || null,
+                })
+                .eq('id', currentContract.property_id);
+            }
+          }
+        }
+
+        // Step 5: Save to DB
+        send({ step: 'saving', progress: 90, message: 'ocr.step_saving' });
+
+        const updateData: Record<string, unknown> = {
+          raw_text_th: extracted.raw_text_th,
+          translated_text_en: extracted.translated_text_en,
+          structured_clauses: extracted.clauses,
+          lease_start: extracted.lease_start,
+          lease_end: extracted.lease_end,
+          monthly_rent: extracted.monthly_rent,
+          security_deposit: extracted.security_deposit,
+        };
+
+        const { error: updateError } = await adminClient
+          .from('contracts')
+          .update(updateData)
+          .eq('id', contract_id);
+
+        if (updateError) {
+          send({ step: 'error', error: 'Failed to save: ' + updateError.message });
+          controller.close();
+          return;
+        }
+
+        send({
+          step: 'done',
+          progress: 100,
+          message: 'ocr.step_done',
+          contract_id,
+          clauses_count: extracted.clauses.length,
+          property_detected: extracted.property?.name_en || extracted.property?.name_th || null,
+        });
+      } catch (err) {
+        send({
+          step: 'error',
+          error: err instanceof Error ? err.message : 'OCR processing failed',
+        });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    },
+  });
 }

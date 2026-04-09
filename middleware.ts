@@ -39,6 +39,11 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
+  // Block dev routes in production
+  if (pathname.startsWith('/api/dev') && process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not available' }, { status: 404 });
+  }
+
   // API routes — skip middleware (handled by route handlers)
   if (pathname.startsWith('/api/')) {
     return response;
@@ -86,9 +91,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Block wrong-role access
+  // Landlord-only routes: /landlord/*, including /landlord/dashboard, /landlord/billing/*, /landlord/onboarding
   if (pathname.startsWith('/landlord') && profile.role !== 'landlord') {
     return NextResponse.redirect(new URL('/tenant/dashboard', request.url));
   }
+  // Tenant-only routes: /tenant/*, including /tenant/dashboard, /tenant/onboarding
   if (pathname.startsWith('/tenant') && profile.role !== 'tenant') {
     return NextResponse.redirect(new URL('/landlord/dashboard', request.url));
   }

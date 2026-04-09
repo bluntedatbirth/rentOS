@@ -4,6 +4,10 @@ import { cookies } from 'next/headers';
 
 // DEV ONLY — password sign-in that sets session cookies
 export async function GET() {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not available in production' }, { status: 403 });
+  }
+
   const cookieStore = cookies();
 
   const supabase = createServerClient(

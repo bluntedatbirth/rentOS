@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAuthenticatedUser, unauthorized, badRequest } from '@/lib/supabase/api';
+import { getAuthenticatedUser, unauthorized, badRequest, serverError } from '@/lib/supabase/api';
+import { createServiceRoleClient } from '@/lib/supabase/server';
+import { getPropertyLimit } from '@/lib/tier';
 
 const createPropertySchema = z.object({
   name: z.string().min(1).max(200),
@@ -20,7 +22,7 @@ export async function GET() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return serverError(error.message);
   }
 
   return NextResponse.json(data);
@@ -36,6 +38,36 @@ export async function POST(request: Request) {
     return badRequest(parsed.error.issues.map((i) => i.message).join(', '));
   }
 
+  // Check property limit based on user tier
+  const adminClient = createServiceRoleClient();
+  const { data: profile } = await adminClient
+    .from('profiles')
+    .select('tier')
+    .eq('id', user.id)
+    .single();
+
+  const userTier = profile?.tier ?? 'free';
+  const limit = getPropertyLimit(userTier);
+
+  if (isFinite(limit)) {
+    const { count } = await supabase
+      .from('properties')
+      .select('*', { count: 'exact', head: true })
+      .eq('landlord_id', user.id)
+      .eq('is_active', true);
+
+    if ((count ?? 0) >= limit) {
+      return NextResponse.json(
+        {
+          allowed: false,
+          reason: `Free plan is limited to ${limit} properties`,
+          upgradeUrl: '/landlord/billing/upgrade',
+        },
+        { status: 403 }
+      );
+    }
+  }
+
   const { data, error } = await supabase
     .from('properties')
     .insert({
@@ -48,7 +80,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return serverError(error.message);
   }
 
   return NextResponse.json(data, { status: 201 });

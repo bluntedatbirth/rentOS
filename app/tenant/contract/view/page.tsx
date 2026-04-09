@@ -1,12 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { createClient } from '@/lib/supabase/client';
 import { ContractClauseCard } from '@/components/landlord/ContractClauseCard';
+import { useAutoDismissNotifications } from '@/lib/hooks/useAutoDismissNotifications';
+
+const supabase = createClient();
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+import { RenewalNotice } from '@/components/tenant/RenewalNotice';
 import type { StructuredClause } from '@/lib/supabase/types';
 
 interface ContractDetail {
@@ -17,6 +21,9 @@ interface ContractDetail {
   monthly_rent: number | null;
   security_deposit: number | null;
   structured_clauses: StructuredClause[] | null;
+  raw_text_th: string | null;
+  renewed_from: string | null;
+  renewal_changes: Record<string, { old: unknown; new: unknown }> | null;
   properties: { name: string; address: string | null } | null;
 }
 
@@ -24,28 +31,82 @@ export default function TenantContractViewPage() {
   const { user } = useAuth();
   const { t } = useI18n();
   const [contract, setContract] = useState<ContractDetail | null>(null);
+  const [originalClauses, setOriginalClauses] = useState<StructuredClause[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLang, setShowLang] = useState<'th' | 'en'>('th');
 
-  const supabase = createClient();
+  // Auto-dismiss renewal notifications when tenant visits contract view
+  useAutoDismissNotifications({ types: ['lease_renewal_offer', 'lease_expiry'] });
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
+      // Fetch active contract OR pending renewal (renewal takes priority)
       const { data } = await supabase
         .from('contracts')
         .select(
-          'id, status, lease_start, lease_end, monthly_rent, security_deposit, structured_clauses, properties(name, address)'
+          'id, status, lease_start, lease_end, monthly_rent, security_deposit, structured_clauses, raw_text_th, renewed_from, renewal_changes, properties(name, address)'
         )
         .eq('tenant_id', user.id)
-        .eq('status', 'active')
+        .in('status', ['active', 'pending', 'awaiting_signature'])
+        .order('created_at', { ascending: false })
         .limit(1);
 
-      setContract((data?.[0] as unknown as ContractDetail) ?? null);
+      const c = (data?.[0] as unknown as ContractDetail) ?? null;
+      setContract(c);
+
+      // If this is a renewal with text changes, fetch original contract's structured clauses for comparison
+      if (c?.renewed_from && c.renewal_changes?.contract_text) {
+        const { data: origData } = await supabase
+          .from('contracts')
+          .select('structured_clauses')
+          .eq('id', c.renewed_from)
+          .single();
+        const origClauses =
+          (origData as unknown as { structured_clauses: StructuredClause[] | null })
+            ?.structured_clauses ?? null;
+        setOriginalClauses(origClauses);
+
+        // Auto-reparse: if renewal's structured_clauses are identical to original
+        // (created before reparse logic existed), trigger a reparse now
+        const newClauses = c.structured_clauses ?? [];
+        if (origClauses && newClauses.length > 0 && origClauses.length === newClauses.length) {
+          const identical = newClauses.every(
+            (nc, i) =>
+              nc.clause_id === origClauses[i].clause_id && nc.text_th === origClauses[i].text_th
+          );
+          if (identical) {
+            // Clauses are byte-for-byte identical — reparse in background
+            fetch(`/api/contracts/${c.id}/reparse`, { method: 'POST' })
+              .then((res) => (res.ok ? res.json() : null))
+              .then((result) => {
+                if (result?.success) {
+                  // Reload to show fresh clauses
+                  window.location.reload();
+                }
+              })
+              .catch(() => {
+                /* silent — non-critical */
+              });
+          }
+        }
+      }
+
       setLoading(false);
     };
     load();
-  }, [user, supabase]);
+  }, [user]);
+
+  // Build a map of original clause content by ID for per-clause diff comparison
+  const originalClauseMap = useMemo(() => {
+    if (!originalClauses) return null;
+    const m = new Map<string, string>();
+    for (const c of originalClauses) {
+      // Use Thai text for comparison (canonical source)
+      m.set(c.clause_id.toLowerCase(), c.text_th);
+    }
+    return m;
+  }, [originalClauses]);
 
   if (loading) return <LoadingSkeleton count={4} />;
 
@@ -54,6 +115,9 @@ export default function TenantContractViewPage() {
   }
 
   const clauses = contract.structured_clauses ?? [];
+  const isRenewalWithTextChanges = !!(
+    contract.renewed_from && contract.renewal_changes?.contract_text
+  );
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -72,11 +136,14 @@ export default function TenantContractViewPage() {
         </div>
       )}
 
+      {/* Renewal notice — shows if this is a pending renewal offer */}
+      <RenewalNotice contract={contract} onResponded={() => window.location.reload()} />
+
       {/* Contract summary */}
       <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg bg-white p-4 shadow-sm sm:grid-cols-4">
-        <div>
+        <div className="col-span-2 sm:col-span-1">
           <p className="text-xs text-gray-500">{t('contract.lease_period')}</p>
-          <p className="text-sm font-medium text-gray-900">
+          <p className="break-all text-sm font-medium text-gray-900">
             {contract.lease_start ?? '—'} → {contract.lease_end ?? '—'}
           </p>
         </div>
@@ -131,9 +198,54 @@ export default function TenantContractViewPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {clauses.map((clause) => (
-            <ContractClauseCard key={clause.clause_id} clause={clause} showLang={showLang} />
-          ))}
+          {clauses.map((clause) => {
+            // For renewals with text changes, highlight modified/new clauses
+            const isNew =
+              isRenewalWithTextChanges && clause.clause_id.toLowerCase().startsWith('nc');
+            const origText = originalClauseMap?.get(clause.clause_id.toLowerCase());
+            const isChanged =
+              isRenewalWithTextChanges && originalClauseMap
+                ? origText === undefined
+                  ? !isNew // clause ID not in original and not NC → modified
+                  : origText.trim() !== clause.text_th.trim()
+                : false;
+            const highlighted = isChanged || isNew;
+
+            if (highlighted) {
+              // Render highlighted clause card with blue styling
+              return (
+                <div
+                  key={clause.clause_id}
+                  className="rounded-lg bg-blue-50 p-4 shadow-sm ring-2 ring-blue-200"
+                >
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-bold text-blue-600">
+                      {clause.clause_id.toUpperCase()}
+                    </span>
+                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                      {isNew ? t('renewal.new_clause') : t('renewal.modified_clause')}
+                    </span>
+                    {clause.category && (
+                      <span className="rounded-full bg-blue-100/50 px-2 py-0.5 text-xs font-medium text-blue-600">
+                        {clause.category}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="mb-1 text-sm font-semibold text-blue-900">
+                    {showLang === 'th' ? clause.title_th : clause.title_en}
+                  </h3>
+                  <p className="whitespace-pre-wrap text-sm text-blue-800">
+                    {showLang === 'th' ? clause.text_th : clause.text_en}
+                  </p>
+                </div>
+              );
+            }
+
+            // Normal clause card
+            return (
+              <ContractClauseCard key={clause.clause_id} clause={clause} showLang={showLang} />
+            );
+          })}
         </div>
       )}
     </div>

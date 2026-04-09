@@ -1,6 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
 import type { Database } from './types';
 
 export function createApiClient() {
@@ -41,14 +40,12 @@ export async function getAuthenticatedUser() {
   return { user: session.user, supabase };
 }
 
-export function unauthorized() {
-  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-}
-
-export function badRequest(message: string) {
-  return NextResponse.json({ error: message }, { status: 400 });
-}
-
-export function notFound(message = 'Not found') {
-  return NextResponse.json({ error: message }, { status: 404 });
-}
+// Re-export error utilities from the shared module
+export {
+  unauthorized,
+  badRequest,
+  notFound,
+  forbidden,
+  serverError,
+  apiError,
+} from '@/lib/apiErrors';

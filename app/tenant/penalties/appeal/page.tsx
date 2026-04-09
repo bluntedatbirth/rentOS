@@ -3,9 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
+import { useToast } from '@/components/ui/ToastProvider';
 import { createClient } from '@/lib/supabase/client';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+
+const supabase = createClient();
 
 interface Penalty {
   id: string;
@@ -24,14 +28,13 @@ interface Penalty {
 export default function TenantPenaltiesPage() {
   const { user } = useAuth();
   const { t, locale } = useI18n();
+  const { toast } = useToast();
   const [penalties, setPenalties] = useState<Penalty[]>([]);
   const [loading, setLoading] = useState(true);
   const [appealingId, setAppealingId] = useState<string | null>(null);
   const [appealNote, setAppealNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-
-  const supabase = createClient();
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -58,7 +61,7 @@ export default function TenantPenaltiesPage() {
 
     setPenalties((data ?? []) as Penalty[]);
     setLoading(false);
-  }, [user, supabase]);
+  }, [user]);
 
   useEffect(() => {
     loadData();
@@ -77,9 +80,11 @@ export default function TenantPenaltiesPage() {
     if (!res.ok) {
       const data = await res.json();
       setError(data.error ?? t('auth.error'));
+      toast.error(t('auth.error'));
     } else {
       setAppealingId(null);
       setAppealNote('');
+      toast.success(t('penalties.appeal_submitted'));
       await loadData();
     }
 

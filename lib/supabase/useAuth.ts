@@ -13,14 +13,14 @@ interface AuthState {
   loading: boolean;
 }
 
+const supabase = createClient();
+
 export function useAuth() {
   const [state, setState] = useState<AuthState>({
     user: null,
     profile: null,
     loading: true,
   });
-
-  const supabase = createClient();
 
   useEffect(() => {
     const getSession = async () => {
@@ -60,26 +60,35 @@ export function useAuth() {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase]);
+  }, []);
 
-  const signInWithOtp = useCallback(
-    async (email: string) => {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      return { error };
-    },
-    [supabase]
-  );
+  const signInWithOtp = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    return { error };
+  }, []);
 
   const signUp = useCallback(
     async (
       email: string,
-      metadata: { role: 'landlord' | 'tenant'; full_name: string; phone: string }
+      metadata: { role: 'landlord' | 'tenant'; full_name: string; phone: string },
+      password?: string
     ) => {
+      if (password) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            data: metadata,
+          },
+        });
+        return { error };
+      }
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
@@ -89,21 +98,19 @@ export function useAuth() {
       });
       return { error };
     },
-    [supabase]
+    []
   );
 
-  const signInWithPassword = useCallback(
-    async (email: string, password: string) => {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      return { error };
-    },
-    [supabase]
-  );
+  const signInWithPassword = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error };
+  }, []);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setState({ user: null, profile: null, loading: false });
-  }, [supabase]);
+    window.location.href = '/login';
+  }, []);
 
   return {
     ...state,

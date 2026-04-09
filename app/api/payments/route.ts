@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAuthenticatedUser, unauthorized, badRequest } from '@/lib/supabase/api';
+import { getAuthenticatedUser, unauthorized, badRequest, serverError } from '@/lib/supabase/api';
 
 const createPaymentSchema = z.object({
   contract_id: z.string().uuid(),
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
   const { data, error } = await query;
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return serverError(error.message);
   }
 
   return NextResponse.json(data);
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return serverError(error.message);
   }
 
   return NextResponse.json(data, { status: 201 });
