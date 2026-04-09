@@ -51,12 +51,18 @@ export async function GET(request: NextRequest) {
         const metadata = session.user.user_metadata;
         const role: 'landlord' | 'tenant' = metadata.role === 'tenant' ? 'tenant' : 'landlord';
 
+        // Beta: grant Pro for 1 year to all new signups
+        const oneYearFromNow = new Date();
+        oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
         await adminClient.from('profiles').insert({
           id: session.user.id,
           role,
           full_name: (metadata.full_name as string) || null,
           phone: (metadata.phone as string) || null,
           language: 'th' as const,
+          tier: 'pro' as const,
+          tier_expires_at: oneYearFromNow.toISOString(),
         });
 
         const dashboard = role === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';

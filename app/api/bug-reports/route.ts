@@ -1,8 +1,16 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import { getAuthenticatedUser } from '@/lib/supabase/api';
 
-function getResend() {
-  return new Resend(process.env.RESEND_API_KEY);
+function getTransporter() {
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
 }
 
 export async function POST(request: Request) {
@@ -30,9 +38,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    await getResend().emails.send({
-      from: 'RentOS Bugs <bugs@rentos.app>',
-      to: 'john.caules@gmail.com',
+    const transporter = getTransporter();
+    await transporter.sendMail({
+      from: `RentOS Bugs <${process.env.SMTP_USER}>`,
+      to: process.env.SMTP_USER, // Send to yourself
       subject: `[RentOS Bug] ${body.description.slice(0, 60)}`,
       text: [
         `Bug Report`,
