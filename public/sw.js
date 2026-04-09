@@ -1,6 +1,6 @@
 // RentOS Service Worker — App Shell Caching + Push Notifications
 
-const CACHE_NAME = 'rentos-v1';
+const CACHE_NAME = 'rentos-v2';
 const APP_SHELL = [
   '/',
   '/manifest.json',
@@ -40,10 +40,9 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin requests
   if (url.origin !== self.location.origin) return;
 
-  // Network-first for API calls
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(networkFirst(request));
-    return;
+  // Never cache API calls or Supabase requests — always go to network
+  if (url.pathname.startsWith('/api/') || url.hostname.includes('supabase')) {
+    return; // Let the browser handle it normally
   }
 
   // Cache-first for static assets (JS, CSS, images, fonts, icons)
@@ -58,8 +57,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Default: network-first
-  event.respondWith(networkFirst(request));
+  // Default: let the browser handle it (no caching)
 });
 
 function isStaticAsset(pathname) {
@@ -83,24 +81,6 @@ async function cacheFirst(request) {
     return response;
   } catch {
     return new Response('Offline', { status: 503 });
-  }
-}
-
-async function networkFirst(request) {
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch {
-    const cached = await caches.match(request);
-    if (cached) return cached;
-    return new Response(JSON.stringify({ error: 'Offline' }), {
-      status: 503,
-      headers: { 'Content-Type': 'application/json' },
-    });
   }
 }
 
