@@ -24,13 +24,13 @@ export async function GET(request: Request) {
   }
 
   const supabase = createServiceRoleClient();
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const today = new Date().toISOString().split('T')[0]!; // YYYY-MM-DD
   const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
     .toISOString()
-    .split('T')[0];
+    .split('T')[0]!;
   const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     .toISOString()
-    .split('T')[0];
+    .split('T')[0]!;
 
   const summary = {
     paymentDueReminders: 0,
@@ -174,10 +174,18 @@ export async function GET(request: Request) {
   // 4. Custom notification rules (landlord-defined)
   // ----------------------------------------------------------------
   try {
-    const { data: rules, error: rulesError } = await supabase
-      .from('notification_rules')
+    interface NotifRule {
+      id: string;
+      landlord_id: string;
+      name: string;
+      trigger_type: string;
+      days_offset: number;
+      message_template: string;
+    }
+    const { data: rules, error: rulesError } = (await supabase
+      .from('notification_rules' as never)
       .select('id, landlord_id, name, trigger_type, days_offset, message_template')
-      .eq('is_active', true);
+      .eq('is_active', true)) as unknown as { data: NotifRule[] | null; error: Error | null };
 
     if (rulesError) throw rulesError;
 
@@ -190,7 +198,7 @@ export async function GET(request: Request) {
 
         if (rule.trigger_type === 'payment_due') {
           // Find pending payments due exactly days_offset days from now
-          const targetDate = new Date(Date.now() + offsetMs).toISOString().split('T')[0];
+          const targetDate = new Date(Date.now() + offsetMs).toISOString().split('T')[0]!;
           const { data: payments } = await supabase
             .from('payments')
             .select(
@@ -238,7 +246,7 @@ export async function GET(request: Request) {
           }
         } else if (rule.trigger_type === 'payment_overdue') {
           // Find overdue payments that became overdue exactly days_offset days ago
-          const targetDate = new Date(Date.now() - offsetMs).toISOString().split('T')[0];
+          const targetDate = new Date(Date.now() - offsetMs).toISOString().split('T')[0]!;
           const { data: payments } = await supabase
             .from('payments')
             .select(
@@ -285,7 +293,7 @@ export async function GET(request: Request) {
           }
         } else if (rule.trigger_type === 'lease_expiry') {
           // Find active contracts expiring exactly days_offset days from now
-          const targetDate = new Date(Date.now() + offsetMs).toISOString().split('T')[0];
+          const targetDate = new Date(Date.now() + offsetMs).toISOString().split('T')[0]!;
           const { data: contracts } = await supabase
             .from('contracts')
             .select('id, tenant_id, landlord_id, lease_end, properties(name)')
@@ -342,14 +350,23 @@ export async function GET(request: Request) {
   let autoPenaltiesApplied = 0;
   try {
     // Fetch all active auto-apply late_payment rules
-    const { data: rules, error: rulesError } = await supabase
-      .from('penalty_rules')
+    interface PenaltyRule {
+      id: string;
+      contract_id: string;
+      landlord_id: string;
+      trigger_days: number;
+      penalty_amount: number;
+      penalty_description: string;
+      clause_id: string | null;
+    }
+    const { data: rules, error: rulesError } = (await supabase
+      .from('penalty_rules' as never)
       .select(
         'id, contract_id, landlord_id, trigger_days, penalty_amount, penalty_description, clause_id'
       )
       .eq('trigger_type', 'late_payment')
       .eq('auto_apply', true)
-      .eq('is_active', true);
+      .eq('is_active', true)) as unknown as { data: PenaltyRule[] | null; error: Error | null };
 
     if (rulesError) throw rulesError;
 
@@ -358,7 +375,7 @@ export async function GET(request: Request) {
         // Calculate the threshold date: payments overdue by at least trigger_days
         const thresholdDate = new Date(Date.now() - rule.trigger_days * 24 * 60 * 60 * 1000)
           .toISOString()
-          .split('T')[0];
+          .split('T')[0]!;
 
         // Find overdue payments for this contract older than trigger_days
         const { data: overduePayments, error: paymentsError } = await supabase
@@ -443,7 +460,7 @@ export async function GET(request: Request) {
         type: 'tier_expiry_warning',
         titleEn: 'Pro Plan Expiring',
         titleTh: 'แพลน Pro กำลังจะหมดอายุ',
-        bodyEn: `Your Pro plan expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}. Renew to keep your features.`,
+        bodyEn: `Your Pro plan expires in ${daysLeft} days. Renew to keep your features.`,
         bodyTh: `แพลน Pro ของคุณจะหมดอายุในอีก ${daysLeft} วัน กรุณาต่ออายุเพื่อใช้งานฟีเจอร์ต่อ`,
         url: '/landlord/billing',
       });

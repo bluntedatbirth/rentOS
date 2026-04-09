@@ -73,7 +73,7 @@ export default function TenantContractViewPage() {
         if (origClauses && newClauses.length > 0 && origClauses.length === newClauses.length) {
           const identical = newClauses.every(
             (nc, i) =>
-              nc.clause_id === origClauses[i].clause_id && nc.text_th === origClauses[i].text_th
+              nc.clause_id === origClauses[i]?.clause_id && nc.text_th === origClauses[i]?.text_th
           );
           if (identical) {
             // Clauses are byte-for-byte identical — reparse in background

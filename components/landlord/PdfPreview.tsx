@@ -26,7 +26,7 @@ export function PdfPreview({ contractText, debounceMs = 800 }: PdfPreviewProps) 
     try {
       const { generateContractPdf } = await import('@/lib/pdf/generateContractPdf');
       const pdfBytes = await generateContractPdf(text);
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
 
       // Revoke previous URL to prevent memory leaks

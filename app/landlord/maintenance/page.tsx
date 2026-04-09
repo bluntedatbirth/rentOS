@@ -115,7 +115,7 @@ export default function LandlordMaintenancePage() {
     }
 
     // Build contract→property mapping for the requests we got
-    const contractIds = [...new Set(maintenanceData.map((r) => r.contract_id))];
+    const contractIds = Array.from(new Set(maintenanceData.map((r) => r.contract_id)));
     const contractPropertyMap = new Map<string, string>();
 
     if (contractIds.length > 0) {

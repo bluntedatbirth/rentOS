@@ -1,7 +1,9 @@
 import { Resend } from 'resend';
 import { getAuthenticatedUser } from '@/lib/supabase/api';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 export async function POST(request: Request) {
   const body = (await request.json()) as {
@@ -28,7 +30,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    await resend.emails.send({
+    await getResend().emails.send({
       from: 'RentOS Bugs <bugs@rentos.app>',
       to: 'john.caules@gmail.com',
       subject: `[RentOS Bug] ${body.description.slice(0, 60)}`,

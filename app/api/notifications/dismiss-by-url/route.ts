@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorized, badRequest, serverError } from '@/lib/supabase/api';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import type { Database } from '@/lib/supabase/types';
 
 /**
  * POST /api/notifications/dismiss-by-url
@@ -14,7 +15,9 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null);
   const url = body?.url as string | undefined;
-  const types = body?.types as string[] | undefined;
+  const types = body?.types as
+    | Database['public']['Tables']['notifications']['Row']['type'][]
+    | undefined;
 
   if (!url && (!types || types.length === 0)) {
     return badRequest('Provide url or types to dismiss');

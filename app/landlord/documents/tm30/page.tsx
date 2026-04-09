@@ -56,7 +56,7 @@ export default function TM30GeneratorPage() {
     foreigner_passport_number: '',
     foreigner_arrival_date: '',
     foreigner_arrival_from: '',
-    foreigner_stay_date: new Date().toISOString().split('T')[0],
+    foreigner_stay_date: new Date().toISOString().split('T')[0]!,
     foreigner_visa_type: '',
     foreigner_visa_expiry: '',
   });

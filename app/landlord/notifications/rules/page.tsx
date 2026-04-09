@@ -460,7 +460,7 @@ export default function NotificationRulesPage() {
           <p className="mt-1 text-sm text-blue-600">{t('notification_rules.presets_desc')}</p>
           <button
             type="button"
-            onClick={() => handleApplyPreset(PRESET_CHAINS[0])}
+            onClick={() => handleApplyPreset(PRESET_CHAINS[0]!)}
             disabled={applyingPreset}
             className="mt-3 min-h-[44px] rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
@@ -474,7 +474,7 @@ export default function NotificationRulesPage() {
         <div className="mb-4 flex justify-end">
           <button
             type="button"
-            onClick={() => handleApplyPreset(PRESET_CHAINS[0])}
+            onClick={() => handleApplyPreset(PRESET_CHAINS[0]!)}
             disabled={applyingPreset}
             className="min-h-[44px] rounded-lg border border-blue-300 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50"
           >

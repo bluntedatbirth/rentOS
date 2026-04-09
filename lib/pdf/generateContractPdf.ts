@@ -267,7 +267,7 @@ export async function generateContractPdf(contractText: string): Promise<Uint8Ar
 // ─── Browser Download Helper ────────────────────────────────────────────────
 
 export function downloadPdf(pdfBytes: Uint8Array, filename: string) {
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const blob = new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

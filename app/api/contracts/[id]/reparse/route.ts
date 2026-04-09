@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorized, notFound, serverError } from '@/lib/supabase/api';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { reparseContractText } from '@/lib/claude/extractContract';
+import type { StructuredClause } from '@/lib/supabase/types';
 
 /**
  * POST /api/contracts/[id]/reparse
@@ -44,7 +45,7 @@ export async function POST(_request: Request, { params }: { params: { id: string
     // Update the contract's structured_clauses
     const { error: updateError } = await admin
       .from('contracts')
-      .update({ structured_clauses: clauses as unknown })
+      .update({ structured_clauses: clauses as StructuredClause[] })
       .eq('id', params.id);
 
     if (updateError) {

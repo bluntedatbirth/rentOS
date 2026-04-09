@@ -95,7 +95,8 @@ export async function sendNotification(params: SendNotificationParams): Promise<
     delete insertPayload.title_th;
     delete insertPayload.body_en;
     delete insertPayload.body_th;
-    const retry = await supabase.from('notifications').insert(insertPayload as unknown);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const retry = await supabase.from('notifications').insert(insertPayload as any);
     insertError = retry.error;
     if (insertError) {
       console.error('[Notifications] Retry also failed:', insertError.message);

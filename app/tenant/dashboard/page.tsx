@@ -60,13 +60,9 @@ export default function TenantDashboard() {
       setContract(activeContract);
 
       // Check for pending renewal offer
-      const { data: renewals } = await (
-        supabase
-          .from('contracts')
-          .select(
-            'id, status, lease_start, lease_end, monthly_rent, property_id, properties(name)'
-          ) as unknown as { eq: (...args: unknown[]) => unknown }
-      )
+      const { data: renewals } = await supabase
+        .from('contracts')
+        .select('id, status, lease_start, lease_end, monthly_rent, property_id, properties(name)')
         .eq('tenant_id', user.id)
         .eq('status', 'pending')
         .not('renewed_from', 'is', null)

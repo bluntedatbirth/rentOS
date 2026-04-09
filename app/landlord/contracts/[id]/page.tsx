@@ -68,14 +68,10 @@ export default function ContractReviewPage() {
 
     // Check if a pending or awaiting_signature renewal exists for this contract
     if (data) {
-      const { data: renewalData } = await (
-        supabase
-          .from('contracts')
-          .select('id, status, lease_start, lease_end, monthly_rent') as unknown as {
-          eq: (...args: unknown[]) => unknown;
-        }
-      )
-        .eq('renewed_from', id)
+      const { data: renewalData } = await supabase
+        .from('contracts')
+        .select('id, status, lease_start, lease_end, monthly_rent')
+        .eq('renewed_from' as never, id)
         .in('status', ['pending', 'awaiting_signature'])
         .limit(1)
         .single();

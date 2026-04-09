@@ -128,7 +128,7 @@ export interface Database {
           lease_end: string | null;
           monthly_rent: number | null;
           security_deposit: number | null;
-          status: 'active' | 'expired' | 'terminated';
+          status: 'active' | 'expired' | 'terminated' | 'pending' | 'awaiting_signature';
           pairing_code: string | null;
           pairing_expires_at: string | null;
           co_tenants: Json | null;
@@ -148,7 +148,7 @@ export interface Database {
           lease_end?: string | null;
           monthly_rent?: number | null;
           security_deposit?: number | null;
-          status?: 'active' | 'expired' | 'terminated';
+          status?: 'active' | 'expired' | 'terminated' | 'pending' | 'awaiting_signature';
           pairing_code?: string | null;
           pairing_expires_at?: string | null;
           co_tenants?: Json | null;
@@ -168,7 +168,7 @@ export interface Database {
           lease_end?: string | null;
           monthly_rent?: number | null;
           security_deposit?: number | null;
-          status?: 'active' | 'expired' | 'terminated';
+          status?: 'active' | 'expired' | 'terminated' | 'pending' | 'awaiting_signature';
           pairing_code?: string | null;
           pairing_expires_at?: string | null;
           co_tenants?: Json | null;
@@ -577,6 +577,140 @@ export interface Database {
             referencedColumns: ['id'];
           },
         ];
+      };
+      notification_rules: {
+        Row: {
+          id: string;
+          landlord_id: string;
+          name: string;
+          trigger_type: 'payment_due' | 'payment_overdue' | 'lease_expiry' | 'custom';
+          days_offset: number;
+          message_template: string;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          landlord_id: string;
+          name?: string;
+          trigger_type: 'payment_due' | 'payment_overdue' | 'lease_expiry' | 'custom';
+          days_offset: number;
+          message_template?: string;
+          is_active?: boolean;
+        };
+        Update: {
+          name?: string;
+          trigger_type?: 'payment_due' | 'payment_overdue' | 'lease_expiry' | 'custom';
+          days_offset?: number;
+          message_template?: string;
+          is_active?: boolean;
+        };
+        Relationships: [];
+      };
+      penalty_rules: {
+        Row: {
+          id: string;
+          contract_id: string;
+          landlord_id: string;
+          clause_id: string | null;
+          trigger_type: string;
+          trigger_days: number;
+          penalty_amount: number;
+          penalty_description: string | null;
+          auto_apply: boolean;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          contract_id: string;
+          landlord_id: string;
+          clause_id?: string | null;
+          trigger_type: string;
+          trigger_days: number;
+          penalty_amount: number;
+          penalty_description?: string | null;
+          auto_apply?: boolean;
+          is_active?: boolean;
+        };
+        Update: {
+          clause_id?: string | null;
+          trigger_type?: string;
+          trigger_days?: number;
+          penalty_amount?: number;
+          penalty_description?: string | null;
+          auto_apply?: boolean;
+          is_active?: boolean;
+        };
+        Relationships: [];
+      };
+      contract_templates: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          template_text: string;
+          language: string;
+          category: string;
+          is_system: boolean;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          template_text: string;
+          language?: string;
+          category?: string;
+          is_system?: boolean;
+          created_by?: string | null;
+        };
+        Update: {
+          name?: string;
+          description?: string | null;
+          template_text?: string;
+          language?: string;
+          category?: string;
+          is_system?: boolean;
+        };
+        Relationships: [];
+      };
+      contract_analyses: {
+        Row: {
+          id: string;
+          contract_id: string;
+          risks: Json | null;
+          missing_clauses: Json | null;
+          summary: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          contract_id: string;
+          risks?: Json | null;
+          missing_clauses?: Json | null;
+          summary?: string | null;
+        };
+        Update: { risks?: Json | null; missing_clauses?: Json | null; summary?: string | null };
+        Relationships: [];
+      };
+      bug_reports: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          page_url: string | null;
+          description: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          page_url?: string | null;
+          description: string;
+        };
+        Update: { description?: string };
+        Relationships: [];
       };
     };
     Views: Record<string, never>;
