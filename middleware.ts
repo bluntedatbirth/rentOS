@@ -99,31 +99,37 @@ export async function middleware(request: NextRequest) {
       if (profile) {
         const dashboardUrl =
           profile.role === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[middleware]', {
+            pathname,
+            has_user: true,
+            profile_via_session_client: profileViaSession,
+            profile_via_service_role: profileViaServiceRole,
+            redirect_target: dashboardUrl,
+          });
+        }
+        return NextResponse.redirect(new URL(dashboardUrl, request.url));
+      }
+
+      if (process.env.NODE_ENV === 'development') {
         console.log('[middleware]', {
           pathname,
           has_user: true,
           profile_via_session_client: profileViaSession,
           profile_via_service_role: profileViaServiceRole,
-          redirect_target: dashboardUrl,
+          redirect_target: 'passthrough',
         });
-        return NextResponse.redirect(new URL(dashboardUrl, request.url));
       }
-
-      console.log('[middleware]', {
-        pathname,
-        has_user: true,
-        profile_via_session_client: profileViaSession,
-        profile_via_service_role: profileViaServiceRole,
-        redirect_target: 'passthrough',
-      });
     } else {
-      console.log('[middleware]', {
-        pathname,
-        has_user: false,
-        profile_via_session_client: null,
-        profile_via_service_role: null,
-        redirect_target: 'passthrough',
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[middleware]', {
+          pathname,
+          has_user: false,
+          profile_via_session_client: null,
+          profile_via_service_role: null,
+          redirect_target: 'passthrough',
+        });
+      }
     }
     return response;
   }
@@ -133,24 +139,28 @@ export async function middleware(request: NextRequest) {
   const protectedPrefixes = ['/landlord', '/tenant', '/admin'];
   const isProtected = protectedPrefixes.some((p) => pathname === p || pathname.startsWith(p + '/'));
   if (!isProtected) {
-    console.log('[middleware]', {
-      pathname,
-      has_user: !!user,
-      profile_via_session_client: null,
-      profile_via_service_role: null,
-      redirect_target: 'passthrough',
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[middleware]', {
+        pathname,
+        has_user: !!user,
+        profile_via_session_client: null,
+        profile_via_service_role: null,
+        redirect_target: 'passthrough',
+      });
+    }
     return response;
   }
 
   if (!user) {
-    console.log('[middleware]', {
-      pathname,
-      has_user: false,
-      profile_via_session_client: null,
-      profile_via_service_role: null,
-      redirect_target: '/login',
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[middleware]', {
+        pathname,
+        has_user: false,
+        profile_via_session_client: null,
+        profile_via_service_role: null,
+        redirect_target: '/login',
+      });
+    }
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
@@ -172,47 +182,55 @@ export async function middleware(request: NextRequest) {
 
   if (!profile) {
     // No profile yet — redirect to signup
-    console.log('[middleware]', {
-      pathname,
-      has_user: true,
-      profile_via_session_client: profileViaSession,
-      profile_via_service_role: profileViaServiceRole,
-      redirect_target: '/signup',
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[middleware]', {
+        pathname,
+        has_user: true,
+        profile_via_session_client: profileViaSession,
+        profile_via_service_role: profileViaServiceRole,
+        redirect_target: '/signup',
+      });
+    }
     return NextResponse.redirect(new URL('/signup', request.url));
   }
 
   // Block wrong-role access
   // Landlord-only routes: /landlord/*, including /landlord/dashboard, /landlord/billing/*, /landlord/onboarding
   if (pathname.startsWith('/landlord') && profile.role !== 'landlord') {
-    console.log('[middleware]', {
-      pathname,
-      has_user: true,
-      profile_via_session_client: profileViaSession,
-      profile_via_service_role: profileViaServiceRole,
-      redirect_target: '/tenant/dashboard',
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[middleware]', {
+        pathname,
+        has_user: true,
+        profile_via_session_client: profileViaSession,
+        profile_via_service_role: profileViaServiceRole,
+        redirect_target: '/tenant/dashboard',
+      });
+    }
     return NextResponse.redirect(new URL('/tenant/dashboard', request.url));
   }
   // Tenant-only routes: /tenant/*, including /tenant/dashboard, /tenant/onboarding
   if (pathname.startsWith('/tenant') && profile.role !== 'tenant') {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[middleware]', {
+        pathname,
+        has_user: true,
+        profile_via_session_client: profileViaSession,
+        profile_via_service_role: profileViaServiceRole,
+        redirect_target: '/landlord/dashboard',
+      });
+    }
+    return NextResponse.redirect(new URL('/landlord/dashboard', request.url));
+  }
+
+  if (process.env.NODE_ENV === 'development') {
     console.log('[middleware]', {
       pathname,
       has_user: true,
       profile_via_session_client: profileViaSession,
       profile_via_service_role: profileViaServiceRole,
-      redirect_target: '/landlord/dashboard',
+      redirect_target: 'passthrough',
     });
-    return NextResponse.redirect(new URL('/landlord/dashboard', request.url));
   }
-
-  console.log('[middleware]', {
-    pathname,
-    has_user: true,
-    profile_via_session_client: profileViaSession,
-    profile_via_service_role: profileViaServiceRole,
-    redirect_target: 'passthrough',
-  });
   return response;
 }
 

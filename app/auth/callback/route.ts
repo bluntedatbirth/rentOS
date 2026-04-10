@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     if (exchangeError || !session) {
       console.error('[callback] exchangeCodeForSession failed', exchangeError);
       diag.final_redirect = '/login?error=oauth_failed';
-      console.log('[callback-diag]', diag);
+      if (process.env.NODE_ENV === 'development') console.log('[callback-diag]', diag);
       return NextResponse.redirect(new URL('/login?error=oauth_failed', requestUrl.origin));
     }
 
@@ -161,14 +161,14 @@ export async function GET(request: NextRequest) {
         if (resolvedRole === 'tenant' && pairCode && /^[A-Z0-9]{6}$/.test(pairCode)) {
           const target = `/tenant/pair?code=${pairCode}`;
           diag.final_redirect = target;
-          console.log('[callback-diag]', diag);
+          if (process.env.NODE_ENV === 'development') console.log('[callback-diag]', diag);
           if (isDebug) return debugHtmlResponse(diag, target, requestUrl.origin);
           return NextResponse.redirect(new URL(target, requestUrl.origin));
         }
 
         const dashboard = resolvedRole === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
         diag.final_redirect = dashboard;
-        console.log('[callback-diag]', diag);
+        if (process.env.NODE_ENV === 'development') console.log('[callback-diag]', diag);
         if (isDebug) return debugHtmlResponse(diag, dashboard, requestUrl.origin);
         return NextResponse.redirect(new URL(dashboard, requestUrl.origin));
       }
@@ -193,7 +193,7 @@ export async function GET(request: NextRequest) {
       if (existingProfile.role === 'tenant' && pairCode && /^[A-Z0-9]{6}$/.test(pairCode)) {
         const target = `/tenant/pair?code=${pairCode}`;
         diag.final_redirect = target;
-        console.log('[callback-diag]', diag);
+        if (process.env.NODE_ENV === 'development') console.log('[callback-diag]', diag);
         if (isDebug) return debugHtmlResponse(diag, target, requestUrl.origin);
         return NextResponse.redirect(new URL(target, requestUrl.origin));
       }
@@ -202,7 +202,7 @@ export async function GET(request: NextRequest) {
       const dashboard =
         existingProfile.role === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
       diag.final_redirect = dashboard;
-      console.log('[callback-diag]', diag);
+      if (process.env.NODE_ENV === 'development') console.log('[callback-diag]', diag);
       if (isDebug) return debugHtmlResponse(diag, dashboard, requestUrl.origin);
       return NextResponse.redirect(new URL(dashboard, requestUrl.origin));
     }
