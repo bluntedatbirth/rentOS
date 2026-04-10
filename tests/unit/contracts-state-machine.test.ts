@@ -268,7 +268,12 @@ describe('activateContract()', () => {
   });
 
   it('seeds 12 payment rows when all invariants pass', async () => {
-    const contract = makeContract({ status: 'scheduled' });
+    // lease_end must be >= 12 months from today to allow 12 monthly rows
+    // (T-BUG-07 fix bounds seeding to min(12, months_until_lease_end))
+    const farFuture = new Date();
+    farFuture.setFullYear(farFuture.getFullYear() + 2);
+    const farFutureStr = farFuture.toISOString().split('T')[0]!;
+    const contract = makeContract({ status: 'scheduled', lease_end: farFutureStr });
     contractStore.push(contract);
 
     const supabase = makeMockSupabase(contractStore, paymentStore);
