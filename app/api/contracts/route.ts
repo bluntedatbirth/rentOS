@@ -21,9 +21,13 @@ export async function GET() {
   if (!user) return unauthorized();
 
   // RLS ensures landlords see their contracts, tenants see theirs
+  // Exclude heavy JSONB columns (raw_text_th, translated_text_en, structured_clauses)
+  // that are only needed on the individual contract detail endpoint.
   const { data, error } = await supabase
     .from('contracts')
-    .select('*, properties(name, address, unit_number)')
+    .select(
+      'id, property_id, tenant_id, landlord_id, lease_start, lease_end, monthly_rent, security_deposit, status, pairing_code, pairing_expires_at, renewed_from, created_at, properties(name, address, unit_number)'
+    )
     .order('created_at', { ascending: false });
 
   if (error) {
