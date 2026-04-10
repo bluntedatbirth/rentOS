@@ -44,6 +44,29 @@ export async function GET(request: Request) {
   };
 
   // ----------------------------------------------------------------
+  // Pre-fetch recent notifications for dedup (replaces per-payment SELECTs)
+  // Key: `${recipient_id}:${body}` — same logic as the inline dedup queries below.
+  // ----------------------------------------------------------------
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const dedupSet = new Set<string>();
+  try {
+    const { data: recentNotifs } = await supabase
+      .from('notifications')
+      .select('recipient_id, body')
+      .gte('sent_at', oneDayAgo);
+
+    for (const n of recentNotifs ?? []) {
+      if (n.recipient_id && n.body) {
+        dedupSet.add(`${n.recipient_id}:${n.body}`);
+      }
+    }
+  } catch (dedupErr) {
+    // Non-fatal: log and continue with an empty dedup set (may send duplicates)
+    const msg = dedupErr instanceof Error ? dedupErr.message : String(dedupErr);
+    console.warn('[Cron] Could not pre-fetch dedup set:', msg);
+  }
+
+  // ----------------------------------------------------------------
   // 1. Payment due reminders: pending payments due within 3 days
   // ----------------------------------------------------------------
   try {
@@ -192,9 +215,6 @@ export async function GET(request: Request) {
 
     if (rulesError) throw rulesError;
 
-    // De-dupe check: notifications sent in last 24h
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
     for (const rule of rules ?? []) {
       try {
         const offsetMs = rule.days_offset * 24 * 60 * 60 * 1000;
@@ -226,15 +246,8 @@ export async function GET(request: Request) {
               .replace('{property_name}', c.properties?.name ?? '')
               .replace('{tenant_name}', '');
 
-            // Duplicate check
-            const { data: recent } = await supabase
-              .from('notifications')
-              .select('id')
-              .eq('recipient_id', recipientId)
-              .eq('body', body)
-              .gte('sent_at', oneDayAgo)
-              .maybeSingle();
-            if (recent) continue;
+            if (dedupSet.has(`${recipientId}:${body}`)) continue;
+            dedupSet.add(`${recipientId}:${body}`);
 
             await sendNotification({
               recipientId,
@@ -274,14 +287,8 @@ export async function GET(request: Request) {
               .replace('{property_name}', c.properties?.name ?? '')
               .replace('{tenant_name}', '');
 
-            const { data: recent } = await supabase
-              .from('notifications')
-              .select('id')
-              .eq('recipient_id', recipientId)
-              .eq('body', body)
-              .gte('sent_at', oneDayAgo)
-              .maybeSingle();
-            if (recent) continue;
+            if (dedupSet.has(`${recipientId}:${body}`)) continue;
+            dedupSet.add(`${recipientId}:${body}`);
 
             await sendNotification({
               recipientId,
@@ -315,14 +322,8 @@ export async function GET(request: Request) {
               .replace('{amount}', '')
               .replace('{tenant_name}', '');
 
-            const { data: recent } = await supabase
-              .from('notifications')
-              .select('id')
-              .eq('recipient_id', recipientId)
-              .eq('body', body)
-              .gte('sent_at', oneDayAgo)
-              .maybeSingle();
-            if (recent) continue;
+            if (dedupSet.has(`${recipientId}:${body}`)) continue;
+            dedupSet.add(`${recipientId}:${body}`);
 
             await sendNotification({
               recipientId,
