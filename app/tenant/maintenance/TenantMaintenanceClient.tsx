@@ -146,7 +146,7 @@ export function TenantMaintenanceClient({
               key={req.id}
               type="button"
               onClick={() => setSelectedId(req.id)}
-              className="w-full rounded-lg bg-white p-4 shadow-sm text-left hover:shadow-md transition-shadow cursor-pointer"
+              className="w-full cursor-pointer rounded-lg bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md"
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-charcoal-900">{req.title}</h3>
@@ -172,21 +172,20 @@ export function TenantMaintenanceClient({
               <StatusBadge status={selectedRequest.status} />
             </div>
 
-            <p className="mb-4 text-sm font-semibold text-charcoal-900">{selectedRequest.title}</p>
+            <p className="mb-1 text-sm font-semibold text-charcoal-900">{selectedRequest.title}</p>
+            <p className="mb-4 text-xs text-charcoal-400">
+              {formatDate(selectedRequest.created_at)}
+            </p>
 
             {selectedRequest.description && (
               <p className="mb-4 text-sm text-charcoal-700">{selectedRequest.description}</p>
             )}
 
-            <p className="mb-4 text-xs text-charcoal-400">
-              {formatDate(selectedRequest.created_at)}
-            </p>
-
-            <div className="mb-4 space-y-2 text-sm text-charcoal-700">
+            <div className="mb-4 space-y-2 text-sm">
               {selectedRequest.assigned_to && (
                 <div className="flex justify-between">
                   <span className="text-charcoal-500">{t('tenant.maintenance_assigned_to')}</span>
-                  <span>{selectedRequest.assigned_to}</span>
+                  <span className="text-charcoal-700">{selectedRequest.assigned_to}</span>
                 </div>
               )}
 
@@ -195,21 +194,27 @@ export function TenantMaintenanceClient({
                   <span className="text-charcoal-500">
                     {t('tenant.maintenance_estimated_cost')}
                   </span>
-                  <span>฿{selectedRequest.estimated_cost.toLocaleString('en-US')}</span>
+                  <span className="text-charcoal-700">
+                    ฿{selectedRequest.estimated_cost.toLocaleString('en-US')}
+                  </span>
                 </div>
               )}
 
               {selectedRequest.actual_cost !== null && (
                 <div className="flex justify-between">
                   <span className="text-charcoal-500">{t('tenant.maintenance_actual_cost')}</span>
-                  <span>฿{selectedRequest.actual_cost.toLocaleString('en-US')}</span>
+                  <span className="text-charcoal-700">
+                    ฿{selectedRequest.actual_cost.toLocaleString('en-US')}
+                  </span>
                 </div>
               )}
 
               {selectedRequest.completed_at && (
                 <div className="flex justify-between">
                   <span className="text-charcoal-500">{t('tenant.maintenance_completed_at')}</span>
-                  <span>{formatDate(selectedRequest.completed_at)}</span>
+                  <span className="text-charcoal-700">
+                    {formatDate(selectedRequest.completed_at)}
+                  </span>
                 </div>
               )}
             </div>
