@@ -1,38 +1,27 @@
+// TODO(0-E): /api/dev/seed-user and other seed endpoints were deleted as part of
+// the security audit (P0-E). These helpers must be updated to use a migration-only
+// seeding path (e.g., a dedicated test migration or Supabase Admin API calls).
+// Until then, any test that calls seedTestUsers or callSeedEndpoint will fail.
+// See sprint-reports/security-fixes.md for the deferral rationale.
+
 /**
- * Calls the dev seed-user API to ensure test users exist in the database.
- * Should be called in test.beforeAll or test.beforeEach when tests need
- * seeded data.
+ * @deprecated Replaced by TODO(0-E) — seed endpoint was deleted.
  */
-export async function seedTestUsers(baseURL: string): Promise<void> {
-  const response = await fetch(`${baseURL}/api/dev/seed-user`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-  });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`seed-user failed (${response.status}): ${text}`);
-  }
+export async function seedTestUsers(_baseURL: string): Promise<void> {
+  throw new Error(
+    'seedTestUsers: /api/dev/seed-user was deleted (P0-E). Update to use migration-based seeding.'
+  );
 }
 
 /**
- * Generic helper to call any dev seed endpoint.
- * @param baseURL - The base URL of the app (e.g. http://localhost:3000)
- * @param endpoint - The seed endpoint path (e.g. '/api/dev/seed-user')
- * @param body - Optional JSON body to send
+ * @deprecated Replaced by TODO(0-E) — seed endpoints were deleted.
  */
 export async function callSeedEndpoint(
-  baseURL: string,
-  endpoint: string,
-  body?: Record<string, unknown>
+  _baseURL: string,
+  _endpoint: string,
+  _body?: Record<string, unknown>
 ): Promise<unknown> {
-  const response = await fetch(`${baseURL}${endpoint}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    ...(body ? { body: JSON.stringify(body) } : {}),
-  });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`${endpoint} failed (${response.status}): ${text}`);
-  }
-  return response.json();
+  throw new Error(
+    'callSeedEndpoint: dev seed endpoints were deleted (P0-E). Update to use migration-based seeding.'
+  );
 }
