@@ -1365,6 +1365,8 @@
   "auth.continue_with_line": "เข้าสู่ระบบด้วย LINE",
   "auth.line_coming_soon": "เร็วๆ นี้",
   "auth.line_coming_soon_tooltip": "การเข้าสู่ระบบด้วย LINE จะเปิดให้บริการในเร็วๆ นี้",
+  "auth.apple_coming_soon": "เร็วๆ นี้",
+  "auth.apple_coming_soon_tooltip": "การเข้าสู่ระบบด้วย Apple จะเปิดให้บริการในเร็วๆ นี้",
   "properties.slots_usage": "ใช้ {used} จาก {limit} ห้อง",
   "properties.slots_full": "ใช้ครบทุกห้องแล้ว ({used}/{limit})",
   "properties.unlock_more_slots": "ปลดล็อคเพิ่ม",

@@ -1365,6 +1365,8 @@
   "auth.continue_with_line": "Continue with LINE",
   "auth.line_coming_soon": "Coming soon",
   "auth.line_coming_soon_tooltip": "LINE login coming in a future update.",
+  "auth.apple_coming_soon": "Coming soon",
+  "auth.apple_coming_soon_tooltip": "Sign in with Apple coming in a future update.",
   "properties.slots_usage": "Using {used} of {limit} slots",
   "properties.slots_full": "All slots used ({used}/{limit})",
   "properties.unlock_more_slots": "Unlock more",

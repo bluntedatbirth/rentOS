@@ -1365,6 +1365,8 @@
   "auth.continue_with_line": "使用 LINE 继续",
   "auth.line_coming_soon": "即将推出",
   "auth.line_coming_soon_tooltip": "LINE 登录即将在未来更新中推出",
+  "auth.apple_coming_soon": "即将推出",
+  "auth.apple_coming_soon_tooltip": "Apple 登录即将在未来更新中推出",
   "properties.slots_usage": "已使用 {limit} 中的 {used} 个",
   "properties.slots_full": "所有名额已满 ({used}/{limit})",
   "properties.unlock_more_slots": "解锁更多",

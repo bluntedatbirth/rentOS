@@ -12,7 +12,7 @@ interface SocialLoginButtonsProps {
   disabled?: boolean;
 }
 
-type ActiveProvider = 'google' | 'facebook' | 'apple';
+type ActiveProvider = 'google' | 'facebook';
 
 export function SocialLoginButtons({
   mode: _mode,
@@ -45,7 +45,6 @@ export function SocialLoginButtons({
   const activeProviders: { provider: ActiveProvider; labelKey: string }[] = [
     { provider: 'google', labelKey: 'auth.continue_with_google' },
     { provider: 'facebook', labelKey: 'auth.continue_with_facebook' },
-    { provider: 'apple', labelKey: 'auth.continue_with_apple' },
   ];
 
   const isAllDisabled = !!disabled || !!loadingProvider;
@@ -75,6 +74,23 @@ export function SocialLoginButtons({
             <span className="flex-1 text-center">{t(labelKey)}</span>
           </button>
         ))}
+
+        {/* Apple — visual-only stub, unconditionally disabled */}
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          tabIndex={-1}
+          title={t('auth.apple_coming_soon_tooltip')}
+          className="flex min-h-[44px] w-full cursor-not-allowed items-center gap-3 rounded-lg border border-warm-200 bg-white px-4 py-2.5 text-sm font-medium text-charcoal-900 opacity-60"
+          onClick={(e) => e.preventDefault()}
+        >
+          <SocialProviderIcon provider="apple" size={24} />
+          <span className="flex-1 text-center">{t('auth.continue_with_apple')}</span>
+          <span className="ml-2 inline-flex items-center rounded-full bg-warm-100 px-2 py-0.5 text-xs text-charcoal-500">
+            {t('auth.apple_coming_soon')}
+          </span>
+        </button>
 
         {/* LINE — visual-only stub, unconditionally disabled */}
         <button
