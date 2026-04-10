@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
         const oneYearFromNow = new Date();
         oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
-        await adminClient.from('profiles').upsert(
+        const { error: upsertError } = await adminClient.from('profiles').upsert(
           {
             id: session.user.id,
             role: resolvedRole,
@@ -92,6 +92,9 @@ export async function GET(request: NextRequest) {
           },
           { onConflict: 'id', ignoreDuplicates: true }
         );
+        if (upsertError) {
+          console.error('[callback] profile upsert failed', upsertError);
+        }
 
         // Fresh OAuth signup → fire welcome email (non-blocking)
         const provider = session.user.app_metadata.provider;

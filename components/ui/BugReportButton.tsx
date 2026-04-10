@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useI18n } from '@/lib/i18n/context';
 
 const MAX_DESCRIPTION_LENGTH = 5000;
@@ -11,16 +11,9 @@ export function BugReportButton() {
   const [description, setDescription] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
   const panelRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const openMailto = useCallback((desc: string) => {
-    const subject = encodeURIComponent('RentOS Issue Report');
-    const body = encodeURIComponent(
-      `Issue:\n${desc}\n\nPage: ${window.location.href}\nTime: ${new Date().toISOString()}`
-    );
-    window.open(`mailto:hello@rentos.homes?subject=${subject}&body=${body}`);
-  }, []);
 
   // Close on outside click — also reset sent state
   useEffect(() => {
@@ -64,9 +57,10 @@ export function BugReportButton() {
         setSent(false);
         setOpen(false);
       }, 2000);
-    } catch {
+    } catch (err) {
+      console.error('[bug-report] submit failed', err);
       setSending(false);
-      openMailto(trimmed);
+      setError(t('bug_report.error') ?? 'Failed to send. Please try again.');
     }
   };
 
@@ -89,12 +83,16 @@ export function BugReportButton() {
               <textarea
                 ref={textareaRef}
                 value={description}
-                onChange={(e) => setDescription(e.target.value.slice(0, MAX_DESCRIPTION_LENGTH))}
+                onChange={(e) => {
+                  setDescription(e.target.value.slice(0, MAX_DESCRIPTION_LENGTH));
+                  if (error) setError('');
+                }}
                 placeholder={t('bug_report.placeholder')}
                 rows={3}
                 maxLength={MAX_DESCRIPTION_LENGTH}
-                className="mb-3 w-full rounded-lg border border-warm-200 px-3 py-2 text-sm text-charcoal-900 placeholder-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                className="mb-2 w-full rounded-lg border border-warm-200 px-3 py-2 text-sm text-charcoal-900 placeholder-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
               />
+              {error && <p className="mb-2 text-xs text-red-600">{error}</p>}
               <button
                 type="button"
                 onClick={handleSubmit}

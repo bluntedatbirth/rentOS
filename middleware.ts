@@ -1,6 +1,20 @@
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+
+// Service-role fallback: used when the anon-key session client returns null for
+// a logged-in user's profile (most likely due to RLS policy missing on the live DB).
+// Adds one extra DB round-trip ONLY in the failure case — no perf regression for
+// the happy path.
+async function getProfileViaServiceRole(userId: string): Promise<{ role: string } | null> {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!serviceKey || !supabaseUrl) return null;
+  const admin = createClient(supabaseUrl, serviceKey);
+  const { data } = await admin.from('profiles').select('role').eq('id', userId).single();
+  return data ?? null;
+}
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -66,11 +80,17 @@ export async function middleware(request: NextRequest) {
   ) {
     // If logged in and visiting public pages, redirect to dashboard
     if (user) {
-      const { data: profile } = await supabase
+      let { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single();
+
+      // Fallback: anon-key lookup may return null if RLS policy is missing on the
+      // live DB. Try service-role client before giving up.
+      if (!profile) {
+        profile = await getProfileViaServiceRole(user.id);
+      }
 
       if (profile) {
         const dashboardUrl =
@@ -94,11 +114,16 @@ export async function middleware(request: NextRequest) {
   }
 
   // Role-based routing
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  let { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+
+  // Fallback: anon-key lookup may return null if RLS policy is missing on the
+  // live DB (e.g., policy was never applied or was accidentally dropped).
+  // Service-role client bypasses RLS — this is the belt-and-suspenders fix that
+  // keeps the OAuth callback redirect loop from occurring while the migration is
+  // being applied manually via the Supabase dashboard.
+  if (!profile) {
+    profile = await getProfileViaServiceRole(user.id);
+  }
 
   if (!profile) {
     // No profile yet — redirect to signup
