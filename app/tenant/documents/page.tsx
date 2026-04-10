@@ -24,15 +24,24 @@ export default async function TenantDocumentsPage() {
 
   const supabase = createServerSupabaseClient();
 
-  // RLS policy returns only documents the tenant has access to
-  const { data } = await supabase
-    .from('documents')
-    .select(
-      'id, category, public_url, file_name, file_size, version, notes, created_at, properties(name)'
-    )
-    .order('created_at', { ascending: false });
+  // Fetch active contract id and documents in parallel
+  const [contractResult, docsResult] = await Promise.all([
+    supabase
+      .from('contracts')
+      .select('id')
+      .eq('tenant_id', user.id)
+      .eq('status', 'active')
+      .limit(1),
+    supabase
+      .from('documents')
+      .select(
+        'id, category, public_url, file_name, file_size, version, notes, created_at, properties(name)'
+      )
+      .order('created_at', { ascending: false }),
+  ]);
 
-  const documents = (data ?? []) as unknown as Document[];
+  const activeContractId = contractResult.data?.[0]?.id ?? null;
+  const documents = (docsResult.data ?? []) as unknown as Document[];
 
-  return <TenantDocumentsClient documents={documents} />;
+  return <TenantDocumentsClient documents={documents} activeContractId={activeContractId} />;
 }

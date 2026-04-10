@@ -1426,5 +1426,16 @@
   "notfound.body": "The page you're looking for doesn't exist or may have been moved.",
   "notfound.home_cta": "Back to home",
   "notfound.login_cta": "Log in",
-  "properties.slots_full_toast": "All slots are used. Unlock more to add another property."
+  "properties.slots_full_toast": "All slots are used. Unlock more to add another property.",
+  "tenant.documents_upload_button": "Upload Document",
+  "tenant.documents_upload_category": "Category",
+  "tenant.documents_upload_category_tenant_id": "ID / Passport",
+  "tenant.documents_upload_category_receipt": "Receipt",
+  "tenant.documents_upload_category_other": "Other",
+  "tenant.documents_upload_file": "File",
+  "tenant.documents_upload_notes": "Notes (optional)",
+  "tenant.documents_upload_submit": "Upload",
+  "tenant.documents_upload_success": "Document uploaded",
+  "tenant.documents_upload_too_large": "File exceeds 25 MB limit",
+  "tenant.documents_upload_no_contract": "You can upload documents once your contract is active"
 }
