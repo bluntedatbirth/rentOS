@@ -8,6 +8,10 @@ const checkoutSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  if (process.env.ALLOW_MOCK_CHECKOUT !== 'true') {
+    return NextResponse.json({ error: 'not_available' }, { status: 403 });
+  }
+
   const { user } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
