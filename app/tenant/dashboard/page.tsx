@@ -56,6 +56,10 @@ export default async function TenantDashboard() {
   const activeContract = (contractsResult.data?.[0] as unknown as ContractSummary) ?? null;
   const pendingRenewal = (renewalsResult.data?.[0] as unknown as ContractSummary) ?? null;
 
+  const daysUntilExpiry = activeContract?.lease_end
+    ? Math.ceil((new Date(activeContract.lease_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+
   // Step 2: if there is an active contract, fetch maintenance + penalties in parallel.
   let maintenance: MaintenanceSummary[] = [];
   let penalties: PenaltySummary[] = [];
@@ -86,6 +90,7 @@ export default async function TenantDashboard() {
       pendingRenewal={pendingRenewal}
       maintenance={maintenance}
       penalties={penalties}
+      daysUntilExpiry={daysUntilExpiry}
     />
   );
 }

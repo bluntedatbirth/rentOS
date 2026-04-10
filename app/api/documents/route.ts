@@ -10,6 +10,8 @@ const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
 const VALID_CATEGORIES = ['contract', 'tenant_id', 'inspection', 'receipt', 'other'] as const;
 type DocumentCategory = (typeof VALID_CATEGORIES)[number];
 
+const TENANT_UPLOAD_CATEGORIES: DocumentCategory[] = ['tenant_id', 'receipt', 'other'];
+
 function extFromMime(mime: string): string {
   switch (mime) {
     case 'image/jpeg':
@@ -145,6 +147,111 @@ export async function POST(request: Request) {
     return badRequest(`category must be one of: ${VALID_CATEGORIES.join(', ')}`);
   }
 
+  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    return badRequest('Unsupported file type. Only JPEG, PNG, WebP, and PDF are allowed.');
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    return badRequest('File too large. Maximum size is 25MB.');
+  }
+
+  const adminClient = createServiceRoleClient();
+
+  // Resolve contract row when contract_id is provided — needed for both
+  // tenant-upload branch (to get landlord_id) and general validation.
+  let contractRow: {
+    id: string;
+    tenant_id: string | null;
+    landlord_id: string;
+    status: string;
+    property_id: string | null;
+  } | null = null;
+  if (contractId) {
+    const { data: cr } = await adminClient
+      .from('contracts')
+      .select('id, tenant_id, landlord_id, status, property_id')
+      .eq('id', contractId)
+      .single();
+    contractRow = cr ?? null;
+  }
+
+  // --- Tenant upload branch ---
+  if (contractRow && contractRow.tenant_id === user.id) {
+    // Tenant must have an active contract
+    if (contractRow.status !== 'active') {
+      return NextResponse.json({ error: 'No active contract' }, { status: 403 });
+    }
+
+    // Tenants may only upload tenant_id, receipt, or other
+    if (!TENANT_UPLOAD_CATEGORIES.includes(category as DocumentCategory)) {
+      return NextResponse.json(
+        { error: 'Tenants may not upload category: ' + category },
+        { status: 403 }
+      );
+    }
+
+    try {
+      const _ext = extFromMime(file.type);
+      const _docId = crypto.randomUUID();
+      const timestamp = Date.now();
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const storagePath = `tenant-uploads/${user.id}/${contractId}/${timestamp}-${safeName}`;
+
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      const { error: uploadError } = await adminClient.storage
+        .from('documents')
+        .upload(storagePath, buffer, {
+          contentType: file.type,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        return serverError('Storage upload failed: ' + uploadError.message);
+      }
+
+      // landlord_id resolved from the contract row (NOT NULL requirement)
+      const { data: doc, error: insertError } = await adminClient
+        .from('documents')
+        .insert({
+          landlord_id: contractRow.landlord_id,
+          uploaded_by: user.id,
+          property_id: contractRow.property_id ?? null,
+          contract_id: contractId,
+          category: category as DocumentCategory,
+          storage_path: storagePath,
+          public_url: null,
+          file_name: file.name,
+          file_size: file.size,
+          mime_type: file.type,
+          version: 1,
+          notes: notes ?? null,
+        })
+        .select()
+        .single();
+
+      if (insertError || !doc) {
+        await adminClient.storage.from('documents').remove([storagePath]);
+        return serverError(
+          'Failed to save document record: ' + (insertError?.message ?? 'unknown')
+        );
+      }
+
+      const signedUrl = await getSignedDocumentUrl(storagePath, 'documents', 3600);
+      return NextResponse.json({ ...doc, public_url: signedUrl }, { status: 201 });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      return serverError(message);
+    }
+  }
+
+  // --- Landlord upload branch ---
+  // Verify caller is the landlord (or no contract_id was given, fallback to existing logic)
+  if (contractRow && contractRow.landlord_id !== user.id) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   // Gate non-contract categories behind Pro
   if (category !== 'contract') {
     const check = requirePro(userTier, `Document category: ${category}`);
@@ -155,16 +262,6 @@ export async function POST(request: Request) {
       );
     }
   }
-
-  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-    return badRequest('Unsupported file type. Only JPEG, PNG, WebP, and PDF are allowed.');
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    return badRequest('File too large. Maximum size is 25MB.');
-  }
-
-  const adminClient = createServiceRoleClient();
 
   // Determine next version number
   let version = 1;

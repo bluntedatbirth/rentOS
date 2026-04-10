@@ -165,7 +165,12 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 
   // Fire-and-forget: notify tenant of status change
   if (data && parsed.data.status) {
-    void onMaintenanceStatusChanged(params.id, maintenanceRequest.contract_id, parsed.data.status);
+    void onMaintenanceStatusChanged(
+      params.id,
+      maintenanceRequest.contract_id,
+      parsed.data.status,
+      maintenanceRequest.status
+    );
   }
 
   return NextResponse.json(data);

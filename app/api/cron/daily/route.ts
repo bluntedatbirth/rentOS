@@ -148,7 +148,7 @@ export async function GET(request: Request) {
           titleTh: 'สัญญาเช่าใกล้หมดอายุ',
           bodyEn: `Your lease expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`,
           bodyTh: `สัญญาเช่าของคุณจะหมดอายุในอีก ${daysLeft} วัน`,
-          url: '/tenant/contracts',
+          url: '/tenant/contract/view',
         });
       }
 
