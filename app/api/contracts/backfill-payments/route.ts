@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { getAuthenticatedUser, unauthorized, serverError } from '@/lib/supabase/api';
-import type { Database } from '@/lib/supabase/types';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { activateContract } from '@/lib/contracts/activate';
 
 /**
@@ -24,10 +23,7 @@ export async function POST() {
   const { user } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
-  const adminClient = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const adminClient = createServiceRoleClient();
 
   // Fetch all active contracts belonging to this landlord
   const { data: contracts, error: fetchError } = await adminClient

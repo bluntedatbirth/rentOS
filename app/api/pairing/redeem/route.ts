@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createClient } from '@supabase/supabase-js';
 import { getAuthenticatedUser, unauthorized, badRequest, forbidden, serverError } from '@/lib/supabase/api';
-import type { Database } from '@/lib/supabase/types';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { onTenantPaired } from '@/lib/notifications/events';
 import { activateContract } from '@/lib/contracts/activate';
 
@@ -19,10 +18,7 @@ export async function POST(request: Request) {
   const parsed = schema.safeParse(body);
   if (!parsed.success) return badRequest('Invalid pairing code');
 
-  const adminClient = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const adminClient = createServiceRoleClient();
 
   // Verify user is a tenant
   const { data: profile } = await adminClient

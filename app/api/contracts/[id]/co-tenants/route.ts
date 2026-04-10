@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { getAuthenticatedUser, unauthorized, notFound } from '@/lib/supabase/api';
-import type { Database } from '@/lib/supabase/types';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 /**
  * GET /api/contracts/[id]/co-tenants
@@ -13,10 +12,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   const { user } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
-  const adminClient = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const adminClient = createServiceRoleClient();
 
   const { data: contract, error } = await adminClient
     .from('contracts')
