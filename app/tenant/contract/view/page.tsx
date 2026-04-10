@@ -40,19 +40,51 @@ export default function TenantContractViewPage() {
 
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
     const load = async () => {
-      // Fetch active contract OR pending renewal (renewal takes priority)
-      const { data } = await supabase
-        .from('contracts')
-        .select(
-          'id, status, lease_start, lease_end, monthly_rent, security_deposit, structured_clauses, raw_text_th, renewed_from, renewal_changes, properties(name, address)'
-        )
-        .eq('tenant_id', user.id)
-        .in('status', ['active', 'pending', 'awaiting_signature'])
-        .order('created_at', { ascending: false })
-        .limit(1);
+      setLoading(true);
+      // T-BUG-01: Prioritized multi-step query — active → awaiting_signature → pending
+      // Prevents a newer pending-renewal row from shadowing the tenant's active contract.
+      const selectCols =
+        'id, status, lease_start, lease_end, monthly_rent, security_deposit, structured_clauses, raw_text_th, renewed_from, renewal_changes, properties(name, address)';
 
-      const c = (data?.[0] as unknown as ContractDetail) ?? null;
+      let c: ContractDetail | null = null;
+
+      // Step 1: active
+      const { data: activeData } = await supabase
+        .from('contracts')
+        .select(selectCols)
+        .eq('tenant_id', user.id)
+        .eq('status', 'active')
+        .limit(1);
+      c = (activeData?.[0] as unknown as ContractDetail) ?? null;
+
+      // Step 2: awaiting_signature (if no active)
+      if (!c) {
+        const { data: awaitingData } = await supabase
+          .from('contracts')
+          .select(selectCols)
+          .eq('tenant_id', user.id)
+          .eq('status', 'awaiting_signature')
+          .limit(1);
+        c = (awaitingData?.[0] as unknown as ContractDetail) ?? null;
+      }
+
+      // Step 3: pending (if no active or awaiting_signature)
+      if (!c) {
+        const { data: pendingData } = await supabase
+          .from('contracts')
+          .select(selectCols)
+          .eq('tenant_id', user.id)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(1);
+        c = (pendingData?.[0] as unknown as ContractDetail) ?? null;
+      }
+
+      // T-BUG-05: Discard stale response if component unmounted or effect re-ran
+      if (cancelled) return;
+
       setContract(c);
 
       // If this is a renewal with text changes, fetch original contract's structured clauses for comparison
@@ -92,9 +124,12 @@ export default function TenantContractViewPage() {
         }
       }
 
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     };
     load();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   // Build a map of original clause content by ID for per-clause diff comparison
