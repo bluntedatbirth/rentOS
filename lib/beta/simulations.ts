@@ -23,6 +23,7 @@
 
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { sendNotification } from '@/lib/notifications/send';
+import { activateContract } from '@/lib/contracts/activate';
 
 // ---------------------------------------------------------------------------
 // Random sample pools for simulations that need realistic-looking test data.
@@ -135,6 +136,9 @@ export interface SimulationDefinition {
   description: string;
   /** Role that can run this simulation. 'both' = either role. */
   allowedRole: 'landlord' | 'tenant' | 'both';
+  /** When true, the simulation panel renders a contract picker so the user can
+   *  choose which contract to target instead of always defaulting to the first. */
+  needsContractTarget?: boolean;
 }
 
 export const SIMULATIONS: SimulationDefinition[] = [
@@ -152,6 +156,7 @@ export const SIMULATIONS: SimulationDefinition[] = [
     label: 'Auto-pair demo tenant',
     description: 'Links the demo tenant account to your first pending contract and activates it.',
     allowedRole: 'landlord',
+    needsContractTarget: true,
   },
   {
     id: 'trigger_renewal_needed',
@@ -184,6 +189,7 @@ export const SIMULATIONS: SimulationDefinition[] = [
     description:
       'Creates an open maintenance request with a randomized title. Notifies the landlord.',
     allowedRole: 'both',
+    needsContractTarget: true,
   },
   {
     id: 'appeal_penalty',
@@ -245,6 +251,8 @@ export const SIMULATIONS: SimulationDefinition[] = [
 type SimContext = {
   userId: string;
   role: 'landlord' | 'tenant';
+  /** Optional contract ID the user selected in the panel picker. */
+  targetContractId?: string;
 };
 
 type SimResult = {
@@ -256,14 +264,40 @@ type SimResult = {
 type SimHandler = (ctx: SimContext) => Promise<SimResult>;
 
 // Lookup a contract owned by or assigned to this user.
-// Returns the first contract matching the given status; null if none.
+// When targetContractId is provided, fetches that specific contract and verifies
+// ownership (landlord_id === userId or tenant_id === userId). If ownership check
+// fails or the contract is not in the expected statuses, returns null.
+// When targetContractId is omitted, falls back to the original "first match" behaviour.
 async function findContract(
   userId: string,
   role: 'landlord' | 'tenant',
-  statuses: string[]
+  statuses: string[],
+  targetContractId?: string
 ): Promise<{ id: string; property_id: string } | null> {
   const admin = createServiceRoleClient();
   const column = role === 'landlord' ? 'landlord_id' : 'tenant_id';
+
+  if (targetContractId) {
+    // Targeted lookup — verify ownership and status.
+    const { data } = await admin
+      .from('contracts')
+      .select('id, property_id, landlord_id, tenant_id')
+      .eq('id', targetContractId)
+      .in(
+        'status',
+        statuses as ('active' | 'expired' | 'terminated' | 'pending' | 'awaiting_signature')[]
+      )
+      .limit(1);
+    const row = data && data[0];
+    if (!row) return null;
+    // Ownership check — the caller must own the contract on the appropriate side.
+    const ownedAsLandlord = (row as { landlord_id: string | null }).landlord_id === userId;
+    const ownedAsTenant = (row as { tenant_id: string | null }).tenant_id === userId;
+    if (!ownedAsLandlord && !ownedAsTenant) return null;
+    return { id: row.id, property_id: row.property_id };
+  }
+
+  // Default: first contract matching status for this user's role column.
   const { data } = await admin
     .from('contracts')
     .select('id, property_id')
@@ -432,7 +466,7 @@ const handlers: Record<string, SimHandler> = {
     };
   },
 
-  auto_pair_demo_tenant: async ({ userId, role }) => {
+  auto_pair_demo_tenant: async ({ userId, role, targetContractId }) => {
     if (role !== 'landlord') {
       return { success: false, message: 'Only landlords can pair tenants.' };
     }
@@ -448,7 +482,12 @@ const handlers: Record<string, SimHandler> = {
     if (!tenant) {
       return { success: false, message: 'No tenant account found to pair with.' };
     }
-    const pending = await findContract(userId, 'landlord', ['pending', 'awaiting_signature']);
+    const pending = await findContract(
+      userId,
+      'landlord',
+      ['pending', 'awaiting_signature'],
+      targetContractId
+    );
     if (!pending) {
       return {
         success: false,
@@ -489,14 +528,14 @@ const handlers: Record<string, SimHandler> = {
     const leaseEndIsValid =
       typeof pendingRow.lease_end === 'string' && pendingRow.lease_end > todayStr;
 
+    // Step 1: Fix state machine invariants + link tenant — leave status untouched
     const { error } = await admin
       .from('contracts')
       .update({
         tenant_id: tenant.id,
-        status: 'active',
         pairing_code: null,
         pairing_expires_at: null,
-        // Ensure state machine invariants are met:
+        // Ensure state machine invariants are met before activateContract checks them:
         ...(!hasValidClauses && { structured_clauses: makeSampleClauses(monthlyRent) }),
         ...(!leaseStartIsValid && { lease_start: todayStr }),
         ...(!leaseEndIsValid && { lease_end: oneYearLaterStr }),
@@ -506,15 +545,26 @@ const handlers: Record<string, SimHandler> = {
       } as Record<string, unknown>)
       .eq('id', pending.id);
     if (error) return { success: false, message: error.message };
+
+    // Step 2: Route through activateContract — flips status to active AND seeds 12 payment rows
+    const activateResult = await activateContract(admin, pending.id);
+    if (!activateResult.success) {
+      return { success: false, message: activateResult.error ?? 'Activation failed' };
+    }
+
     return {
       success: true,
       message: `Paired ${tenant.full_name ?? 'demo tenant'} to contract ${pending.id.slice(0, 8)}.`,
-      data: { contract_id: pending.id, tenant_id: tenant.id },
+      data: {
+        contract_id: pending.id,
+        tenant_id: tenant.id,
+        seededPayments: activateResult.seededCount,
+      },
     };
   },
 
-  file_maintenance_request: async ({ userId, role }) => {
-    const contract = await findContract(userId, role, ['active']);
+  file_maintenance_request: async ({ userId, role, targetContractId }) => {
+    const contract = await findContract(userId, role, ['active'], targetContractId);
     if (!contract) {
       return { success: false, message: 'No active contract found.' };
     }

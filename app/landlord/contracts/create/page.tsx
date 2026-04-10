@@ -71,7 +71,9 @@ const DEFAULT_TENANT_RESPONSIBILITIES = [
   'report_damage',
 ];
 
-const DRAFT_KEY = 'rentos_contract_draft';
+function draftKeyFor(userId: string): string {
+  return `rentos_contract_draft_${userId}`;
+}
 
 function getDefaultData(): WizardData {
   return {
@@ -124,7 +126,7 @@ function calculateLeaseEnd(startDate: string, months: number): string {
 }
 
 export default function ContractCreatePage() {
-  const { user: _user, profile } = useAuth();
+  const { user, profile } = useAuth();
   const { t } = useI18n();
   const { toast } = useToast();
   const router = useRouter();
@@ -147,10 +149,11 @@ export default function ContractCreatePage() {
 
   const [data, setData] = useState<WizardData>(getDefaultData());
 
-  // Load draft from localStorage on mount
+  // Load draft from localStorage once auth has resolved
   useEffect(() => {
+    if (!user?.id) return; // wait for auth to hydrate
     try {
-      const saved = localStorage.getItem(DRAFT_KEY);
+      const saved = localStorage.getItem(draftKeyFor(user.id));
       if (saved) {
         const parsed = JSON.parse(saved) as Partial<WizardData>;
         setData((d) => ({ ...d, ...parsed }));
@@ -159,7 +162,7 @@ export default function ContractCreatePage() {
       // ignore
     }
     setDraftLoaded(true);
-  }, []);
+  }, [user?.id]);
 
   // If arriving from properties page with ?property_id=, prefill property fields
   useEffect(() => {
@@ -241,16 +244,25 @@ export default function ContractCreatePage() {
   };
 
   const handleSaveDraft = () => {
+    if (!user?.id) return;
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
-      toast.success(t('create_contract.draft_saved'));
+      const draftData = data;
+      localStorage.setItem(draftKeyFor(user.id), JSON.stringify(draftData));
+      console.debug('[draft] saved', draftData);
+      try {
+        toast.success(t('create_contract.draft_saved'));
+      } catch {
+        alert(t('create_contract.draft_saved'));
+      }
     } catch {
       toast.error(t('auth.error'));
     }
   };
 
   const handleClearDraft = () => {
-    localStorage.removeItem(DRAFT_KEY);
+    if (user?.id) {
+      localStorage.removeItem(draftKeyFor(user.id));
+    }
     setData(getDefaultData());
     setStep(1);
     toast.info(t('create_contract.draft_cleared'));
@@ -346,7 +358,9 @@ export default function ContractCreatePage() {
         // Non-blocking — contract is displayed even if save fails
       }
       // Clear draft after successful generation
-      localStorage.removeItem(DRAFT_KEY);
+      if (user?.id) {
+        localStorage.removeItem(draftKeyFor(user.id));
+      }
       // Show slide-in notification
       setShowGenerationNotification(true);
     } catch (err) {

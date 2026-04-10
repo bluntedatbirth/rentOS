@@ -31,7 +31,8 @@ export async function GET(request: Request) {
 
 const createPenaltySchema = z.object({
   contract_id: z.string().uuid(),
-  clause_id: z.string().min(1),
+  // null means a manual (free-form) penalty entry not tied to a specific clause
+  clause_id: z.string().min(1).nullable(),
   description_th: z.string().optional(),
   description_en: z.string().optional(),
   calculated_amount: z.number().min(0),
@@ -51,7 +52,10 @@ export async function POST(request: Request) {
     .from('penalties')
     .insert({
       contract_id: parsed.data.contract_id,
-      clause_id: parsed.data.clause_id,
+      // clause_id is nullable for manual (free-form) penalty entries. The
+      // generated Supabase type expects string but the column allows NULL —
+      // cast to satisfy the type checker without changing runtime behaviour.
+      clause_id: (parsed.data.clause_id ?? null) as string,
       description_th: parsed.data.description_th ?? null,
       description_en: parsed.data.description_en ?? null,
       calculated_amount: parsed.data.calculated_amount,

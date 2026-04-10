@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getAuthenticatedUser, unauthorized, badRequest, forbidden } from '@/lib/supabase/api';
 import type { Database } from '@/lib/supabase/types';
 import { onTenantPaired } from '@/lib/notifications/events';
+import { activateContract } from '@/lib/contracts/activate';
 
 const schema = z.object({
   code: z.string().length(6),
@@ -66,16 +67,25 @@ export async function POST(request: Request) {
     return forbidden();
   }
 
-  // Pair tenant to contract, activate it, and clear the code
-  await adminClient
+  // Step 1: Link tenant and clear pairing code — leave status untouched
+  const { error: pairError } = await adminClient
     .from('contracts')
     .update({
       tenant_id: user.id,
-      status: 'active',
       pairing_code: null,
       pairing_expires_at: null,
     } as Record<string, unknown>)
     .eq('id', contract.id);
+
+  if (pairError) {
+    return NextResponse.json({ error: pairError.message }, { status: 500 });
+  }
+
+  // Step 2: Route through activateContract — flips status to active AND seeds 12 payment rows
+  const result = await activateContract(adminClient, contract.id);
+  if (!result.success) {
+    return NextResponse.json({ error: result.error }, { status: 500 });
+  }
 
   // Fire-and-forget: notify both parties of successful pairing
   void onTenantPaired(contract.id);

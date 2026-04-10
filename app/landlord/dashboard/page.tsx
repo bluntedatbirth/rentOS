@@ -7,6 +7,7 @@ import { DashboardClient } from './DashboardClient';
 
 export interface StatCards {
   monthlyRevenue: number;
+  expectedRevenue: number;
   propertyCount: number;
   paymentsDueCount: number;
   openMaintenanceCount: number;
@@ -55,7 +56,9 @@ export default async function LandlordDashboard() {
   // Step 1: fetch all of this landlord's contracts (need IDs for sub-queries)
   const { data: contractsData } = await supabase
     .from('contracts')
-    .select('id, property_id, tenant_id, status, created_at, properties(id, name)')
+    .select(
+      'id, property_id, tenant_id, status, created_at, monthly_rent, lease_end, properties(id, name)'
+    )
     .eq('landlord_id', user.id);
 
   const contracts = (contractsData ?? []) as Array<{
@@ -64,6 +67,8 @@ export default async function LandlordDashboard() {
     tenant_id: string | null;
     status: string;
     created_at: string;
+    monthly_rent: number | null;
+    lease_end: string | null;
     properties: { id: string; name: string } | null;
   }>;
 
@@ -86,6 +91,7 @@ export default async function LandlordDashboard() {
         fullName={profile?.full_name ?? null}
         stats={{
           monthlyRevenue: 0,
+          expectedRevenue: 0,
           propertyCount: 0,
           paymentsDueCount: 0,
           openMaintenanceCount: 0,
@@ -94,6 +100,7 @@ export default async function LandlordDashboard() {
         }}
         activity={[]}
         upcomingPayments={[]}
+        renewalsNearingExpiry={0}
         showDevTools={showDevTools}
       />
     );
@@ -170,8 +177,27 @@ export default async function LandlordDashboard() {
   const allProperties = (propsRes.data ?? []) as Array<{ id: string; name: string }>;
   const totalPropertyCount = allProperties.length;
 
-  // Monthly revenue sum
+  // Monthly revenue sum (collected — payments confirmed paid this calendar month)
   const monthlyRevenue = (revenueRes.data ?? []).reduce((sum, p) => sum + (p.amount ?? 0), 0);
+
+  // FEAT-1 / BUG-02: expected revenue = sum of monthly_rent across all active contracts.
+  // Mirrors the pattern at lib/analytics/getLandlordAnalytics.ts:215 — no extra DB query needed.
+  const expectedRevenue = contracts
+    .filter((c) => c.status === 'active')
+    .reduce((sum, c) => sum + (c.monthly_rent ?? 0), 0);
+
+  // FEAT-2 / BUG-06: count active contracts whose lease_end falls within the next 60 days.
+  const sixtyDaysLaterDate = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0]!;
+  const todayStr = now.toISOString().split('T')[0]!;
+  const renewalsNearingExpiry = contracts.filter(
+    (c) =>
+      c.status === 'active' &&
+      c.lease_end !== null &&
+      c.lease_end >= todayStr &&
+      c.lease_end <= sixtyDaysLaterDate
+  ).length;
 
   // Properties with active contracts
   const activeContractPropertyIds = new Set(
@@ -210,6 +236,7 @@ export default async function LandlordDashboard() {
       .map((c) => c.tenant_id as string);
     const uniqueTenantIds = Array.from(new Set(tenantIds));
 
+    // BUG-09: guard against empty array — .in() with [] would return all rows
     if (uniqueTenantIds.length > 0) {
       const { data: profilesData } = await supabase
         .from('profiles')
@@ -217,6 +244,13 @@ export default async function LandlordDashboard() {
         .in('id', uniqueTenantIds);
 
       tenantProfileMap = new Map((profilesData ?? []).map((p) => [p.id, p.full_name ?? 'Tenant']));
+
+      // BUG-09: warn once for any tenant IDs whose profile did not come back
+      for (const tid of uniqueTenantIds) {
+        if (!tenantProfileMap.has(tid)) {
+          console.warn(`[dashboard] missing profile for tenant_id=${tid}`);
+        }
+      }
     }
   }
 
@@ -228,7 +262,10 @@ export default async function LandlordDashboard() {
   // Build upcoming payments list
   const upcomingPayments: UpcomingPaymentItem[] = upcomingPaymentRows.map((p) => {
     const tenantId = contractTenantMap.get(p.contract_id);
-    const tenantName = tenantId ? (tenantProfileMap.get(tenantId) ?? 'Tenant') : 'Tenant';
+    // BUG-09: fallback chain — full name → short ID prefix → generic label
+    const tenantName = tenantId
+      ? (tenantProfileMap.get(tenantId) ?? `${tenantId.slice(0, 8)}\u2026`)
+      : 'Tenant';
     return {
       id: p.id,
       tenantName,
@@ -305,8 +342,11 @@ export default async function LandlordDashboard() {
 
   const stats: StatCards = {
     monthlyRevenue,
+    expectedRevenue,
     propertyCount,
     paymentsDueCount: paymentsDueRes.count ?? 0,
+    // BUG-08 verify: open maintenance query at lines ~134-139 already filters
+    // .in('status', ['open', 'in_progress']) — resolved items are excluded. No change needed.
     openMaintenanceCount: maintenanceRes.count ?? 0,
     vacancyCount: Math.max(vacancyCount, 0),
     totalPropertyCount,
@@ -318,6 +358,7 @@ export default async function LandlordDashboard() {
       stats={stats}
       activity={activity}
       upcomingPayments={upcomingPayments}
+      renewalsNearingExpiry={renewalsNearingExpiry}
       showDevTools={showDevTools}
     />
   );

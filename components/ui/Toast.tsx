@@ -81,7 +81,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
         className="ml-2 text-sm opacity-60 hover:opacity-100"
         aria-label="Dismiss"
       >
-        \u2715
+        {'\u2715'}
       </button>
     </div>
   );

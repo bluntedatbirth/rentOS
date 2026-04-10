@@ -336,7 +336,7 @@ export function MaintenanceClient({
                       onClick={() => openEditProModal(req)}
                       className="text-xs font-medium text-amber-700 hover:text-amber-900 underline"
                     >
-                      {t('maintenance.edit_pro_fields')}
+                      {t('maintenance.edit_costs')}
                     </button>
                   </div>
                 </div>
@@ -441,7 +441,7 @@ export function MaintenanceClient({
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
           <div className="w-full max-w-md rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl">
             <h3 className="mb-4 text-base font-bold text-gray-900">
-              {t('maintenance.edit_pro_fields')}
+              {t('maintenance.edit_costs')}
             </h3>
             <div className="space-y-4">
               {/* Assign Technician */}

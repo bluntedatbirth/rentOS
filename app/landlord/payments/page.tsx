@@ -76,6 +76,7 @@ export default function LandlordPaymentsPage() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [contractMap, setContractMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [creating, setCreating] = useState(false);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
@@ -131,6 +132,7 @@ export default function LandlordPaymentsPage() {
     }
 
     setLoading(false);
+    setHasLoaded(true);
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -183,7 +185,9 @@ export default function LandlordPaymentsPage() {
     setConfirmingId(null);
   }
 
-  if (loading) return <LoadingSkeleton count={6} />;
+  // Only show the full-page skeleton on initial load; subsequent refreshes
+  // (after create / confirm) keep the existing list visible while refetching.
+  if (loading && !hasLoaded) return <LoadingSkeleton count={6} />;
 
   // Categorise into three buckets
   const duePayments = payments

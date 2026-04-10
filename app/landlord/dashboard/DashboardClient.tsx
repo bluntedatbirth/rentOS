@@ -117,6 +117,7 @@ interface DashboardClientProps {
   stats: StatCards;
   activity: ActivityItem[];
   upcomingPayments: UpcomingPaymentItem[];
+  renewalsNearingExpiry?: number;
   showDevTools?: boolean;
 }
 
@@ -127,14 +128,21 @@ export function DashboardClient({
   stats,
   activity,
   upcomingPayments,
+  renewalsNearingExpiry = 0,
   showDevTools = false,
 }: DashboardClientProps) {
   const { t } = useI18n();
 
+  // FEAT-1: revenue card shows "collected / expected" when expected > 0
+  const revenueValue =
+    stats.expectedRevenue > 0
+      ? `${formatBaht(stats.monthlyRevenue)} / ${formatBaht(stats.expectedRevenue)}`
+      : formatBaht(stats.monthlyRevenue);
+
   const statCards = [
     {
       label: t('dashboard.v2_monthly_revenue'),
-      value: formatBaht(stats.monthlyRevenue),
+      value: revenueValue,
       sub: t('dashboard.v2_n_properties').replace('{n}', String(stats.propertyCount)),
       color: 'text-saffron-600',
       href: '/landlord/analytics',
@@ -172,6 +180,26 @@ export function DashboardClient({
             {t('dashboard.welcome')}, {fullName ?? ''}
           </p>
         </div>
+
+        {/* FEAT-2: Renewals banner — shown only when N > 0 */}
+        {renewalsNearingExpiry > 0 && (
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-saffron-300 bg-warm-100 px-4 py-3">
+            <p className="text-sm font-medium text-charcoal-800">
+              {renewalsNearingExpiry === 1
+                ? t('dashboard.renewals_banner_one')
+                : t('dashboard.renewals_banner_other').replace(
+                    '{n}',
+                    String(renewalsNearingExpiry)
+                  )}
+            </p>
+            <Link
+              href="/landlord/contracts?filter=expiring"
+              className="ml-4 shrink-0 rounded-md bg-saffron-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-500 focus:ring-offset-1"
+            >
+              {t('dashboard.review_renewals')}
+            </Link>
+          </div>
+        )}
 
         {/* Stat cards — 2×2 mobile, 4-across desktop. Each card is a link to its
             matching details page (revenue→analytics, due→payments, etc.). */}

@@ -113,6 +113,10 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
   const [editedAmount, setEditedAmount] = useState('');
   const [raising, setRaising] = useState(false);
 
+  // Manual entry state (when clause_id === '__manual__')
+  const [manualAmount, setManualAmount] = useState('');
+  const [manualDesc, setManualDesc] = useState('');
+
   // Appeal resolution state
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [resolveAction, setResolveAction] = useState<'uphold' | 'reduce' | 'waive' | null>(null);
@@ -168,10 +172,13 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
     setCalcResult(null);
     setEditedAmount('');
     setRaising(false);
+    setManualAmount('');
+    setManualDesc('');
   };
 
   const handleCalculate = async () => {
-    if (!formContractId || !formClauseId || !violationDesc.trim()) return;
+    if (!formContractId || !formClauseId || formClauseId === '__manual__' || !violationDesc.trim())
+      return;
     setError('');
     setCalculating(true);
     setModalStep(2);
@@ -203,6 +210,41 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
     }
 
     setCalculating(false);
+  };
+
+  const handleManualRaise = async () => {
+    if (!formContractId || !manualDesc.trim()) return;
+    const amount = Number(manualAmount);
+    if (isNaN(amount) || amount < 0) {
+      setError(t('penalties.invalid_amount'));
+      return;
+    }
+    setError('');
+    setRaising(true);
+
+    const res = await fetch('/api/penalties', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contract_id: formContractId,
+        clause_id: null,
+        calculated_amount: amount,
+        description_en: manualDesc,
+        description_th: manualDesc,
+      }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      setError(data.error ?? t('auth.error'));
+      toast.error(t('auth.error'));
+    } else {
+      resetModal();
+      toast.success(t('penalties.raised_success'));
+      await reloadPenalties();
+    }
+
+    setRaising(false);
   };
 
   const handleConfirmRaise = async () => {
@@ -507,33 +549,71 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                     >
                       {t('penalties.select_clause')}
                     </label>
-                    {penaltyClauses.length === 0 ? (
-                      <p className="text-sm text-gray-500">{t('penalties.no_penalty_clauses')}</p>
-                    ) : (
-                      <select
-                        id="pen-clause"
-                        value={formClauseId}
-                        onChange={(e) => setFormClauseId(e.target.value)}
-                        className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
-                      >
-                        <option value="">{t('penalties.select_clause')}</option>
-                        {penaltyClauses.map((c) => (
-                          <option key={c.clause_id} value={c.clause_id}>
-                            {c.clause_id.toUpperCase()} -{' '}
-                            {c.thai_text?.slice(0, 60) ??
-                              c.text_th?.slice(0, 60) ??
-                              c.english_text?.slice(0, 60) ??
-                              c.text_en?.slice(0, 60) ??
-                              ''}
-                          </option>
-                        ))}
-                      </select>
-                    )}
+                    <select
+                      id="pen-clause"
+                      value={formClauseId}
+                      onChange={(e) => setFormClauseId(e.target.value)}
+                      className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                    >
+                      <option value="">{t('penalties.select_clause')}</option>
+                      {/* Manual entry option — not tied to a contract clause */}
+                      <option value="__manual__">{t('penalties.manual_entry')}</option>
+                      {penaltyClauses.map((c) => (
+                        <option key={c.clause_id} value={c.clause_id}>
+                          {c.clause_id.toUpperCase()} -{' '}
+                          {c.thai_text?.slice(0, 60) ??
+                            c.text_th?.slice(0, 60) ??
+                            c.english_text?.slice(0, 60) ??
+                            c.text_en?.slice(0, 60) ??
+                            ''}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
 
-                {/* Violation description */}
-                {formClauseId && (
+                {/* Manual entry form — shown when __manual__ is selected */}
+                {formClauseId === '__manual__' && (
+                  <div className="space-y-3 mb-4">
+                    <div>
+                      <label
+                        htmlFor="pen-manual-desc"
+                        className="mb-1 block text-sm font-medium text-gray-700"
+                      >
+                        {t('penalties.violation_description')}
+                      </label>
+                      <textarea
+                        id="pen-manual-desc"
+                        value={manualDesc}
+                        onChange={(e) => setManualDesc(e.target.value)}
+                        rows={3}
+                        maxLength={5000}
+                        placeholder={t('penalties.violation_placeholder')}
+                        className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="pen-manual-amount"
+                        className="mb-1 block text-sm font-medium text-gray-700"
+                      >
+                        {t('penalties.amount')} (&#3647;)
+                      </label>
+                      <input
+                        id="pen-manual-amount"
+                        type="number"
+                        min="0"
+                        value={manualAmount}
+                        onChange={(e) => setManualAmount(e.target.value)}
+                        className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Violation description for clause-based penalties */}
+                {formClauseId && formClauseId !== '__manual__' && (
                   <div className="mb-4">
                     <label
                       htmlFor="pen-violation"
@@ -554,14 +634,25 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                 )}
 
                 <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={handleCalculate}
-                    disabled={!formContractId || !formClauseId || !violationDesc.trim()}
-                    className="min-h-[44px] rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
-                  >
-                    {t('penalties.calculate')}
-                  </button>
+                  {formClauseId === '__manual__' ? (
+                    <button
+                      type="button"
+                      onClick={handleManualRaise}
+                      disabled={raising || !manualDesc.trim() || !manualAmount}
+                      className="min-h-[44px] rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
+                    >
+                      {raising ? t('penalties.raising') : t('penalties.confirm_raise')}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleCalculate}
+                      disabled={!formContractId || !formClauseId || !violationDesc.trim()}
+                      className="min-h-[44px] rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
+                    >
+                      {t('penalties.calculate')}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={resetModal}

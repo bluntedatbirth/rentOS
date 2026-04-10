@@ -33,7 +33,10 @@ export async function POST(request: Request) {
   } catch {
     return badRequest('Invalid JSON body');
   }
-  const { action } = (body ?? {}) as { action?: string };
+  const { action, target_contract_id } = (body ?? {}) as {
+    action?: string;
+    target_contract_id?: string;
+  };
   if (!action || typeof action !== 'string') {
     return badRequest('Missing "action" field');
   }
@@ -51,6 +54,10 @@ export async function POST(request: Request) {
     return serverError('Unknown role');
   }
 
-  const result = await runSimulation(action, { userId: user.id, role: profile.role });
+  const result = await runSimulation(action, {
+    userId: user.id,
+    role: profile.role,
+    ...(target_contract_id && { targetContractId: target_contract_id }),
+  });
   return NextResponse.json(result, { status: result.success ? 200 : 400 });
 }

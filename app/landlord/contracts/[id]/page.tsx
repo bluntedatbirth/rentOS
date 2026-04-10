@@ -150,12 +150,18 @@ export default function ContractReviewPage() {
             <StatusBadge status={contract.status} />
           </div>
         </div>
-        <Link
-          href={`/landlord/contracts/${id}/pair`}
-          className="min-h-[44px] flex items-center rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600"
-        >
-          {t('pairing.pair_tenant')}
-        </Link>
+        {contract.tenant_id ? (
+          <span className="inline-flex min-h-[44px] items-center rounded-lg bg-green-100 px-4 py-2 text-sm font-medium text-green-800">
+            ✓ {t('pairing.already_paired')}
+          </span>
+        ) : (
+          <Link
+            href={`/landlord/contracts/${id}/pair`}
+            className="min-h-[44px] flex items-center rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600"
+          >
+            {t('pairing.pair_tenant')}
+          </Link>
+        )}
       </div>
 
       {/* AI-parsed content warning */}

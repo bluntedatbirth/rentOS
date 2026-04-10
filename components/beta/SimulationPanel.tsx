@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 type SimulationCategory = 'contract' | 'tenant_action' | 'landlord_action' | 'billing';
 
@@ -18,6 +19,12 @@ type Simulation = {
   label: string;
   description: string;
   allowedRole: 'landlord' | 'tenant' | 'both';
+  needsContractTarget?: boolean;
+};
+
+type ContractOption = {
+  id: string;
+  label: string;
 };
 
 type RunResult = { success: true; message: string } | { success: false; message: string };
@@ -38,6 +45,10 @@ export function SimulationPanel({ role }: { role: 'landlord' | 'tenant' }) {
   const [runningId, setRunningId] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<{ id: string; result: RunResult } | null>(null);
   const [reloading, setReloading] = useState(false);
+  // Contract picker state: map from simulation id → selected contract id
+  const [contractTargets, setContractTargets] = useState<Record<string, string>>({});
+  const [contracts, setContracts] = useState<ContractOption[]>([]);
+  const [loadingContracts, setLoadingContracts] = useState(false);
 
   // Lazy-load the registry once the panel is opened
   useEffect(() => {
@@ -50,16 +61,43 @@ export function SimulationPanel({ role }: { role: 'landlord' | 'tenant' }) {
       .finally(() => setLoadingList(false));
   }, [open, simulations.length]);
 
+  // Lazy-load the user's contracts for the picker when the panel is opened
+  useEffect(() => {
+    if (!open || contracts.length > 0 || loadingContracts) return;
+    setLoadingContracts(true);
+    const supabase = createClient();
+    const fetchContracts = async () => {
+      try {
+        const { data } = await supabase
+          .from('contracts')
+          .select('id, status, properties(name)')
+          .order('created_at', { ascending: false });
+        const opts: ContractOption[] = (data ?? []).map((c) => {
+          const propName = (c.properties as { name: string } | null)?.name ?? 'Unknown property';
+          return { id: c.id, label: `${propName} (${c.status}) — ${c.id.slice(0, 8)}` };
+        });
+        setContracts(opts);
+      } catch {
+        setContracts([]);
+      } finally {
+        setLoadingContracts(false);
+      }
+    };
+    void fetchContracts();
+  }, [open, contracts.length, loadingContracts]);
+
   if (!BETA_ENABLED) return null;
 
-  const runAction = async (id: string) => {
+  const runAction = async (id: string, targetContractId?: string) => {
     setRunningId(id);
     setLastResult(null);
     try {
+      const body: Record<string, string> = { action: id };
+      if (targetContractId) body.target_contract_id = targetContractId;
       const res = await fetch('/api/beta/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: id }),
+        body: JSON.stringify(body),
       });
       const data = (await res.json()) as RunResult;
       setLastResult({ id, result: data });
@@ -162,6 +200,9 @@ export function SimulationPanel({ role }: { role: 'landlord' | 'tenant' }) {
                         {items.map((sim) => {
                           const isRunning = runningId === sim.id;
                           const result = lastResult?.id === sim.id ? lastResult.result : null;
+                          const selectedContractId = contractTargets[sim.id] ?? '';
+                          const noContracts =
+                            sim.needsContractTarget && contracts.length === 0 && !loadingContracts;
                           return (
                             <div
                               key={sim.id}
@@ -171,10 +212,39 @@ export function SimulationPanel({ role }: { role: 'landlord' | 'tenant' }) {
                                 <div className="min-w-0 flex-1">
                                   <p className="text-sm font-medium text-gray-900">{sim.label}</p>
                                   <p className="mt-0.5 text-xs text-gray-500">{sim.description}</p>
+                                  {sim.needsContractTarget && (
+                                    <div className="mt-2">
+                                      <select
+                                        value={selectedContractId}
+                                        onChange={(e) =>
+                                          setContractTargets((prev) => ({
+                                            ...prev,
+                                            [sim.id]: e.target.value,
+                                          }))
+                                        }
+                                        disabled={noContracts || loadingContracts}
+                                        className="w-full rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-800 disabled:opacity-50"
+                                        aria-label="Target contract"
+                                      >
+                                        <option value="">
+                                          {loadingContracts
+                                            ? 'Loading contracts...'
+                                            : noContracts
+                                              ? 'No contracts yet — seed one first'
+                                              : '— default (first match) —'}
+                                        </option>
+                                        {contracts.map((c) => (
+                                          <option key={c.id} value={c.id}>
+                                            {c.label}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                  )}
                                 </div>
                                 <button
                                   type="button"
-                                  onClick={() => runAction(sim.id)}
+                                  onClick={() => runAction(sim.id, selectedContractId || undefined)}
                                   disabled={isRunning || runningId !== null || reloading}
                                   className="min-h-[36px] shrink-0 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
                                 >

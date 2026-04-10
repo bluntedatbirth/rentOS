@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
+import { useToast } from '@/components/ui/ToastProvider';
 import { createClient } from '@/lib/supabase/client';
 import { PdfPreview } from '@/components/landlord/PdfPreview';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
@@ -119,6 +120,7 @@ export default function ContractRenewPage() {
   const router = useRouter();
   const { user, profile } = useAuth();
   const { t, locale } = useI18n();
+  const { toast } = useToast();
 
   // Contract loading
   const [contract, setContract] = useState<ContractData | null>(null);
@@ -331,6 +333,23 @@ export default function ContractRenewPage() {
       );
       if (!clause) return;
 
+      // Guard: required text fields must be present
+      if (contractLang === 'th' && !clause.text_th) {
+        toast.error(t('renewal.apply_fix_clause_missing'));
+        return;
+      }
+      if (contractLang === 'en' && !clause.text_en) {
+        toast.error(t('renewal.apply_fix_clause_missing'));
+        return;
+      }
+      if (
+        contractLang === 'bilingual' &&
+        (!clause.text_th || !clause.text_en || !clause.title_en)
+      ) {
+        toast.error(t('renewal.apply_fix_clause_missing'));
+        return;
+      }
+
       // Build the original clause body based on contract language
       let originalBody: string;
       let replacementBody: string;
@@ -354,17 +373,20 @@ export default function ContractRenewPage() {
         return next;
       });
 
-      // Replace in contract text
+      // Replace in contract text — guard against clause not found in current text
       setContractText((prev) => {
         const pos = prev.indexOf(originalBody);
-        if (pos === -1) return prev;
+        if (pos === -1) {
+          toast.error(t('renewal.apply_fix_not_found'));
+          return prev;
+        }
         return prev.slice(0, pos) + replacementBody + prev.slice(pos + originalBody.length);
       });
 
       // Scroll to the updated clause
       setTimeout(() => scrollToClause(risk.clause_id), 200);
     },
-    [contract, contractLang, scrollToClause]
+    [contract, contractLang, scrollToClause, t, toast]
   );
 
   /** Undo a previously applied risk fix */

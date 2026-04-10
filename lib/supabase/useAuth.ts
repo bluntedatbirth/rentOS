@@ -170,14 +170,6 @@ export function useAuth() {
         }
       }
       const redirectTo = `${window.location.origin}/auth/callback`;
-      // Temporary diagnostic — visible in browser DevTools console during the
-      // OAuth button click. Safe to remove once the flow is confirmed stable.
-      console.log('[oauth] signInWithOAuth', {
-        provider,
-        redirectTo,
-        role: opts?.role,
-        pairCode: opts?.pairCode,
-      });
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: { redirectTo },
