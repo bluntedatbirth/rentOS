@@ -630,16 +630,18 @@ export async function GET(request: Request) {
     console.error('[Cron] Scheduled activation error:', msg);
   }
 
-  return NextResponse.json({
-    ok: true,
-    ran_at: new Date().toISOString(),
-    summary: {
-      ...summary,
-      autoPenaltiesApplied,
-      tierExpiryWarnings,
-      tierDowngrades,
-      signingReminders,
-      spendAlertUsd,
-    },
-  });
+  const fullSummary = {
+    ...summary,
+    autoPenaltiesApplied,
+    tierExpiryWarnings,
+    tierDowngrades,
+    signingReminders,
+    spendAlertUsd,
+  };
+
+  if (summary.errors.length > 0) {
+    return NextResponse.json({ summary: fullSummary }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true, ran_at: new Date().toISOString(), summary: fullSummary });
 }
