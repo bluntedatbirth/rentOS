@@ -180,7 +180,7 @@ The e2e test helpers (`auth.ts`, `seed.ts`) previously used `/api/dev/signin-bro
 
 1. **`contracts` table lacks a `storage_path` column** (discovered during P0-D): The storage path for uploaded contracts is not persisted in the database — only the `original_file_url` (a public URL) is stored. The OCR fix derives the path by splitting the URL, which works but creates a coupling to the URL format. A future migration to add `storage_path TEXT` to `contracts` and populate it on upload would be cleaner. Low risk for now since the URL format is stable and server-written.
 
-2. **`middleware.ts` still contains dead `/api/dev` guard** (lines ~57-62): After P0-E deleted the dev routes, the middleware block that returns 404 for `/api/dev/*` is now dead code. It is harmless but should be cleaned up. Notified `code-quality-engineer` — they can remove it as part of 1-F.
+2. **`middleware.ts` still contains dead `/api/dev` guard** (lines ~57-62): After P0-E deleted the dev routes, the middleware block that returns 404 for `/api/dev/*` is now dead code. Notified `code-quality-engineer` — they confirmed 1-F was already done (`bb9a996`) and will clean up this dead-code block as a follow-on.
 
 3. **Branch collision in shared working directory**: During this sprint, multiple agents sharing the same git working directory caused branch switches mid-work, leading to commits landing on wrong branches and Prettier pre-commit hooks failing on other agents' modified files. Resolved by creating an isolated git worktree (`git worktree add ../security-fixes security/audit-fixes`). Recommend using worktrees by default for future multi-agent sprints.
 
