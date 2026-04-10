@@ -19,6 +19,7 @@ export interface ActivityItem {
   type: 'payment' | 'maintenance' | 'contract';
   text: string;
   timestamp: string;
+  href: string;
 }
 
 export interface UpcomingPaymentItem {
@@ -27,6 +28,7 @@ export interface UpcomingPaymentItem {
   propertyName: string;
   amount: number;
   dueDate: string;
+  href: string;
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -233,6 +235,7 @@ export default async function LandlordDashboard() {
       propertyName: contractPropertyMap.get(p.contract_id) ?? 'Unknown Property',
       amount: p.amount,
       dueDate: p.due_date,
+      href: '/landlord/payments',
     };
   });
 
@@ -242,6 +245,7 @@ export default async function LandlordDashboard() {
     type: 'payment' | 'maintenance' | 'contract';
     text: string;
     timestamp: string;
+    href: string;
   };
 
   const activityItems: RawActivity[] = [];
@@ -259,6 +263,7 @@ export default async function LandlordDashboard() {
       type: 'payment',
       text: `Payment confirmed — ${propName} (฿${p.amount.toLocaleString('en-US')})`,
       timestamp: p.paid_date ?? '',
+      href: '/landlord/payments',
     });
   }
 
@@ -275,6 +280,7 @@ export default async function LandlordDashboard() {
       type: 'maintenance',
       text: `Maintenance filed — ${propName} (${m.title})`,
       timestamp: m.created_at,
+      href: '/landlord/maintenance',
     });
   }
 
@@ -287,6 +293,7 @@ export default async function LandlordDashboard() {
       type: 'contract',
       text: `${label} — ${propName}`,
       timestamp: c.created_at,
+      href: `/landlord/contracts/${c.id}`,
     });
   }
 

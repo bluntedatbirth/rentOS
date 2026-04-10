@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useI18n } from '@/lib/i18n/context';
 import type { StatCards, ActivityItem, UpcomingPaymentItem } from './page';
 import { DevToolsPanel } from '@/components/dev/DevToolsPanel';
@@ -136,24 +137,28 @@ export function DashboardClient({
       value: formatBaht(stats.monthlyRevenue),
       sub: t('dashboard.v2_n_properties').replace('{n}', String(stats.propertyCount)),
       color: 'text-saffron-600',
+      href: '/landlord/analytics',
     },
     {
       label: t('dashboard.v2_payments_due'),
       value: String(stats.paymentsDueCount),
       sub: t('dashboard.v2_next_7_days'),
       color: 'text-amber-500',
+      href: '/landlord/payments',
     },
     {
       label: t('dashboard.v2_open_maintenance'),
       value: String(stats.openMaintenanceCount),
       sub: t('dashboard.v2_requests'),
       color: 'text-red-600',
+      href: '/landlord/maintenance',
     },
     {
       label: t('dashboard.v2_vacancies'),
       value: String(stats.vacancyCount),
       sub: t('dashboard.v2_of_n_units').replace('{n}', String(stats.totalPropertyCount)),
       color: 'text-gray-900',
+      href: '/landlord/properties',
     },
   ];
 
@@ -168,17 +173,19 @@ export function DashboardClient({
           </p>
         </div>
 
-        {/* Stat cards — 2×2 mobile, 4-across desktop */}
+        {/* Stat cards — 2×2 mobile, 4-across desktop. Each card is a link to its
+            matching details page (revenue→analytics, due→payments, etc.). */}
         <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
           {statCards.map((s) => (
-            <div
+            <Link
               key={s.label}
-              className="rounded-lg bg-warm-50 border border-warm-200 p-4 shadow-sm transition-shadow hover:shadow-md"
+              href={s.href}
+              className="block rounded-lg border border-warm-200 bg-warm-50 p-4 shadow-sm transition-shadow hover:shadow-md hover:border-saffron-300 focus:outline-none focus:ring-2 focus:ring-saffron-500 focus:ring-offset-1"
             >
               <p className="mb-1 text-xs text-charcoal-500">{s.label}</p>
               <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
               <p className="mt-0.5 text-xs text-charcoal-500">{s.sub}</p>
-            </div>
+            </Link>
           ))}
         </div>
 
@@ -191,7 +198,7 @@ export function DashboardClient({
                 {t('dashboard.v2_recent_activity')}
               </h2>
             </div>
-            <ul className="divide-y divide-warm-100 px-4 py-2">
+            <ul className="divide-y divide-warm-100 px-2 py-1">
               {activity.length === 0 ? (
                 <li className="py-4 text-center text-sm text-charcoal-500">
                   {t('dashboard.v2_no_recent_activity')}
@@ -200,14 +207,19 @@ export function DashboardClient({
                 activity.map((item) => {
                   const style = ICON_STYLES[item.type];
                   return (
-                    <li key={item.id} className="flex items-start gap-3 py-2.5">
-                      <ActivityIcon type={item.type} color={style.color} bg={style.bg} />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm leading-snug text-charcoal-700">{item.text}</p>
-                        <p className="mt-0.5 text-xs text-charcoal-500">
-                          {relativeTime(item.timestamp)}
-                        </p>
-                      </div>
+                    <li key={item.id}>
+                      <Link
+                        href={item.href}
+                        className="-mx-2 flex items-start gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-warm-100 focus:bg-warm-100 focus:outline-none focus:ring-2 focus:ring-saffron-500"
+                      >
+                        <ActivityIcon type={item.type} color={style.color} bg={style.bg} />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm leading-snug text-charcoal-700">{item.text}</p>
+                          <p className="mt-0.5 text-xs text-charcoal-500">
+                            {relativeTime(item.timestamp)}
+                          </p>
+                        </div>
+                      </Link>
                     </li>
                   );
                 })
@@ -222,28 +234,33 @@ export function DashboardClient({
                 {t('dashboard.v2_upcoming_payments')}
               </h2>
             </div>
-            <ul className="divide-y divide-warm-100 px-4 py-2">
+            <ul className="divide-y divide-warm-100 px-2 py-1">
               {upcomingPayments.length === 0 ? (
                 <li className="py-4 text-center text-sm text-charcoal-500">
                   {t('dashboard.v2_no_upcoming_payments')}
                 </li>
               ) : (
                 upcomingPayments.map((p) => (
-                  <li key={p.id} className="flex items-center justify-between gap-2 py-2.5">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-charcoal-800">
-                        {p.tenantName}
-                      </p>
-                      <p className="truncate text-xs text-charcoal-500">{p.propertyName}</p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-sm font-semibold text-charcoal-900">
-                        {formatBaht(p.amount)}
-                      </span>
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                        {shortDate(p.dueDate)}
-                      </span>
-                    </div>
+                  <li key={p.id}>
+                    <Link
+                      href={p.href}
+                      className="-mx-2 flex items-center justify-between gap-2 rounded-md px-2 py-2.5 transition-colors hover:bg-warm-100 focus:bg-warm-100 focus:outline-none focus:ring-2 focus:ring-saffron-500"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-charcoal-800">
+                          {p.tenantName}
+                        </p>
+                        <p className="truncate text-xs text-charcoal-500">{p.propertyName}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-sm font-semibold text-charcoal-900">
+                          {formatBaht(p.amount)}
+                        </span>
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                          {shortDate(p.dueDate)}
+                        </span>
+                      </div>
+                    </Link>
                   </li>
                 ))
               )}
