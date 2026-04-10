@@ -11,6 +11,11 @@ interface MaintenanceRequest {
   description: string | null;
   status: string;
   created_at: string;
+  assigned_to: string | null;
+  estimated_cost: number | null;
+  actual_cost: number | null;
+  completed_at: string | null;
+  photo_urls: string[] | null;
 }
 
 interface TenantMaintenanceClientProps {
@@ -29,6 +34,9 @@ export function TenantMaintenanceClient({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const selectedRequest = selectedId ? (requests.find((r) => r.id === selectedId) ?? null) : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,7 +142,12 @@ export function TenantMaintenanceClient({
       ) : (
         <div className="space-y-3">
           {requests.map((req) => (
-            <div key={req.id} className="rounded-lg bg-white p-4 shadow-sm">
+            <button
+              key={req.id}
+              type="button"
+              onClick={() => setSelectedId(req.id)}
+              className="w-full cursor-pointer rounded-lg bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md"
+            >
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-charcoal-900">{req.title}</h3>
                 <StatusBadge status={req.status} />
@@ -143,8 +156,86 @@ export function TenantMaintenanceClient({
                 <p className="mt-2 text-sm text-charcoal-700">{req.description}</p>
               )}
               <p className="mt-2 text-xs text-charcoal-400">{formatDate(req.created_at)}</p>
-            </div>
+            </button>
           ))}
+        </div>
+      )}
+
+      {/* Read-only detail modal */}
+      {selectedRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <h3 className="text-base font-bold text-charcoal-900">
+                {t('tenant.maintenance_detail_title')}
+              </h3>
+              <StatusBadge status={selectedRequest.status} />
+            </div>
+
+            <p className="mb-1 text-sm font-semibold text-charcoal-900">{selectedRequest.title}</p>
+            <p className="mb-4 text-xs text-charcoal-400">
+              {formatDate(selectedRequest.created_at)}
+            </p>
+
+            {selectedRequest.description && (
+              <p className="mb-4 text-sm text-charcoal-700">{selectedRequest.description}</p>
+            )}
+
+            <div className="mb-4 space-y-2 text-sm">
+              {selectedRequest.assigned_to && (
+                <div className="flex justify-between">
+                  <span className="text-charcoal-500">{t('tenant.maintenance_assigned_to')}</span>
+                  <span className="text-charcoal-700">{selectedRequest.assigned_to}</span>
+                </div>
+              )}
+
+              {selectedRequest.estimated_cost !== null && (
+                <div className="flex justify-between">
+                  <span className="text-charcoal-500">
+                    {t('tenant.maintenance_estimated_cost')}
+                  </span>
+                  <span className="text-charcoal-700">
+                    ฿{selectedRequest.estimated_cost.toLocaleString('en-US')}
+                  </span>
+                </div>
+              )}
+
+              {selectedRequest.actual_cost !== null && (
+                <div className="flex justify-between">
+                  <span className="text-charcoal-500">{t('tenant.maintenance_actual_cost')}</span>
+                  <span className="text-charcoal-700">
+                    ฿{selectedRequest.actual_cost.toLocaleString('en-US')}
+                  </span>
+                </div>
+              )}
+
+              {selectedRequest.completed_at && (
+                <div className="flex justify-between">
+                  <span className="text-charcoal-500">{t('tenant.maintenance_completed_at')}</span>
+                  <span className="text-charcoal-700">
+                    {formatDate(selectedRequest.completed_at)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {selectedRequest.photo_urls && selectedRequest.photo_urls.length > 0 && (
+              <div className="mb-4 grid grid-cols-3 gap-2">
+                {selectedRequest.photo_urls.map((url, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={i} src={url} alt="" className="h-24 w-full rounded-lg object-cover" />
+                ))}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setSelectedId(null)}
+              className="min-h-[44px] w-full rounded-lg border border-warm-200 text-sm font-medium text-charcoal-700 hover:bg-warm-50"
+            >
+              {t('tenant.maintenance_close')}
+            </button>
+          </div>
         </div>
       )}
     </div>

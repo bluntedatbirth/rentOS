@@ -83,6 +83,12 @@ export default function TenantPairPage() {
             className="mb-4 block w-full rounded-lg border border-warm-200 px-4 py-3 text-center font-mono text-2xl font-bold tracking-widest text-charcoal-900 placeholder:text-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
           />
 
+          {code.length > 0 && code.length < 6 && (
+            <p className="mb-2 text-xs text-charcoal-500">
+              {t('pairing.code_length_hint').replace('{n}', String(6 - code.length))}
+            </p>
+          )}
+
           {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
           <button
