@@ -246,6 +246,18 @@ export default function TenantPaymentsPage() {
 
         {payment.notes && <p className="mt-1 text-sm text-charcoal-400">{payment.notes}</p>}
 
+        {/* Download Receipt button — only on paid rows */}
+        {payment.status === 'paid' && (
+          <a
+            href={`/api/payments/${payment.id}/receipt`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex min-h-[36px] items-center rounded-lg border border-saffron-500 px-3 py-1.5 text-xs font-semibold text-saffron-700 hover:bg-saffron-50"
+          >
+            {t('payments.download_receipt')}
+          </a>
+        )}
+
         {/* "Already claimed" banner — waiting for landlord confirmation */}
         {isClaimed && (
           <div className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">

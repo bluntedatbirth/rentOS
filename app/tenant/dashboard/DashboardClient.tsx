@@ -35,6 +35,7 @@ interface TenantDashboardClientProps {
   pendingRenewal: ContractSummary | null;
   maintenance: MaintenanceSummary[];
   penalties: PenaltySummary[];
+  daysUntilExpiry: number | null;
 }
 
 export function TenantDashboardClient({
@@ -43,6 +44,7 @@ export function TenantDashboardClient({
   pendingRenewal,
   maintenance,
   penalties,
+  daysUntilExpiry,
 }: TenantDashboardClientProps) {
   const { t } = useI18n();
 
@@ -102,6 +104,31 @@ export function TenantDashboardClient({
           </div>
         </Link>
       )}
+
+      {/* Lease expiry banner — suppressed when a pending-renewal card is already visible */}
+      {daysUntilExpiry !== null &&
+        daysUntilExpiry >= 0 &&
+        daysUntilExpiry <= 30 &&
+        !pendingRenewal && (
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-saffron-300 bg-warm-100 px-4 py-3">
+            <p className="text-sm font-medium text-charcoal-800">
+              {daysUntilExpiry === 0
+                ? t('dashboard.lease_expiry_banner_today')
+                : daysUntilExpiry === 1
+                  ? t('dashboard.lease_expiry_banner_one')
+                  : t('dashboard.lease_expiry_banner_other').replace(
+                      '{n}',
+                      String(daysUntilExpiry)
+                    )}
+            </p>
+            <Link
+              href="/tenant/contract/view"
+              className="ml-4 shrink-0 rounded-md bg-saffron-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-500 focus:ring-offset-1"
+            >
+              {t('dashboard.lease_expiry_action')}
+            </Link>
+          </div>
+        )}
 
       {/* Contract summary */}
       {contract ? (

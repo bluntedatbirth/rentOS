@@ -64,8 +64,15 @@ export async function onPenaltyAppealed(penaltyId: string, contractId: string): 
 export async function onMaintenanceStatusChanged(
   requestId: string,
   contractId: string,
-  newStatus: string
+  newStatus: string,
+  previousStatus?: string
 ): Promise<void> {
+  // Dedup guard: no-op if status hasn't actually changed (T-BUG-08)
+  if (previousStatus !== undefined && previousStatus === newStatus) return;
+
+  // Whitelist: only fire for actionable transitions
+  if (newStatus !== 'in_progress' && newStatus !== 'resolved') return;
+
   const parties = await getContractParties(contractId);
   if (!parties?.tenant_id) return;
 

@@ -10,6 +10,11 @@ interface MaintenanceRequest {
   description: string | null;
   status: string;
   created_at: string;
+  assigned_to: string | null;
+  estimated_cost: number | null;
+  actual_cost: number | null;
+  completed_at: string | null;
+  photo_urls: string[] | null;
 }
 
 export default async function TenantMaintenancePage() {
@@ -35,7 +40,9 @@ export default async function TenantMaintenancePage() {
   if (contractId) {
     const { data } = await supabase
       .from('maintenance_requests')
-      .select('id, contract_id, title, description, status, created_at')
+      .select(
+        'id, contract_id, title, description, status, created_at, assigned_to, estimated_cost, actual_cost, completed_at, photo_urls'
+      )
       .eq('contract_id', contractId)
       .order('created_at', { ascending: false });
     requests = (data ?? []) as MaintenanceRequest[];
