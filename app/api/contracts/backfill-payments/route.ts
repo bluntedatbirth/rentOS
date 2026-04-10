@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getAuthenticatedUser, unauthorized } from '@/lib/supabase/api';
+import { getAuthenticatedUser, unauthorized, serverError } from '@/lib/supabase/api';
 import type { Database } from '@/lib/supabase/types';
 import { activateContract } from '@/lib/contracts/activate';
 
@@ -37,7 +37,7 @@ export async function POST() {
     .eq('status', 'active');
 
   if (fetchError) {
-    return NextResponse.json({ error: fetchError.message }, { status: 500 });
+    return serverError(fetchError.message);
   }
 
   if (!contracts || contracts.length === 0) {

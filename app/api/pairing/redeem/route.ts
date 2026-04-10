@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
-import { getAuthenticatedUser, unauthorized, badRequest, forbidden } from '@/lib/supabase/api';
+import { getAuthenticatedUser, unauthorized, badRequest, forbidden, serverError } from '@/lib/supabase/api';
 import type { Database } from '@/lib/supabase/types';
 import { onTenantPaired } from '@/lib/notifications/events';
 import { activateContract } from '@/lib/contracts/activate';
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     .eq('id', contract.id);
 
   if (pairError) {
-    return NextResponse.json({ error: pairError.message }, { status: 500 });
+    return serverError(pairError.message);
   }
 
   // Step 2: Route through activateContract — flips status to active AND seeds 12 payment rows
