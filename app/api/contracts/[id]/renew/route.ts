@@ -10,6 +10,7 @@ import {
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { sendNotification } from '@/lib/notifications/send';
 import { reparseContractText } from '@/lib/claude/extractContract';
+import { checkRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
 
 const renewSchema = z.object({
   lease_start: z.string().min(1),
@@ -106,8 +107,27 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const textChanged = contract_text && contract_text !== original.raw_text_th;
   let newClauses = original.structured_clauses;
   if (textChanged) {
+    // Persistent rate limit: 5/hour, 10/day per user (matches reparse route)
+    // Only gates the Claude path — unchanged-text renewals are not rate-limited.
+    const rl = await checkRateLimit(user.id, 'renew', 5, 10);
+    if (!rl.allowed) {
+      console.warn('[rateLimit] renew blocked, reason:', rl.reason, 'user:', user.id);
+      return new Response(
+        JSON.stringify({ error: 'ai_unavailable', retryAfterSeconds: rl.retryAfterSeconds }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': String(rl.retryAfterSeconds),
+          },
+        }
+      );
+    }
+
     try {
-      newClauses = await reparseContractText(contract_text);
+      newClauses = await reparseContractText(contract_text, (usage) => {
+        void logAISpend(user.id, 'renew', usage.input_tokens, usage.output_tokens);
+      });
       if (!Array.isArray(newClauses) || newClauses.length === 0) {
         console.error('[Renew] AI returned empty clauses, failing explicitly');
         return serverError('Failed to re-parse updated contract clauses. Please try again.');

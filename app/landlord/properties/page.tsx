@@ -372,6 +372,7 @@ function PropertyListRow({ property, onRemoved }: PropertyListRowProps) {
 export default function PropertiesPage() {
   const { user, profile } = useAuth();
   const { t } = useI18n();
+  const { toast } = useToast();
   const { PromptModal } = useProGate('slot_limit', { showSlotUnlock: true });
   const [properties, setProperties] = useState<PropertyRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -476,6 +477,19 @@ export default function PropertiesPage() {
       setUnitNumber('');
       setShowForm(false);
       await loadProperties();
+    } else {
+      let errorMessage = t('auth.error');
+      try {
+        const body = await response.json();
+        if (body?.error === 'property_limit_reached') {
+          errorMessage = t('properties.slots_full_toast');
+        } else if (body?.message) {
+          errorMessage = body.message;
+        }
+      } catch {
+        // body wasn't JSON — fall back to generic error
+      }
+      toast.error(errorMessage);
     }
     setCreating(false);
   };

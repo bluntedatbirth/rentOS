@@ -71,16 +71,19 @@ export async function GET(request: NextRequest) {
         const oneYearFromNow = new Date();
         oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
-        await adminClient.from('profiles').insert({
-          id: session.user.id,
-          role: resolvedRole,
-          full_name: fullName,
-          phone: (metadata.phone as string) || null,
-          language: 'th' as const,
-          tier: 'pro' as const,
-          tier_expires_at: oneYearFromNow.toISOString(),
-          founding_member: true,
-        });
+        await adminClient.from('profiles').upsert(
+          {
+            id: session.user.id,
+            role: resolvedRole,
+            full_name: fullName,
+            phone: (metadata.phone as string) || null,
+            language: 'th' as const,
+            tier: 'pro' as const,
+            tier_expires_at: oneYearFromNow.toISOString(),
+            founding_member: true,
+          },
+          { onConflict: 'id', ignoreDuplicates: true }
+        );
 
         // pair_code resolution: query param → metadata
         const queryPair = requestUrl.searchParams.get('pair');

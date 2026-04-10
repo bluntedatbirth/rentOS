@@ -13,8 +13,13 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'RentOS — Rental Manager',
-  description: 'Thai rental property management',
+  metadataBase: new URL('https://rentos.homes'),
+  title: {
+    default: 'RentOS — Free rental management for Thai landlords',
+    template: '%s | RentOS',
+  },
+  description:
+    'The easiest way for Thai landlords to manage properties, contracts, and tenants. Free for up to 2 properties — no card required.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -27,6 +32,34 @@ export const metadata: Metadata = {
   other: {
     'theme-color': '#2563EB',
     'mobile-web-app-capable': 'yes',
+  },
+  openGraph: {
+    title: 'RentOS — Free rental management for Thai landlords',
+    description:
+      'The easiest way for Thai landlords to manage properties, contracts, and tenants. Free for up to 2 properties — no card required.',
+    url: 'https://rentos.homes',
+    siteName: 'RentOS',
+    images: [
+      {
+        url: '/og-image.svg',
+        width: 1200,
+        height: 630,
+        alt: 'RentOS — rental management for Thai landlords',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'RentOS — Free rental management for Thai landlords',
+    description:
+      'The easiest way for Thai landlords to manage properties, contracts, and tenants. Free for up to 2 properties — no card required.',
+    images: ['/og-image.svg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

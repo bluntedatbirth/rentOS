@@ -1210,8 +1210,8 @@
   "landing.hero_quote_1_text": "我终于看懂了泰文租约——每条款都有英文，就在手机上。",
   "landing.hero_quote_1_author": "James T.",
   "landing.hero_quote_1_role": "租客，清迈",
-  "landing.hero_quote_2_text": "ระบบดีมาก ช่วยติดตามสัญญาและ TM30 ได้ครบถ้วน ไม่ต้องเป็นห่วงเรื่องเอกสารอีกต่อไป",
-  "landing.hero_quote_2_author": "คุณสมชาย ว.",
+  "landing.hero_quote_2_text": "\u201c\u8fd9\u4e2a\u7cfb\u7edf\u771f\u7684\u5f88\u597d\u7528\uff0c\u53ef\u4ee5\u4e00\u6b21\u7ba1\u7406\u6240\u6709\u5408\u540c\u548c TM30 \u6587\u4ef6\u3002\u6211\u518d\u4e5f\u4e0d\u7528\u62c5\u5fc3\u6587\u4ef6\u7684\u4e8b\u4e86\u3002\u201d",
+  "landing.hero_quote_2_author": "\u9882\u731c W.",
   "landing.hero_quote_2_role": "房东，曼谷",
   "landing.problem_label": "RentOS 解决的问题",
   "landing.problem_h2": "在泰国租房很复杂，但不必如此。",
@@ -1264,7 +1264,7 @@
   "landing.testimonial_1_author": "Sarah M.",
   "landing.testimonial_1_role": "租客，曼谷",
   "landing.testimonial_2_quote": "以前 TM30 申报很麻烦，用了 RentOS 之后轻松多了，总是在截止日期前提醒我。",
-  "landing.testimonial_2_author": "คุณวิไล ก.",
+  "landing.testimonial_2_author": "\u7ef4\u83b1 K.",
   "landing.testimonial_2_role": "房东，清迈",
   "landing.testimonial_3_quote": "维修记录已经救了我两次。当租客声称我们从未修过某样东西时，我有完整的历史记录。",
   "landing.testimonial_3_author": "David K.",
@@ -1398,5 +1398,10 @@
   "billing.hub_pro_bullet_1": "AI 合同生成、问答和分析",
   "billing.hub_pro_bullet_2": "罚款自动化和批量操作",
   "billing.hub_pro_bullet_3": "投资组合分析仪表板",
-  "billing.hub_pro_bullet_4": "完整的文档库和模板库"
+  "billing.hub_pro_bullet_4": "完整的文档库和模板库",
+  "notfound.title": "页面未找到",
+  "notfound.body": "您要查找的页面不存在，或可能已被移动。",
+  "notfound.home_cta": "返回首页",
+  "notfound.login_cta": "登录",
+  "properties.slots_full_toast": "所有名额已满。解锁更多以添加新房源。"
 }

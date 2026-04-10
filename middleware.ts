@@ -81,7 +81,14 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // Protected routes — require auth
+  // Protected route prefixes — only these require auth.
+  // Unknown paths fall through to Next.js so app/not-found.tsx can render.
+  const protectedPrefixes = ['/landlord', '/tenant', '/admin'];
+  const isProtected = protectedPrefixes.some((p) => pathname === p || pathname.startsWith(p + '/'));
+  if (!isProtected) {
+    return response;
+  }
+
   if (!user) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
@@ -113,6 +120,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|icons|manifest.json|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|icons|manifest.json|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
