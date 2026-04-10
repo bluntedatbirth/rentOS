@@ -1437,5 +1437,8 @@
   "tenant.documents_upload_submit": "Upload",
   "tenant.documents_upload_success": "Document uploaded",
   "tenant.documents_upload_too_large": "File exceeds 25 MB limit",
-  "tenant.documents_upload_no_contract": "You can upload documents once your contract is active"
+  "tenant.documents_upload_no_contract": "You can upload documents once your contract is active",
+  "error.title": "Something went wrong",
+  "error.description": "An unexpected error occurred. Please try again.",
+  "error.try_again": "Try again"
 }

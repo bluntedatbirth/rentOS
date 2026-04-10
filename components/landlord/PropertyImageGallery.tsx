@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { useI18n } from '@/lib/i18n/context';
 
 interface PropertyImage {
@@ -138,8 +139,13 @@ export function PropertyImageGallery({ propertyId }: PropertyImageGalleryProps) 
           {/* Image thumbnails */}
           {filteredImages.map((img) => (
             <div key={img.id} className="group relative aspect-square">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={img.public_url} alt="" className="h-full w-full rounded-lg object-cover" />
+              <Image
+                src={`${img.public_url}?width=400&quality=75`}
+                alt=""
+                width={400}
+                height={400}
+                className="h-full w-full rounded-lg object-cover"
+              />
               {/* Delete button — visible on hover */}
               <button
                 type="button"

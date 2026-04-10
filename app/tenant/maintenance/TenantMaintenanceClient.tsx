@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useI18n } from '@/lib/i18n/context';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 
@@ -222,8 +223,14 @@ export function TenantMaintenanceClient({
             {selectedRequest.photo_urls && selectedRequest.photo_urls.length > 0 && (
               <div className="mb-4 grid grid-cols-3 gap-2">
                 {selectedRequest.photo_urls.map((url, i) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img key={i} src={url} alt="" className="h-24 w-full rounded-lg object-cover" />
+                  <Image
+                    key={i}
+                    src={`${url}?width=200&quality=75`}
+                    alt=""
+                    width={200}
+                    height={96}
+                    className="h-24 w-full rounded-lg object-cover"
+                  />
                 ))}
               </div>
             )}

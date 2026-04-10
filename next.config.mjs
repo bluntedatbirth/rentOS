@@ -20,6 +20,15 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['@supabase/supabase-js', '@supabase/ssr', 'zod'],
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+        pathname: '/storage/v1/**',
+      },
+    ],
+  },
   async headers() {
     return [
       {
@@ -40,6 +49,7 @@ const nextConfig = {
               "default-src 'self'",
               scriptSrc,
               "style-src 'self' 'unsafe-inline'",
+              // *.supabase.co covers storage + image transform endpoints
               "img-src 'self' data: blob: https://*.supabase.co",
               "font-src 'self'",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co",

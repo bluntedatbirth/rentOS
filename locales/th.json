@@ -1437,5 +1437,8 @@
   "tenant.documents_upload_submit": "อัปโหลด",
   "tenant.documents_upload_success": "อัปโหลดเอกสารแล้ว",
   "tenant.documents_upload_too_large": "ไฟล์เกินขีดจำกัด 25 MB",
-  "tenant.documents_upload_no_contract": "คุณสามารถอัปโหลดเอกสารได้เมื่อสัญญาของคุณใช้งาน"
+  "tenant.documents_upload_no_contract": "คุณสามารถอัปโหลดเอกสารได้เมื่อสัญญาของคุณใช้งาน",
+  "error.title": "เกิดข้อผิดพลาด",
+  "error.description": "เกิดข้อผิดพลาดที่ไม่คาดคิด กรุณาลองใหม่อีกครั้ง",
+  "error.try_again": "ลองอีกครั้ง"
 }
