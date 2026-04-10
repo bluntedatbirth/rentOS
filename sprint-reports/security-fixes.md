@@ -15,10 +15,12 @@ All Phase 0 and Phase 1 security items in scope were completed. Build passes cle
 ## Completed Fixes
 
 ### P0-F — Middleware fail-closed
+
 **Commit:** `8e4e454`
 **Files touched:** `middleware.ts`, `app/maintenance/page.tsx` (new)
 
 **Before:**
+
 ```ts
 // Skip auth checks if Supabase is not configured
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -27,6 +29,7 @@ if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_A
 ```
 
 **After:**
+
 ```ts
 // Fail-closed: if Supabase is not configured, block all traffic
 if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -39,10 +42,12 @@ Added `/maintenance` static page with hardcoded EN+TH bilingual text (no i18n co
 ---
 
 ### P0-B — Gate mock billing checkout
+
 **Commit:** `e4fa799`
 **Files touched:** `app/api/billing/checkout/route.ts`
 
 **Before:**
+
 ```ts
 export async function POST(request: Request) {
   const { user } = await getAuthenticatedUser();
@@ -50,6 +55,7 @@ export async function POST(request: Request) {
 ```
 
 **After:**
+
 ```ts
 export async function POST(request: Request) {
   if (process.env.ALLOW_MOCK_CHECKOUT !== 'true') {
@@ -63,6 +69,7 @@ Do NOT set `ALLOW_MOCK_CHECKOUT=true` in the Vercel production environment. Remo
 ---
 
 ### P1-C — Remove listUsers from magic-link route
+
 **Commit:** `1f6251b`
 **Files touched:** `app/api/auth/magic-link/route.ts`
 
@@ -73,6 +80,7 @@ Do NOT set `ALLOW_MOCK_CHECKOUT=true` in the Vercel production environment. Remo
 ---
 
 ### P1-E — Gate middleware and callback diagnostic logs
+
 **Commit:** `147ee99`
 **Files touched:** `middleware.ts`, `app/auth/callback/route.ts`
 
@@ -83,12 +91,14 @@ Do NOT set `ALLOW_MOCK_CHECKOUT=true` in the Vercel production environment. Remo
 ---
 
 ### P0-D — OCR route ownership check before download
+
 **Commit:** `7602774`
 **Files touched:** `app/api/ocr/route.ts`
 
 **Before:** Route accepted client-supplied `file_url`, downloaded via service-role client, then checked ownership _after_ the download. Path-traversal guard (`includes('..')`) was bypassable.
 
 **After:**
+
 1. Fetch contract via **session client** (RLS-enforced) before any storage access
 2. Explicit `contract.landlord_id !== user.id` check as belt-and-suspenders
 3. Derive storage path server-side: `original_file_url.split('/storage/v1/object/public/contracts/')[1]`
@@ -99,11 +109,16 @@ Do NOT set `ALLOW_MOCK_CHECKOUT=true` in the Vercel production environment. Remo
 // Before: download first, check ownership after
 const { data: fileData } = await adminClient.storage.from('contracts').download(file_url);
 // ... many lines later ...
-if (!currentContract || currentContract.landlord_id !== user.id) { /* too late */ }
+if (!currentContract || currentContract.landlord_id !== user.id) {
+  /* too late */
+}
 
 // After: ownership first, path derived server-side
-const { data: contract } = await sessionClient.from('contracts')
-  .select('id, property_id, landlord_id, original_file_url').eq('id', contract_id).single();
+const { data: contract } = await sessionClient
+  .from('contracts')
+  .select('id, property_id, landlord_id, original_file_url')
+  .eq('id', contract_id)
+  .single();
 if (!contract || contract.landlord_id !== user.id) return forbidden();
 const storagePath = contract.original_file_url?.split('/storage/v1/object/public/contracts/')[1];
 ```
@@ -113,10 +128,12 @@ const storagePath = contract.original_file_url?.split('/storage/v1/object/public
 ---
 
 ### P0-E — Delete app/api/dev/ directory
+
 **Commit:** `3261314`
 **Files touched:** 10 route files deleted, `lib/devGuard.ts` deleted, `tests/e2e/helpers/auth.ts` updated, `tests/e2e/helpers/seed.ts` updated
 
 Deleted all routes under `app/api/dev/`:
+
 - `migrate/route.ts`
 - `reset-my-data/route.ts`
 - `seed-contract/route.ts`
@@ -137,16 +154,19 @@ Deleted all routes under `app/api/dev/`:
 ---
 
 ### P0-C — Fix slot purchase callback
+
 **Commit:** `d6f22d3`
 **Files touched:** `app/api/billing/slots/callback/route.ts`, `supabase/migrations/20260411000003_drop_slot_purchases_user_insert.sql` (new)
 
 **Migration:** `20260411000003_drop_slot_purchases_user_insert.sql`
+
 ```sql
 DROP POLICY IF EXISTS slot_purchases_insert_own ON slot_purchases;
 NOTIFY pgrst, 'reload schema';
 ```
 
 **Route — added prod gate (mirroring P0-B):**
+
 ```ts
 if (process.env.ALLOW_MOCK_CHECKOUT !== 'true') {
   return NextResponse.json({ error: 'not_available' }, { status: 403 });
@@ -154,6 +174,7 @@ if (process.env.ALLOW_MOCK_CHECKOUT !== 'true') {
 ```
 
 **Route — added omise_charge_id null check:**
+
 ```ts
 // Before: no check — any pending purchase could be marked paid
 if (purchase.status !== 'pending') { return badRequest(...); }
@@ -170,6 +191,7 @@ if (!purchase.omise_charge_id) {
 ## Deferrals
 
 ### E2E test auth (part of P0-E)
+
 The e2e test helpers (`auth.ts`, `seed.ts`) previously used `/api/dev/signin-browser` and `/api/dev/seed-user`. These now throw errors with TODO comments. Updating them to use real Supabase test auth is deferred — it requires a dedicated test user migration or Supabase Admin API integration that is outside this sprint's scope.
 
 **Impact:** E2e test suite will fail on any test that calls `loginAsLandlord`, `loginAsTenant`, or `seedTestUsers`. This was already the case in practice (dev routes were gated and may not have been running in CI).

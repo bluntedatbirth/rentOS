@@ -17,6 +17,7 @@ All Phase 0-G, Phase 1-M, Phase 1-L, Phase 1-F, and bonus dead-code items comple
 **Status:** Completed (committed by `performance-engineer` as part of P1-H commit `6e0af98`)
 
 **Files touched:**
+
 - `app/error.tsx` (new)
 - `app/landlord/error.tsx` (new)
 - `app/tenant/error.tsx` (new)
@@ -39,6 +40,7 @@ All Phase 0-G, Phase 1-M, Phase 1-L, Phase 1-F, and bonus dead-code items comple
 **Files touched:** `lib/rateLimit.ts` (deleted)
 
 **Before:**
+
 ```ts
 // lib/rateLimit.ts — not imported anywhere
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -57,16 +59,19 @@ setInterval(() => { /* periodic cleanup */ }, 60000);
 **Status:** Completed
 
 **Files touched:**
+
 - `app/api/contracts/backfill-payments/route.ts`
 - `app/api/pairing/redeem/route.ts`
 
 **Before (both files):**
+
 ```ts
 return NextResponse.json({ error: fetchError.message }, { status: 500 });
 // leaks table names, column names, constraint names to caller
 ```
 
 **After (both files):**
+
 ```ts
 return serverError(fetchError.message);
 // logs internally; returns { error: 'internal_error' } to caller
@@ -85,11 +90,13 @@ Dev routes (`app/api/dev/*`) excluded — they contain the same pattern but are 
 **Status:** Completed
 
 **Files touched:**
+
 - `app/api/contracts/backfill-payments/route.ts`
 - `app/api/contracts/[id]/co-tenants/route.ts`
 - `app/api/pairing/redeem/route.ts`
 
 **Before (all three files):**
+
 ```ts
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/supabase/types';
@@ -101,6 +108,7 @@ const adminClient = createClient<Database>(
 ```
 
 **After (all three files):**
+
 ```ts
 import { createServiceRoleClient } from '@/lib/supabase/server';
 // ...
@@ -118,12 +126,14 @@ Dev routes (`app/api/dev/*`) excluded — handled by security-engineer.
 **Status:** Completed
 
 **Files touched:**
+
 - `lib/i18n/index.ts` (deleted)
 - `tests/unit/i18n.test.ts` (rewritten)
 
 **Before:** `lib/i18n/index.ts` exported a module-level singleton `t()` that only supported `th`/`en` (no `zh`). Only the unit test imported it. `i18n.test.ts` had 4 trivial assertions on this dead code path.
 
 **After:** `lib/i18n/index.ts` deleted. `i18n.test.ts` rewritten to test the real locale JSON files:
+
 - Key parity across all 3 locales (en/th/zh)
 - `error.*` keys (added in P0-G) present in all 3 locales
 - `detectSystemLocale()` returns `null` in Node/SSR context
@@ -155,21 +165,21 @@ Five `<li>` elements contain hardcoded English/Thai inline bilingual text (e.g.,
 
 ## Build/Test Status
 
-| Check | Result |
-|-------|--------|
-| `tsc --noEmit` | CLEAN |
-| `vitest run` (16 tests) | ALL PASS |
-| `npm run build` | Not run (worktree shares node_modules; full build requires merged branches) |
+| Check                   | Result                                                                      |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `tsc --noEmit`          | CLEAN                                                                       |
+| `vitest run` (16 tests) | ALL PASS                                                                    |
+| `npm run build`         | Not run (worktree shares node_modules; full build requires merged branches) |
 
 ---
 
 ## Commits on `quality/audit-fixes`
 
-| SHA | Message |
-|-----|---------|
+| SHA       | Message                                                                   |
+| --------- | ------------------------------------------------------------------------- |
 | `bb9a996` | P1-F: replace inline createClient(url,key) with createServiceRoleClient() |
-| `51c90d5` | bonus: delete dead lib/i18n/index.ts; rewrite i18n.test.ts |
-| `3a08fb3` | P1-L: stop leaking DB error messages to clients via serverError() |
-| `8deca53` | P1-M: delete dead lib/rateLimit.ts in-memory rate limiter |
-| `6e0af98` | P1-H: (performance-engineer) includes P0-G error boundaries |
-| `a0e591a` | P1-K: (pre-existing) JSONB exclusion |
+| `51c90d5` | bonus: delete dead lib/i18n/index.ts; rewrite i18n.test.ts                |
+| `3a08fb3` | P1-L: stop leaking DB error messages to clients via serverError()         |
+| `8deca53` | P1-M: delete dead lib/rateLimit.ts in-memory rate limiter                 |
+| `6e0af98` | P1-H: (performance-engineer) includes P0-G error boundaries               |
+| `a0e591a` | P1-K: (pre-existing) JSONB exclusion                                      |

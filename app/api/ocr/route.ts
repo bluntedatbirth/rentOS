@@ -69,7 +69,7 @@ export async function POST(request: Request) {
   // Derive storage path server-side from the stored URL — never use client-supplied path.
   // URL format: https://<project>.supabase.co/storage/v1/object/public/contracts/<storagePath>
   const storagePath = contract.original_file_url
-    ? contract.original_file_url.split('/storage/v1/object/public/contracts/')[1] ?? null
+    ? (contract.original_file_url.split('/storage/v1/object/public/contracts/')[1] ?? null)
     : null;
 
   if (!storagePath) {

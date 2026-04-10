@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getAuthenticatedUser, unauthorized, badRequest, forbidden, serverError } from '@/lib/supabase/api';
+import { getAuthenticatedUser, unauthorized, badRequest, serverError } from '@/lib/supabase/api';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { onTenantPaired } from '@/lib/notifications/events';
 import { activateContract } from '@/lib/contracts/activate';
@@ -9,7 +9,19 @@ const schema = z.object({
   code: z.string().length(6),
 });
 
-// Tenant redeems a pairing code to link to a contract
+// Tenant redeems a pairing code to link to a contract.
+//
+// P1-I: atomic claim-the-code pattern. Previously this route did a
+// SELECT-check-then-UPDATE, which races: two concurrent tenants could
+// both pass `tenant_id IS NULL` before either write landed, and the
+// second silently overwrote the first.
+//
+// The new flow issues a single UPDATE with all the guarding predicates
+// inside the WHERE clause and uses .select() so PostgREST compiles it
+// into one SQL statement with RETURNING. If zero rows come back, the
+// code is invalid/expired/already-claimed — no second query needed.
+// Combined with the unique partial index on contracts(pairing_code)
+// added by the database branch migration, this closes PA-1 and PA-2.
 export async function POST(request: Request) {
   const { user } = await getAuthenticatedUser();
   if (!user) return unauthorized();
@@ -20,7 +32,7 @@ export async function POST(request: Request) {
 
   const adminClient = createServiceRoleClient();
 
-  // Verify user is a tenant
+  // Verify user is a tenant (cheap profile lookup, no race impact)
   const { data: profile } = await adminClient
     .from('profiles')
     .select('role')
@@ -31,64 +43,53 @@ export async function POST(request: Request) {
     return badRequest('Only tenants can redeem pairing codes');
   }
 
-  // Find contract with matching pairing code
-  // We query using raw SQL-like filter since pairing_code may be a JSON field
-  const { data: contracts } = await adminClient
-    .from('contracts')
-    .select('id, tenant_id, landlord_id, pairing_code, pairing_expires_at')
-    .eq('pairing_code' as string, parsed.data.code.toUpperCase())
-    .in('status', ['pending', 'active']);
-
-  const contract = (
-    contracts as unknown as Array<{
-      id: string;
-      tenant_id: string | null;
-      landlord_id: string;
-      pairing_code: string;
-      pairing_expires_at: string;
-    }>
-  )?.[0];
-
-  if (!contract) {
-    return badRequest('Invalid or expired pairing code');
-  }
-
-  // Check expiry
-  if (new Date(contract.pairing_expires_at) < new Date()) {
-    return badRequest('Pairing code has expired');
-  }
-
-  // Check if already paired
-  if (contract.tenant_id && contract.tenant_id !== user.id) {
-    return forbidden();
-  }
-
-  // Step 1: Link tenant and clear pairing code — leave status untouched
-  const { error: pairError } = await adminClient
+  // Atomic claim: one UPDATE that only touches a contract which is
+  //   (a) has a matching pairing code,
+  //   (b) still unclaimed (tenant_id IS NULL),
+  //   (c) in a status that can accept pairing,
+  //   (d) not yet expired.
+  // PostgREST turns this into a single SQL UPDATE ... WHERE ... RETURNING.
+  const nowIso = new Date().toISOString();
+  const { data: claimed, error: claimError } = await adminClient
     .from('contracts')
     .update({
       tenant_id: user.id,
       pairing_code: null,
       pairing_expires_at: null,
     } as Record<string, unknown>)
-    .eq('id', contract.id);
+    .eq('pairing_code', parsed.data.code.toUpperCase())
+    .is('tenant_id', null)
+    .in('status', ['pending', 'active'])
+    .gt('pairing_expires_at', nowIso)
+    .select('id, landlord_id')
+    .maybeSingle();
 
-  if (pairError) {
-    return serverError(pairError.message);
+  if (claimError) {
+    return serverError(claimError.message);
   }
 
-  // Step 2: Route through activateContract — flips status to active AND seeds 12 payment rows
-  const result = await activateContract(adminClient, contract.id);
+  if (!claimed) {
+    // Either the code doesn't exist, already claimed, or expired.
+    // Return a generic "code_already_used" rather than a 404 so the
+    // client sees a single consistent failure mode for all three cases.
+    return NextResponse.json({ error: 'code_already_used' }, { status: 409 });
+  }
+
+  // Step 2: Route through activateContract — flips status to active AND
+  // seeds the rent payment rows. This must succeed for the pairing to be
+  // meaningful; if it fails we leave the tenant linked but inactive and
+  // the landlord can retry.
+  const result = await activateContract(adminClient, claimed.id);
   if (!result.success) {
     return NextResponse.json({ error: result.error }, { status: 500 });
   }
 
   // Fire-and-forget: notify both parties of successful pairing
-  void onTenantPaired(contract.id);
+  void onTenantPaired(claimed.id);
 
   return NextResponse.json({
     success: true,
-    contract_id: contract.id,
+    contract_id: claimed.id,
     message: 'Successfully paired to contract',
   });
 }
