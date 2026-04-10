@@ -23,10 +23,13 @@ function formatFileSize(bytes: number | null): string {
 
 interface TenantDocumentsClientProps {
   documents: Document[];
-  activeContractId: string | null;
+  activeContractId?: string | null;
 }
 
-export function TenantDocumentsClient({ documents, activeContractId: _activeContractId }: TenantDocumentsClientProps) {
+export function TenantDocumentsClient({
+  documents,
+  activeContractId: _activeContractId,
+}: TenantDocumentsClientProps) {
   const { t, formatDate } = useI18n();
 
   const categoryLabel = (cat: string): string => {
