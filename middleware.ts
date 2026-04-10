@@ -53,14 +53,6 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Block dev routes unless NODE_ENV is not production AND DEV_ENDPOINTS_ENABLED=true
-  if (
-    pathname.startsWith('/api/dev') &&
-    (process.env.NODE_ENV === 'production' || process.env.DEV_ENDPOINTS_ENABLED !== 'true')
-  ) {
-    return NextResponse.json({ error: 'Not available' }, { status: 404 });
-  }
-
   // API routes — skip middleware (handled by route handlers)
   if (pathname.startsWith('/api/')) {
     return response;
