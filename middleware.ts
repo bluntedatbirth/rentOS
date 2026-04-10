@@ -21,9 +21,9 @@ export async function middleware(request: NextRequest) {
     request: { headers: request.headers },
   });
 
-  // Skip auth checks if Supabase is not configured
+  // Fail-closed: if Supabase is not configured, block all traffic
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    return response;
+    return NextResponse.redirect(new URL('/maintenance', request.url));
   }
 
   const supabase = createServerClient(
