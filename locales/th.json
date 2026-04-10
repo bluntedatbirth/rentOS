@@ -637,6 +637,7 @@
   "payments.no_future_payments": "ไม่มีรายการที่จะถึง",
   "payments.no_payments_yet": "ยังไม่มีรายการชำระเงิน",
   "payments.v2_not_yet_payable": "ยังชำระไม่ได้",
+  "payments.download_receipt": "ดาวน์โหลดใบเสร็จ",
   "penalties.manual_entry": "เพิ่มด้วยตนเอง",
   "penalties.raised_success": "สร้างค่าปรับแล้ว!",
   "penalties.action_success": "ดำเนินการสำเร็จ!",

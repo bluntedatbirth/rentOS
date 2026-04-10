@@ -637,6 +637,7 @@
   "payments.no_future_payments": "No future payments",
   "payments.no_payments_yet": "No payments yet",
   "payments.v2_not_yet_payable": "Not yet payable",
+  "payments.download_receipt": "Download Receipt",
   "penalties.manual_entry": "Manual entry",
   "penalties.raised_success": "Penalty created!",
   "penalties.action_success": "Action completed!",

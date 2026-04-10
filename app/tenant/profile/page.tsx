@@ -1,7 +1,5 @@
-'use client';
-
-import ProfileForm from '@/components/profile/ProfileForm';
+import { redirect } from 'next/navigation';
 
 export default function TenantProfilePage() {
-  return <ProfileForm />;
+  redirect('/tenant/settings');
 }

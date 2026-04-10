@@ -637,6 +637,7 @@
   "payments.no_future_payments": "暂无待付款项",
   "payments.no_payments_yet": "暂无付款记录",
   "payments.v2_not_yet_payable": "尚未到付款期",
+  "payments.download_receipt": "下载收据",
   "penalties.manual_entry": "手动输入",
   "penalties.raised_success": "违约金已创建！",
   "penalties.action_success": "操作成功！",
