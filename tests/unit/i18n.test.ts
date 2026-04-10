@@ -1,25 +1,52 @@
 import { describe, it, expect } from 'vitest';
-import { t, setLocale, getLocale } from '@/lib/i18n';
+import enLocale from '@/locales/en.json';
+import thLocale from '@/locales/th.json';
+import zhLocale from '@/locales/zh.json';
+import { detectSystemLocale } from '@/lib/i18n/context';
 
-describe('i18n', () => {
-  it('returns Thai string by default', () => {
-    setLocale('th');
-    expect(t('app.title')).toBe('RentOS');
+const enKeys = Object.keys(enLocale);
+const thKeys = Object.keys(thLocale);
+const zhKeys = Object.keys(zhLocale);
+
+describe('locale JSON parity', () => {
+  it('en and th have the same keys', () => {
+    expect(thKeys.sort()).toEqual(enKeys.sort());
   });
 
-  it('returns English string when locale is en', () => {
-    setLocale('en');
-    expect(t('app.title')).toBe('RentOS');
+  it('en and zh have the same keys', () => {
+    expect(zhKeys.sort()).toEqual(enKeys.sort());
   });
 
-  it('returns the key if not found', () => {
-    expect(t('missing.key')).toBe('missing.key');
+  it('all locales are non-empty', () => {
+    expect(enKeys.length).toBeGreaterThan(100);
+    expect(thKeys.length).toBeGreaterThan(100);
+    expect(zhKeys.length).toBeGreaterThan(100);
   });
 
-  it('tracks locale correctly', () => {
-    setLocale('th');
-    expect(getLocale()).toBe('th');
-    setLocale('en');
-    expect(getLocale()).toBe('en');
+  it('app.title is RentOS in all locales', () => {
+    const en = enLocale as Record<string, string>;
+    const th = thLocale as Record<string, string>;
+    const zh = zhLocale as Record<string, string>;
+    expect(en['app.title']).toBe('RentOS');
+    expect(th['app.title']).toBe('RentOS');
+    expect(zh['app.title']).toBe('RentOS');
+  });
+
+  it('error keys exist in all three locales', () => {
+    const en = enLocale as Record<string, string>;
+    const th = thLocale as Record<string, string>;
+    const zh = zhLocale as Record<string, string>;
+    for (const key of ['error.title', 'error.description', 'error.try_again']) {
+      expect(en[key]).toBeTruthy();
+      expect(th[key]).toBeTruthy();
+      expect(zh[key]).toBeTruthy();
+    }
+  });
+});
+
+describe('detectSystemLocale', () => {
+  it('returns null in non-browser environment (SSR)', () => {
+    // In Vitest/Node, window is undefined
+    expect(detectSystemLocale()).toBeNull();
   });
 });
