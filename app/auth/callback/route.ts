@@ -11,6 +11,15 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
 
+  // Debug mode: gate on env flag AND explicit query param so it can't be hit accidentally
+  const isDebug =
+    process.env.DEBUG_ENDPOINTS_ENABLED === 'true' && requestUrl.searchParams.get('debug') === '1';
+
+  // Diagnostic accumulator — populated throughout the handler; always logged to Vercel
+  const diag: Record<string, unknown> = {
+    code_present: !!code,
+  };
+
   if (code) {
     const cookieStore = cookies();
     const supabase = createServerClient<Database>(
@@ -35,8 +44,14 @@ export async function GET(request: NextRequest) {
       error: exchangeError,
     } = await supabase.auth.exchangeCodeForSession(code);
 
+    diag.exchange_error = exchangeError ? String(exchangeError) : null;
+    diag.has_session = !!session;
+    diag.user_id = session?.user?.id ?? null;
+
     if (exchangeError || !session) {
       console.error('[callback] exchangeCodeForSession failed', exchangeError);
+      diag.final_redirect = '/login?error=oauth_failed';
+      console.log('[callback-diag]', diag);
       return NextResponse.redirect(new URL('/login?error=oauth_failed', requestUrl.origin));
     }
 
@@ -48,11 +63,18 @@ export async function GET(request: NextRequest) {
       );
 
       // Check if profile exists
-      const { data: existingProfile } = await adminClient
+      const { data: existingProfile, error: existingProfileError } = await adminClient
         .from('profiles')
         .select('id, role')
         .eq('id', session.user.id)
         .single();
+
+      diag.existing_profile_query_result = existingProfile
+        ? { id: existingProfile.id, role: existingProfile.role }
+        : null;
+      diag.existing_profile_query_error = existingProfileError
+        ? String(existingProfileError)
+        : null;
 
       if (!existingProfile) {
         // Auto-create profile from user metadata (set during signup)
@@ -67,6 +89,8 @@ export async function GET(request: NextRequest) {
               ? 'tenant'
               : 'landlord';
 
+        diag.resolved_role = resolvedRole;
+
         // Defensive full_name mapping: Google may return `full_name`, Facebook/Apple return `name`
         const fullName =
           typeof metadata.full_name === 'string' && metadata.full_name
@@ -79,6 +103,7 @@ export async function GET(request: NextRequest) {
         const oneYearFromNow = new Date();
         oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
+        diag.upsert_attempted = true;
         const { error: upsertError } = await adminClient.from('profiles').upsert(
           {
             id: session.user.id,
@@ -92,6 +117,7 @@ export async function GET(request: NextRequest) {
           },
           { onConflict: 'id', ignoreDuplicates: true }
         );
+        diag.upsert_error = upsertError ? String(upsertError) : null;
         if (upsertError) {
           console.error('[callback] profile upsert failed', upsertError);
         }
@@ -121,10 +147,17 @@ export async function GET(request: NextRequest) {
         // If the new tenant signed up via a QR pair link, drop them directly into
         // the pair page so the code is auto-redeemed before they hit the dashboard.
         if (resolvedRole === 'tenant' && pairCode && /^[A-Z0-9]{6}$/.test(pairCode)) {
-          return NextResponse.redirect(new URL(`/tenant/pair?code=${pairCode}`, requestUrl.origin));
+          const target = `/tenant/pair?code=${pairCode}`;
+          diag.final_redirect = target;
+          console.log('[callback-diag]', diag);
+          if (isDebug) return debugHtmlResponse(diag, target, requestUrl.origin);
+          return NextResponse.redirect(new URL(target, requestUrl.origin));
         }
 
         const dashboard = resolvedRole === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
+        diag.final_redirect = dashboard;
+        console.log('[callback-diag]', diag);
+        if (isDebug) return debugHtmlResponse(diag, dashboard, requestUrl.origin);
         return NextResponse.redirect(new URL(dashboard, requestUrl.origin));
       }
 
@@ -137,17 +170,59 @@ export async function GET(request: NextRequest) {
           : typeof metadata?.pair_code === 'string'
             ? metadata.pair_code
             : null;
+
+      diag.resolved_role = existingProfile.role;
+      diag.upsert_attempted = false;
+
       if (existingProfile.role === 'tenant' && pairCode && /^[A-Z0-9]{6}$/.test(pairCode)) {
-        return NextResponse.redirect(new URL(`/tenant/pair?code=${pairCode}`, requestUrl.origin));
+        const target = `/tenant/pair?code=${pairCode}`;
+        diag.final_redirect = target;
+        console.log('[callback-diag]', diag);
+        if (isDebug) return debugHtmlResponse(diag, target, requestUrl.origin);
+        return NextResponse.redirect(new URL(target, requestUrl.origin));
       }
 
       // Redirect based on existing profile role
       const dashboard =
         existingProfile.role === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
+      diag.final_redirect = dashboard;
+      console.log('[callback-diag]', diag);
+      if (isDebug) return debugHtmlResponse(diag, dashboard, requestUrl.origin);
       return NextResponse.redirect(new URL(dashboard, requestUrl.origin));
     }
   }
 
   // If no code or session, redirect to login
+  diag.final_redirect = '/login?error=missing_code';
+  console.log('[callback-diag]', diag);
   return NextResponse.redirect(new URL('/login?error=missing_code', requestUrl.origin));
+}
+
+/** Returns a plain HTML diagnostic page when debug mode is active. */
+function debugHtmlResponse(
+  diag: Record<string, unknown>,
+  target: string,
+  origin: string
+): Response {
+  const json = JSON.stringify(diag, null, 2);
+  const continueUrl = `${origin}${target}`;
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Callback Debug</title>
+<style>body{font-family:monospace;padding:2rem;background:#0f0f0f;color:#e5e5e5}
+pre{background:#1a1a1a;padding:1rem;border-radius:6px;overflow:auto;white-space:pre-wrap}
+a{color:#facc15;font-size:1.1rem}</style></head>
+<body>
+<h2>Auth Callback — Debug Output</h2>
+<pre>${escapeHtml(json)}</pre>
+<p><a href="${continueUrl}">Continue to ${escapeHtml(target)}</a></p>
+</body></html>`;
+  return new Response(html, {
+    status: 200,
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  });
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

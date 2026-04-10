@@ -86,17 +86,44 @@ export async function middleware(request: NextRequest) {
         .eq('id', user.id)
         .single();
 
+      const profileViaSession = profile?.role ?? null;
+
       // Fallback: anon-key lookup may return null if RLS policy is missing on the
       // live DB. Try service-role client before giving up.
+      let profileViaServiceRole: string | null = null;
       if (!profile) {
         profile = await getProfileViaServiceRole(user.id);
+        profileViaServiceRole = profile?.role ?? null;
       }
 
       if (profile) {
         const dashboardUrl =
           profile.role === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
+        console.log('[middleware]', {
+          pathname,
+          has_user: true,
+          profile_via_session_client: profileViaSession,
+          profile_via_service_role: profileViaServiceRole,
+          redirect_target: dashboardUrl,
+        });
         return NextResponse.redirect(new URL(dashboardUrl, request.url));
       }
+
+      console.log('[middleware]', {
+        pathname,
+        has_user: true,
+        profile_via_session_client: profileViaSession,
+        profile_via_service_role: profileViaServiceRole,
+        redirect_target: 'passthrough',
+      });
+    } else {
+      console.log('[middleware]', {
+        pathname,
+        has_user: false,
+        profile_via_session_client: null,
+        profile_via_service_role: null,
+        redirect_target: 'passthrough',
+      });
     }
     return response;
   }
@@ -106,40 +133,86 @@ export async function middleware(request: NextRequest) {
   const protectedPrefixes = ['/landlord', '/tenant', '/admin'];
   const isProtected = protectedPrefixes.some((p) => pathname === p || pathname.startsWith(p + '/'));
   if (!isProtected) {
+    console.log('[middleware]', {
+      pathname,
+      has_user: !!user,
+      profile_via_session_client: null,
+      profile_via_service_role: null,
+      redirect_target: 'passthrough',
+    });
     return response;
   }
 
   if (!user) {
+    console.log('[middleware]', {
+      pathname,
+      has_user: false,
+      profile_via_session_client: null,
+      profile_via_service_role: null,
+      redirect_target: '/login',
+    });
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // Role-based routing
   let { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
 
+  const profileViaSession = profile?.role ?? null;
+
   // Fallback: anon-key lookup may return null if RLS policy is missing on the
   // live DB (e.g., policy was never applied or was accidentally dropped).
   // Service-role client bypasses RLS — this is the belt-and-suspenders fix that
   // keeps the OAuth callback redirect loop from occurring while the migration is
   // being applied manually via the Supabase dashboard.
+  let profileViaServiceRole: string | null = null;
   if (!profile) {
     profile = await getProfileViaServiceRole(user.id);
+    profileViaServiceRole = profile?.role ?? null;
   }
 
   if (!profile) {
     // No profile yet — redirect to signup
+    console.log('[middleware]', {
+      pathname,
+      has_user: true,
+      profile_via_session_client: profileViaSession,
+      profile_via_service_role: profileViaServiceRole,
+      redirect_target: '/signup',
+    });
     return NextResponse.redirect(new URL('/signup', request.url));
   }
 
   // Block wrong-role access
   // Landlord-only routes: /landlord/*, including /landlord/dashboard, /landlord/billing/*, /landlord/onboarding
   if (pathname.startsWith('/landlord') && profile.role !== 'landlord') {
+    console.log('[middleware]', {
+      pathname,
+      has_user: true,
+      profile_via_session_client: profileViaSession,
+      profile_via_service_role: profileViaServiceRole,
+      redirect_target: '/tenant/dashboard',
+    });
     return NextResponse.redirect(new URL('/tenant/dashboard', request.url));
   }
   // Tenant-only routes: /tenant/*, including /tenant/dashboard, /tenant/onboarding
   if (pathname.startsWith('/tenant') && profile.role !== 'tenant') {
+    console.log('[middleware]', {
+      pathname,
+      has_user: true,
+      profile_via_session_client: profileViaSession,
+      profile_via_service_role: profileViaServiceRole,
+      redirect_target: '/landlord/dashboard',
+    });
     return NextResponse.redirect(new URL('/landlord/dashboard', request.url));
   }
 
+  console.log('[middleware]', {
+    pathname,
+    has_user: true,
+    profile_via_session_client: profileViaSession,
+    profile_via_service_role: profileViaServiceRole,
+    redirect_target: 'passthrough',
+  });
   return response;
 }
 
