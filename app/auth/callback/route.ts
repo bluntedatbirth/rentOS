@@ -4,6 +4,8 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { Database } from '@/lib/supabase/types';
+import { sendEmail } from '@/lib/email/send';
+import { welcomeOauthTemplate } from '@/lib/email/templates/welcomeOauth';
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -30,7 +32,13 @@ export async function GET(request: NextRequest) {
 
     const {
       data: { session },
+      error: exchangeError,
     } = await supabase.auth.exchangeCodeForSession(code);
+
+    if (exchangeError || !session) {
+      console.error('[callback] exchangeCodeForSession failed', exchangeError);
+      return NextResponse.redirect(new URL('/login?error=oauth_failed', requestUrl.origin));
+    }
 
     if (session?.user) {
       // Use service role client for profile operations (bypasses RLS)
@@ -85,6 +93,19 @@ export async function GET(request: NextRequest) {
           { onConflict: 'id', ignoreDuplicates: true }
         );
 
+        // Fresh OAuth signup → fire welcome email (non-blocking)
+        const provider = session.user.app_metadata.provider;
+        if (provider && provider !== 'email') {
+          const dashboard =
+            resolvedRole === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
+          const dashboardUrl = `${requestUrl.origin}${dashboard}`;
+          void sendEmail({
+            to: session.user.email!,
+            kind: 'welcome_oauth',
+            ...welcomeOauthTemplate({ fullName, role: resolvedRole, dashboardUrl }),
+          });
+        }
+
         // pair_code resolution: query param → metadata
         const queryPair = requestUrl.searchParams.get('pair');
         const pairCode =
@@ -125,5 +146,5 @@ export async function GET(request: NextRequest) {
   }
 
   // If no code or session, redirect to login
-  return NextResponse.redirect(new URL('/login', requestUrl.origin));
+  return NextResponse.redirect(new URL('/login?error=missing_code', requestUrl.origin));
 }

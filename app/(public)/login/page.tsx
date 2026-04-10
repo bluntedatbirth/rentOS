@@ -1,17 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
 import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons';
+import { ForgotPasswordLink } from './components/ForgotPasswordLink';
 
-export default function LoginPage() {
+function LoginPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, profile, signInWithOtp, signInWithPassword } = useAuth();
   const { t } = useI18n();
+  const urlError = searchParams.get('error');
+  const urlMsg = searchParams.get('msg');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState<'password' | 'magic_link'>('password');
@@ -62,6 +66,27 @@ export default function LoginPage() {
           <p className="mt-0.5 text-xs text-amber-700">{t('auth.beta_description')}</p>
         </div>
 
+        {/* URL-driven banners */}
+        {urlError === 'oauth_failed' && (
+          <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+            <p className="text-sm text-amber-800">
+              Google sign-in didn&apos;t complete. Please try again or sign up with email.
+            </p>
+          </div>
+        )}
+        {urlError === 'missing_code' && (
+          <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+            <p className="text-sm text-amber-800">Authentication link expired or invalid.</p>
+          </div>
+        )}
+        {urlMsg === 'password_reset_success' && (
+          <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+            <p className="text-sm text-green-800">
+              Password updated. Sign in with your new password.
+            </p>
+          </div>
+        )}
+
         {sent ? (
           <div className="rounded-lg border border-warm-200 bg-white p-6 shadow-sm">
             <h2 className="mb-2 text-lg font-semibold text-charcoal-900">
@@ -109,8 +134,11 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={t('auth.password_placeholder')}
-                    className="mb-4 block w-full rounded-lg border border-warm-200 bg-warm-50 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                    className="mb-1 block w-full rounded-lg border border-warm-200 bg-warm-50 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                   />
+                  <div className="mb-3">
+                    <ForgotPasswordLink />
+                  </div>
                 </>
               )}
 
@@ -188,5 +216,13 @@ export default function LoginPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageInner />
+    </Suspense>
   );
 }

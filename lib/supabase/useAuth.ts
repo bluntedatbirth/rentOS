@@ -66,13 +66,17 @@ export function useAuth() {
   }, []);
 
   const signInWithOtp = useCallback(async (email: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    return { error };
+    try {
+      const res = await fetch('/api/auth/magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) return { error: new Error('send_failed') };
+      return { error: null };
+    } catch (e) {
+      return { error: e instanceof Error ? e : new Error('send_failed') };
+    }
   }, []);
 
   const signUp = useCallback(
@@ -95,19 +99,45 @@ export function useAuth() {
             data: metadata,
           },
         });
+        if (!error) {
+          // Fire-and-forget: send our own confirmation email via Resend
+          void fetch('/api/auth/magic-link', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, metadata }),
+          });
+        }
         return { error };
       }
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-          data: metadata,
-        },
-      });
-      return { error };
+      // Passwordless: POST to our own magic-link endpoint
+      try {
+        const res = await fetch('/api/auth/magic-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, metadata }),
+        });
+        if (!res.ok) return { error: new Error('send_failed') };
+        return { error: null };
+      } catch (e) {
+        return { error: e instanceof Error ? e : new Error('send_failed') };
+      }
     },
     []
   );
+
+  const sendPasswordReset = useCallback(async (email: string) => {
+    try {
+      const res = await fetch('/api/auth/password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) return { error: new Error('send_failed') };
+      return { error: null };
+    } catch (e) {
+      return { error: e instanceof Error ? e : new Error('send_failed') };
+    }
+  }, []);
 
   const signInWithPassword = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -144,5 +174,6 @@ export function useAuth() {
     signUp,
     signOut,
     signInWithOAuth,
+    sendPasswordReset,
   };
 }
