@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import thLocale from '@/locales/th.json';
 import enLocale from '@/locales/en.json';
 import zhLocale from '@/locales/zh.json';
@@ -66,6 +67,7 @@ export function I18nProvider({
   // Capture initialLocale in a ref so the mount effect can use it without
   // adding it to the deps array (it is a mount-time constant and never changes).
   const initialLocaleRef = useRef(initialLocale);
+  const router = useRouter();
 
   // Hydrate locale on mount (priority order):
   //   1. profile.language (wired externally via initialLocale prop — already applied)
@@ -99,23 +101,34 @@ export function I18nProvider({
     }
   }, []);
 
-  const setLocale = useCallback((newLocale: Locale) => {
-    setLocaleState(newLocale);
-    document.documentElement.lang = newLocale;
-    localStorage.setItem('rentos_locale', newLocale);
-    // Sync cookie so SSR on the next navigation renders in the correct locale (no flash)
-    if (typeof document !== 'undefined') {
-      document.cookie = `rentos_locale=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
-    }
-    // Fire-and-forget: sync to profile when authenticated (401 is fine for guests)
-    fetch('/api/profile/language', {
-      method: 'PATCH',
-      body: JSON.stringify({ language: newLocale }),
-      headers: { 'Content-Type': 'application/json' },
-    }).catch(() => {
-      /* ignore */
-    });
-  }, []);
+  const setLocale = useCallback(
+    (newLocale: Locale) => {
+      setLocaleState(newLocale);
+      document.documentElement.lang = newLocale;
+      localStorage.setItem('rentos_locale', newLocale);
+      // Sync cookie so SSR on the next navigation renders in the correct locale (no flash)
+      if (typeof document !== 'undefined') {
+        document.cookie = `rentos_locale=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
+      }
+      // Tell Next.js to re-fetch Server Components so the new cookie is picked up
+      // and server-rendered copy updates without a hard refresh. Fire-and-forget —
+      // client components update reactively from the context change above.
+      try {
+        router?.refresh();
+      } catch {
+        /* defensive: never crash setLocale if router is unavailable */
+      }
+      // Fire-and-forget: sync to profile when authenticated (401 is fine for guests)
+      fetch('/api/profile/language', {
+        method: 'PATCH',
+        body: JSON.stringify({ language: newLocale }),
+        headers: { 'Content-Type': 'application/json' },
+      }).catch(() => {
+        /* ignore */
+      });
+    },
+    [router]
+  );
 
   const t = useCallback(
     (key: string) => {
