@@ -155,9 +155,29 @@ export function useAuth() {
       provider: 'google' | 'facebook' | 'apple',
       opts?: { role?: 'landlord' | 'tenant'; pairCode?: string }
     ): Promise<{ error: Error | null }> => {
-      const role = opts?.role ?? '';
-      const pairPart = opts?.pairCode ? `&pair=${encodeURIComponent(opts.pairCode)}` : '';
-      const redirectTo = `${window.location.origin}/auth/callback?role=${role}${pairPart}`;
+      // Store role/pairCode in short-lived cookies so the redirectTo can be a
+      // clean path with NO query string. Supabase's Redirect URLs allowlist
+      // matcher has been observed to fall back to Site URL when the redirectTo
+      // carries query params, even though the docs claim query params are
+      // ignored. Cookies survive the OAuth redirect chain and are read by
+      // /auth/callback server-side to resolve the role.
+      if (typeof document !== 'undefined') {
+        if (opts?.role) {
+          document.cookie = `oauth_role=${opts.role}; path=/; max-age=600; SameSite=Lax`;
+        }
+        if (opts?.pairCode) {
+          document.cookie = `oauth_pair=${encodeURIComponent(opts.pairCode)}; path=/; max-age=600; SameSite=Lax`;
+        }
+      }
+      const redirectTo = `${window.location.origin}/auth/callback`;
+      // Temporary diagnostic — visible in browser DevTools console during the
+      // OAuth button click. Safe to remove once the flow is confirmed stable.
+      console.log('[oauth] signInWithOAuth', {
+        provider,
+        redirectTo,
+        role: opts?.role,
+        pairCode: opts?.pairCode,
+      });
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: { redirectTo },

@@ -80,14 +80,22 @@ export async function GET(request: NextRequest) {
         // Auto-create profile from user metadata (set during signup)
         const metadata = session.user.user_metadata;
 
-        // Role resolution: query param → metadata → default 'landlord'
+        // Role resolution: query param → cookie → metadata → default 'landlord'
+        // The cookie branch handles OAuth flows where we can't put query params
+        // on the redirectTo (Supabase allowlist falls back to Site URL when
+        // redirectTo carries a query string, even though docs say otherwise).
         const queryRole = requestUrl.searchParams.get('role');
+        const cookieRoleRaw = cookieStore.get('oauth_role')?.value ?? null;
+        const cookieRole =
+          cookieRoleRaw === 'landlord' || cookieRoleRaw === 'tenant' ? cookieRoleRaw : null;
         const resolvedRole: 'landlord' | 'tenant' =
           queryRole === 'landlord' || queryRole === 'tenant'
             ? queryRole
-            : metadata.role === 'tenant'
-              ? 'tenant'
-              : 'landlord';
+            : cookieRole
+              ? cookieRole
+              : metadata.role === 'tenant'
+                ? 'tenant'
+                : 'landlord';
 
         diag.resolved_role = resolvedRole;
 
@@ -135,14 +143,18 @@ export async function GET(request: NextRequest) {
           });
         }
 
-        // pair_code resolution: query param → metadata
+        // pair_code resolution: query param → cookie → metadata
         const queryPair = requestUrl.searchParams.get('pair');
+        const cookiePairRaw = cookieStore.get('oauth_pair')?.value ?? null;
+        const cookiePair = cookiePairRaw ? decodeURIComponent(cookiePairRaw).toUpperCase() : null;
         const pairCode =
           typeof queryPair === 'string' && queryPair
             ? queryPair.toUpperCase()
-            : typeof metadata.pair_code === 'string'
-              ? metadata.pair_code
-              : null;
+            : cookiePair
+              ? cookiePair
+              : typeof metadata.pair_code === 'string'
+                ? metadata.pair_code
+                : null;
 
         // If the new tenant signed up via a QR pair link, drop them directly into
         // the pair page so the code is auto-redeemed before they hit the dashboard.
@@ -161,15 +173,19 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(new URL(dashboard, requestUrl.origin));
       }
 
-      // Existing profile: still honour pair_code — check query param first, then metadata
+      // Existing profile: still honour pair_code — query param → cookie → metadata
       const metadata = session.user.user_metadata;
       const queryPair = requestUrl.searchParams.get('pair');
+      const cookiePairRaw = cookieStore.get('oauth_pair')?.value ?? null;
+      const cookiePair = cookiePairRaw ? decodeURIComponent(cookiePairRaw).toUpperCase() : null;
       const pairCode =
         typeof queryPair === 'string' && queryPair
           ? queryPair.toUpperCase()
-          : typeof metadata?.pair_code === 'string'
-            ? metadata.pair_code
-            : null;
+          : cookiePair
+            ? cookiePair
+            : typeof metadata?.pair_code === 'string'
+              ? metadata.pair_code
+              : null;
 
       diag.resolved_role = existingProfile.role;
       diag.upsert_attempted = false;
