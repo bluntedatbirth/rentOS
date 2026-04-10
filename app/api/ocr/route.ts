@@ -1,29 +1,28 @@
 import { z } from 'zod';
-import { createClient } from '@supabase/supabase-js';
-import { getAuthenticatedUser, unauthorized, badRequest } from '@/lib/supabase/api';
+import { createServiceRoleClient } from '@/lib/supabase/server';
+import { getAuthenticatedUser, unauthorized, badRequest, forbidden } from '@/lib/supabase/api';
 import { extractContractWithProgress, ContractValidationError } from '@/lib/claude/extractContract';
 import { checkRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
-import type { Database } from '@/lib/supabase/types';
 
 const ocrRequestSchema = z.object({
   contract_id: z.string().uuid(),
-  file_url: z.string(),
   file_type: z.enum(['image', 'pdf']),
-  property_id: z.string().uuid().optional(),
+  // file_url is accepted but ignored — storage path is derived server-side from the contract record
+  file_url: z.string().optional(),
 });
 
 function getMimeType(
   fileType: string,
-  fileUrl: string
+  storagePath: string
 ): 'image/jpeg' | 'image/png' | 'image/webp' | 'application/pdf' {
   if (fileType === 'pdf') return 'application/pdf';
-  if (fileUrl.endsWith('.png')) return 'image/png';
-  if (fileUrl.endsWith('.webp')) return 'image/webp';
+  if (storagePath.endsWith('.png')) return 'image/png';
+  if (storagePath.endsWith('.webp')) return 'image/webp';
   return 'image/jpeg';
 }
 
 export async function POST(request: Request) {
-  const { user } = await getAuthenticatedUser();
+  const { user, supabase: sessionClient } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
   // Persistent rate limit: 10/hour, 20/day per user
@@ -48,16 +47,36 @@ export async function POST(request: Request) {
     return badRequest(parsed.error.issues.map((i) => i.message).join(', '));
   }
 
-  const { contract_id, file_url, file_type } = parsed.data;
+  const { contract_id, file_type } = parsed.data;
 
-  if (file_url.includes('..') || file_url.includes('//')) {
-    return badRequest('Invalid file path');
+  // Ownership check BEFORE any storage access: fetch via session client (RLS-enforced).
+  // The session client will only return the contract if landlord_id = auth.uid() per RLS.
+  // We also explicitly verify landlord_id === user.id as belt-and-suspenders.
+  const { data: contract, error: contractFetchError } = await sessionClient
+    .from('contracts')
+    .select('id, property_id, landlord_id, original_file_url')
+    .eq('id', contract_id)
+    .single();
+
+  if (contractFetchError || !contract) {
+    return forbidden();
   }
 
-  const adminClient = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  if (contract.landlord_id !== user.id) {
+    return forbidden();
+  }
+
+  // Derive storage path server-side from the stored URL — never use client-supplied path.
+  // URL format: https://<project>.supabase.co/storage/v1/object/public/contracts/<storagePath>
+  const storagePath = contract.original_file_url
+    ? contract.original_file_url.split('/storage/v1/object/public/contracts/')[1] ?? null
+    : null;
+
+  if (!storagePath) {
+    return badRequest('Contract has no associated file');
+  }
+
+  const adminClient = createServiceRoleClient();
 
   // Stream progress via SSE
   const encoder = new TextEncoder();
@@ -68,12 +87,12 @@ export async function POST(request: Request) {
       }
 
       try {
-        // Step 1: Download file
+        // Step 1: Download file using server-side derived path (not client-supplied)
         send({ step: 'downloading', progress: 5, message: 'ocr.step_downloading' });
 
         const { data: fileData, error: downloadError } = await adminClient.storage
           .from('contracts')
-          .download(file_url);
+          .download(storagePath);
 
         if (downloadError || !fileData) {
           send({ step: 'error', error: 'Failed to download file' });
@@ -89,7 +108,7 @@ export async function POST(request: Request) {
 
         const arrayBuffer = await fileData.arrayBuffer();
         const base64 = Buffer.from(arrayBuffer).toString('base64');
-        const mimeType = getMimeType(file_type, file_url);
+        const mimeType = getMimeType(file_type, storagePath);
 
         send({ step: 'pass1', progress: 15, message: 'ocr.step_analyzing' });
 
@@ -111,20 +130,8 @@ export async function POST(request: Request) {
           }
         );
 
-        // Step 4: Verify ownership then update property
-        const { data: currentContract } = await adminClient
-          .from('contracts')
-          .select('property_id, landlord_id')
-          .eq('id', contract_id)
-          .single();
-
-        if (!currentContract || currentContract.landlord_id !== user.id) {
-          send({ step: 'error', error: 'Forbidden' });
-          controller.close();
-          return;
-        }
-
-        if (extracted.property && currentContract.property_id) {
+        // Step 4: Update property name if auto-detected
+        if (extracted.property && contract.property_id) {
           const prop = extracted.property;
           const propertyName =
             prop.name_en || prop.name_th || prop.address_en || 'Unnamed Property';
@@ -133,7 +140,7 @@ export async function POST(request: Request) {
           const { data: existingProp } = await adminClient
             .from('properties')
             .select('name')
-            .eq('id', currentContract.property_id)
+            .eq('id', contract.property_id)
             .single();
 
           if (existingProp?.name === 'Detecting from contract...') {
@@ -144,7 +151,7 @@ export async function POST(request: Request) {
                 address: propertyAddress,
                 unit_number: prop.unit_number || null,
               })
-              .eq('id', currentContract.property_id);
+              .eq('id', contract.property_id);
           }
         }
 
