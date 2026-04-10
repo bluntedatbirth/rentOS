@@ -10,6 +10,10 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { sendNotification } from '@/lib/notifications/send';
 
 async function handleCallback(request: Request) {
+  if (process.env.ALLOW_MOCK_CHECKOUT !== 'true') {
+    return NextResponse.json({ error: 'not_available' }, { status: 403 });
+  }
+
   const { user } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
@@ -37,7 +41,7 @@ async function handleCallback(request: Request) {
   // Fetch the slot purchase — must belong to the authenticated user and be pending
   const { data: purchase, error: fetchError } = await adminClient
     .from('slot_purchases')
-    .select('id, user_id, slots_added, status')
+    .select('id, user_id, slots_added, status, omise_charge_id')
     .eq('id', slotPurchaseId)
     .single();
 
@@ -51,6 +55,12 @@ async function handleCallback(request: Request) {
 
   if (purchase.status !== 'pending') {
     return badRequest('Slot purchase is not in pending state');
+  }
+
+  // Require a non-null Omise charge ID — a purchase with no charge ID was never
+  // initiated through real payment flow and must not be credited.
+  if (!purchase.omise_charge_id) {
+    return badRequest('invalid_purchase');
   }
 
   const slotsAdded = purchase.slots_added;
