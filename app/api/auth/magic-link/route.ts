@@ -37,22 +37,7 @@ export async function POST(request: Request) {
 
   const admin = createServiceRoleClient();
 
-  // Determine if user exists so we pick the right link type
-  let userExists = false;
-  try {
-    const { data: listData } = await admin.auth.admin.listUsers({ perPage: 1000 });
-    if (listData?.users) {
-      userExists = listData.users.some((u) => u.email?.toLowerCase() === email.toLowerCase());
-    }
-  } catch (e) {
-    console.error('[magic-link] listUsers failed', e);
-    return NextResponse.json({ ok: false, error: 'Server error' }, { status: 500 });
-  }
-
   // `magiclink` type creates the user if they don't exist and mints a sign-in link.
-  // We detect existence only to log accurately; the link type is always `magiclink`.
-  void userExists; // used for logging/future use only
-
   const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
     type: 'magiclink',
     email,
