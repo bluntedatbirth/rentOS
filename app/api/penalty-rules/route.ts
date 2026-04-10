@@ -17,7 +17,9 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from('penalty_rules')
-    .select('*')
+    .select(
+      'id, contract_id, landlord_id, clause_id, trigger_type, trigger_days, penalty_amount, penalty_description, auto_apply, is_active, created_at'
+    )
     .eq('contract_id', contractId)
     .eq('landlord_id', user.id)
     .order('created_at', { ascending: false });

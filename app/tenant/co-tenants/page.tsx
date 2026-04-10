@@ -15,7 +15,7 @@ interface CoTenant {
 
 export default function CoTenantsPage() {
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, formatPhone } = useI18n();
   const [contractId, setContractId] = useState<string | null>(null);
   const [coTenants, setCoTenants] = useState<CoTenant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,7 +86,7 @@ export default function CoTenantsPage() {
 
   if (!contractId) {
     return (
-      <div className="mx-auto max-w-lg py-12 text-center text-sm text-gray-500">
+      <div className="mx-auto max-w-lg py-12 text-center text-sm text-charcoal-500">
         {t('tenant.no_contract')}
       </div>
     );
@@ -94,8 +94,8 @@ export default function CoTenantsPage() {
 
   return (
     <div className="mx-auto max-w-lg">
-      <h2 className="mb-2 text-xl font-bold text-gray-900">{t('co_tenants.title')}</h2>
-      <p className="mb-6 text-sm text-gray-500">{t('co_tenants.description')}</p>
+      <h2 className="mb-2 text-xl font-bold text-charcoal-900">{t('co_tenants.title')}</h2>
+      <p className="mb-6 text-sm text-charcoal-500">{t('co_tenants.description')}</p>
 
       {/* Current co-tenants */}
       {coTenants.length > 0 ? (
@@ -106,8 +106,8 @@ export default function CoTenantsPage() {
               className="flex items-center justify-between rounded-lg bg-white p-4 shadow-sm"
             >
               <div>
-                <p className="text-sm font-medium text-gray-900">{ct.full_name}</p>
-                {ct.phone && <p className="text-xs text-gray-500">{ct.phone}</p>}
+                <p className="text-sm font-medium text-charcoal-900">{ct.full_name}</p>
+                {ct.phone && <p className="text-xs text-charcoal-500">{formatPhone(ct.phone)}</p>}
               </div>
               <button
                 type="button"
@@ -120,7 +120,7 @@ export default function CoTenantsPage() {
           ))}
         </div>
       ) : (
-        <div className="mb-6 rounded-lg bg-gray-50 p-6 text-center text-sm text-gray-500">
+        <div className="mb-6 rounded-lg bg-warm-50 p-6 text-center text-sm text-charcoal-500">
           {t('co_tenants.none')}
         </div>
       )}
@@ -128,33 +128,33 @@ export default function CoTenantsPage() {
       {/* Add co-tenant form */}
       {coTenants.length < 2 && (
         <div className="rounded-lg bg-white p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-gray-900">{t('co_tenants.add')}</h3>
+          <h3 className="mb-3 text-sm font-semibold text-charcoal-900">{t('co_tenants.add')}</h3>
           <div className="space-y-3">
             <input
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder={t('co_tenants.name_placeholder')}
-              className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
             />
             <input
               type="tel"
               value={newPhone}
               onChange={(e) => setNewPhone(e.target.value)}
               placeholder={t('co_tenants.phone_placeholder')}
-              className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
             />
             {error && <p className="text-sm text-red-600">{error}</p>}
             <button
               type="button"
               onClick={handleAdd}
               disabled={adding || !newName.trim()}
-              className="min-h-[44px] w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
             >
               {adding ? t('common.loading') : t('co_tenants.add_button')}
             </button>
           </div>
-          <p className="mt-2 text-xs text-gray-400">
+          <p className="mt-2 text-xs text-charcoal-400">
             {t('co_tenants.limit').replace('{}', `${2 - coTenants.length}`)}
           </p>
         </div>

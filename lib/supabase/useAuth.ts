@@ -5,7 +5,10 @@ import { createClient } from './client';
 import type { User } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-type Profile = Database['public']['Tables']['profiles']['Row'];
+type Profile = Pick<
+  Database['public']['Tables']['profiles']['Row'],
+  'id' | 'role' | 'full_name' | 'phone' | 'tier' | 'language' | 'created_at' | 'purchased_slots'
+>;
 
 interface AuthState {
   user: User | null;
@@ -31,7 +34,7 @@ export function useAuth() {
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, role, full_name, phone, tier, language, created_at, purchased_slots')
           .eq('id', session.user.id)
           .single();
 
@@ -49,7 +52,7 @@ export function useAuth() {
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, role, full_name, phone, tier, language, created_at, purchased_slots')
           .eq('id', session.user.id)
           .single();
 
@@ -75,7 +78,12 @@ export function useAuth() {
   const signUp = useCallback(
     async (
       email: string,
-      metadata: { role: 'landlord' | 'tenant'; full_name: string; phone: string },
+      metadata: {
+        role: 'landlord' | 'tenant';
+        full_name: string;
+        phone: string;
+        pair_code?: string;
+      },
       password?: string
     ) => {
       if (password) {
@@ -112,11 +120,29 @@ export function useAuth() {
     window.location.href = '/login';
   }, []);
 
+  const signInWithOAuth = useCallback(
+    async (
+      provider: 'google' | 'facebook' | 'apple',
+      opts?: { role?: 'landlord' | 'tenant'; pairCode?: string }
+    ): Promise<{ error: Error | null }> => {
+      const role = opts?.role ?? '';
+      const pairPart = opts?.pairCode ? `&pair=${encodeURIComponent(opts.pairCode)}` : '';
+      const redirectTo = `${window.location.origin}/auth/callback?role=${role}${pairPart}`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo },
+      });
+      return { error: error ?? null };
+    },
+    []
+  );
+
   return {
     ...state,
     signInWithOtp,
     signInWithPassword,
     signUp,
     signOut,
+    signInWithOAuth,
   };
 }

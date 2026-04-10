@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+const QRCodeSVG = dynamic(() => import('qrcode.react').then((mod) => mod.QRCodeSVG), {
+  ssr: false,
+});
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
@@ -35,11 +39,12 @@ export default function PairTenantPage() {
     setLoading(false);
   };
 
-  // Build QR data URL using a public QR API
-  const qrUrl = code
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-        `${typeof window !== 'undefined' ? window.location.origin : ''}/tenant/pair?code=${code}`
-      )}`
+  // Build the pairing URL for the QR code — generated entirely client-side.
+  // Points to /signup so unauthenticated tenants land directly in account creation
+  // with the code pre-filled. Already-authenticated tenants are forwarded by the
+  // signup page to /tenant/pair?code=… for immediate auto-redeem.
+  const qrValue = code
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/signup?pair=${code}`
     : null;
 
   if (!user) return <LoadingSkeleton count={2} />;
@@ -74,7 +79,7 @@ export default function PairTenantPage() {
             type="button"
             onClick={generateCode}
             disabled={loading}
-            className="min-h-[44px] rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="min-h-[44px] rounded-lg bg-saffron-500 px-6 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
           >
             {loading ? t('common.loading') : t('pairing.generate_button')}
           </button>
@@ -82,14 +87,10 @@ export default function PairTenantPage() {
         </div>
       ) : (
         <div className="rounded-lg bg-white p-6 text-center shadow-sm">
-          {/* QR Code */}
-          {qrUrl && (
+          {/* QR Code — rendered entirely client-side, no external requests */}
+          {qrValue && (
             <div className="mb-4 flex justify-center">
-              <img // eslint-disable-line @next/next/no-img-element
-                src={qrUrl}
-                alt="Pairing QR Code"
-                className="h-48 w-48 rounded-lg"
-              />
+              <QRCodeSVG value={qrValue} size={192} className="rounded-lg" />
             </div>
           )}
 
@@ -107,7 +108,7 @@ export default function PairTenantPage() {
           </p>
 
           {/* Instructions */}
-          <div className="rounded-lg bg-blue-50 p-4 text-left text-sm text-blue-800">
+          <div className="rounded-lg bg-saffron-50 p-4 text-left text-sm text-saffron-800">
             <p className="mb-2 font-semibold">{t('pairing.instructions_title')}</p>
             <ol className="list-inside list-decimal space-y-1 text-xs">
               <li>{t('pairing.step_1')}</li>

@@ -8,6 +8,7 @@ import {
 } from '@/lib/supabase/api';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { sendNotification } from '@/lib/notifications/send';
+import { activateContract } from '@/lib/contracts/activate';
 
 /**
  * POST /api/contracts/[id]/activate
@@ -23,7 +24,7 @@ export async function POST(_request: Request, { params }: { params: { id: string
   // Load the contract
   const { data: contractRaw, error: fetchError } = await admin
     .from('contracts')
-    .select('id, landlord_id, tenant_id, status, renewed_from')
+    .select('id, landlord_id, tenant_id, status, renewed_from, structured_clauses, lease_start')
     .eq('id', params.id)
     .single();
 
@@ -37,6 +38,8 @@ export async function POST(_request: Request, { params }: { params: { id: string
     tenant_id: string | null;
     status: string;
     renewed_from: string | null;
+    structured_clauses: unknown[] | null;
+    lease_start: string | null;
   };
 
   // Only the landlord can activate
@@ -49,28 +52,27 @@ export async function POST(_request: Request, { params }: { params: { id: string
     return badRequest('Contract is not awaiting signature');
   }
 
-  // Activate the renewal contract
-  const { error: activateError } = await admin
-    .from('contracts')
-    .update({ status: 'active' })
-    .eq('id', contract.id);
-
-  if (activateError) {
-    console.error('[Activate] Failed to activate:', activateError.message);
-    return serverError('Failed to activate contract');
+  // Check invariants before allowing transition
+  const hasClauses =
+    Array.isArray(contract.structured_clauses) && contract.structured_clauses.length > 0;
+  if (!hasClauses) {
+    return badRequest('Contract has no structured clauses and cannot be activated');
   }
 
-  // Expire the original contract
-  if (contract.renewed_from) {
-    const { error: expireError } = await admin
-      .from('contracts')
-      .update({ status: 'expired' })
-      .eq('id', contract.renewed_from);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const leaseStart = contract.lease_start ? new Date(contract.lease_start) : null;
+  if (!leaseStart || leaseStart > today) {
+    return badRequest(
+      `Lease start date (${contract.lease_start ?? 'not set'}) has not arrived yet`
+    );
+  }
 
-    if (expireError) {
-      console.error('[Activate] Failed to expire original:', expireError.message);
-      // Non-fatal — renewal is already activated
-    }
+  // Use shared helper to activate + seed payments
+  const result = await activateContract(admin, contract.id);
+  if (!result.success) {
+    console.error('[Activate] Failed:', result.error);
+    return serverError(`Failed to activate contract: ${result.error}`);
   }
 
   // Notify the tenant that the contract is now active
@@ -86,5 +88,5 @@ export async function POST(_request: Request, { params }: { params: { id: string
     });
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, seededPayments: result.seededCount });
 }

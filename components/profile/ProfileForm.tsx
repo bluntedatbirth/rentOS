@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
+import { formatPhone, stripPhone } from '@/lib/format/phone';
 
 export default function ProfileForm() {
   const { profile, loading } = useAuth();
@@ -17,7 +18,7 @@ export default function ProfileForm() {
   useEffect(() => {
     if (profile) {
       setFullName(profile.full_name || '');
-      setPhone(profile.phone || '');
+      setPhone(formatPhone(profile.phone || ''));
       setLanguage((profile.language as 'th' | 'en') || 'th');
     }
   }, [profile]);
@@ -40,7 +41,7 @@ export default function ProfileForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           full_name: fullName,
-          phone,
+          phone: stripPhone(phone),
           language,
         }),
       });
@@ -88,7 +89,7 @@ export default function ProfileForm() {
             id="phone"
             type="tel"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => setPhone(formatPhone(e.target.value))}
             className="min-h-[44px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>

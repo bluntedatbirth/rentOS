@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
+import { LanguageToggle } from '@/components/ui/LanguageToggle';
+import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons';
 
 export default function LoginPage() {
   const router = useRouter();
   const { user, profile, signInWithOtp, signInWithPassword } = useAuth();
-  const { t, locale, setLocale } = useI18n();
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mode, setMode] = useState<'password' | 'magic_link'>('password');
@@ -47,18 +49,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-warm-50 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">{t('app.title')}</h1>
-          <button
-            type="button"
-            onClick={() => setLocale(locale === 'th' ? 'en' : 'th')}
-            aria-label={locale === 'th' ? t('auth.switch_to_en') : t('auth.switch_to_th')}
-            className="min-h-[44px] min-w-[44px] rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
-          >
-            {locale === 'th' ? t('auth.switch_to_en') : t('auth.switch_to_th')}
-          </button>
+          <h1 className="text-2xl font-bold text-charcoal-900">{t('app.title')}</h1>
+          <LanguageToggle variant="inline" />
         </div>
 
         {/* Beta disclaimer */}
@@ -68,21 +63,25 @@ export default function LoginPage() {
         </div>
 
         {sent ? (
-          <div className="rounded-lg bg-white p-6 shadow-sm">
-            <h2 className="mb-2 text-lg font-semibold text-gray-900">{t('auth.check_email')}</h2>
-            <p className="text-sm text-gray-600">{t('auth.check_email_description')}</p>
+          <div className="rounded-lg border border-warm-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-2 text-lg font-semibold text-charcoal-900">
+              {t('auth.check_email')}
+            </h2>
+            <p className="text-sm text-charcoal-700">{t('auth.check_email_description')}</p>
           </div>
         ) : (
-          <div className="rounded-lg bg-white p-6 shadow-sm">
-            <h2 className="mb-1 text-lg font-semibold text-gray-900">{t('auth.welcome_back')}</h2>
-            <p className="mb-6 text-sm text-gray-500">
+          <div className="rounded-lg border border-warm-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-1 text-lg font-semibold text-charcoal-900">
+              {t('auth.welcome_back')}
+            </h2>
+            <p className="mb-6 text-sm text-charcoal-500">
               {mode === 'password'
                 ? t('auth.welcome_back_password')
                 : t('auth.welcome_back_description')}
             </p>
 
             <form onSubmit={handleSubmit}>
-              <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="mb-1 block text-sm font-medium text-charcoal-700">
                 {t('auth.email')}
               </label>
               <input
@@ -92,14 +91,14 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('auth.email_placeholder')}
-                className="mb-4 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="mb-4 block w-full rounded-lg border border-warm-200 bg-warm-50 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
               />
 
               {mode === 'password' && (
                 <>
                   <label
                     htmlFor="password"
-                    className="mb-1 block text-sm font-medium text-gray-700"
+                    className="mb-1 block text-sm font-medium text-charcoal-700"
                   >
                     {t('auth.password')}
                   </label>
@@ -110,7 +109,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={t('auth.password_placeholder')}
-                    className="mb-4 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="mb-4 block w-full rounded-lg border border-warm-200 bg-warm-50 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                   />
                 </>
               )}
@@ -120,7 +119,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="min-h-[44px] w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-500 focus:ring-offset-2 disabled:opacity-50"
               >
                 {loading
                   ? t('auth.signing_in')
@@ -136,14 +135,16 @@ export default function LoginPage() {
                 setMode(mode === 'password' ? 'magic_link' : 'password');
                 setError('');
               }}
-              className="mt-3 w-full text-center text-sm text-blue-600 hover:text-blue-500"
+              className="mt-3 w-full text-center text-sm text-saffron-600 hover:text-saffron-700"
             >
               {mode === 'password' ? t('auth.use_magic_link') : t('auth.use_password')}
             </button>
 
-            <p className="mt-4 text-center text-sm text-gray-500">
+            <SocialLoginButtons mode="login" disabled={loading} />
+
+            <p className="mt-4 text-center text-sm text-charcoal-500">
               {t('auth.no_account')}{' '}
-              <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-500">
+              <Link href="/signup" className="font-medium text-saffron-600 hover:text-saffron-700">
                 {t('app.signup')}
               </Link>
             </p>
@@ -162,7 +163,7 @@ export default function LoginPage() {
                     if (err) setError(err.message);
                     setLoading(false);
                   }}
-                  className="min-h-[44px] flex-1 rounded-lg border-2 border-dashed border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-500 hover:border-blue-400 hover:text-blue-600"
+                  className="min-h-[44px] flex-1 rounded-lg border border-warm-200 bg-warm-100 px-3 py-2.5 text-sm font-medium text-charcoal-600 hover:border-saffron-400 hover:text-saffron-600"
                 >
                   Dev: Landlord
                 </button>
@@ -177,7 +178,7 @@ export default function LoginPage() {
                     if (err) setError(err.message);
                     setLoading(false);
                   }}
-                  className="min-h-[44px] flex-1 rounded-lg border-2 border-dashed border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-500 hover:border-green-400 hover:text-green-600"
+                  className="min-h-[44px] flex-1 rounded-lg border border-warm-200 bg-warm-100 px-3 py-2.5 text-sm font-medium text-charcoal-600 hover:border-saffron-400 hover:text-saffron-600"
                 >
                   Dev: Tenant
                 </button>

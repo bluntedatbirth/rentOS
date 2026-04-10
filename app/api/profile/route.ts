@@ -5,7 +5,7 @@ import { getAuthenticatedUser, unauthorized, badRequest, serverError } from '@/l
 const updateProfileSchema = z.object({
   full_name: z.string().min(1).max(200).optional(),
   phone: z.string().max(20).optional(),
-  language: z.enum(['th', 'en']).optional(),
+  language: z.enum(['th', 'en', 'zh']).optional(),
 });
 
 export async function GET() {

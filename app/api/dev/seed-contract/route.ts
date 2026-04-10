@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import type { Database, StructuredClause } from '@/lib/supabase/types';
+import { isDevEndpointAllowed } from '@/lib/devGuard';
 
 /**
  * POST /api/dev/seed-contract
@@ -10,9 +11,7 @@ import type { Database, StructuredClause } from '@/lib/supabase/types';
  * Dev-only endpoint — blocked in production.
  */
 export async function POST(request: Request) {
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Not available in production' }, { status: 403 });
-  }
+  if (!isDevEndpointAllowed()) return new Response(null, { status: 404 });
 
   const body = (await request.json()) as { landlord_id?: string };
   const landlordId = body.landlord_id;

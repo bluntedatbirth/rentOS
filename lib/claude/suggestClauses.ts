@@ -47,7 +47,10 @@ const suggestClausesSchema = z.object({
 
 // ─── Main Function ─────────────────────────────────────────────────
 
-export async function suggestClauses(params: SuggestClausesParams): Promise<SuggestClausesResult> {
+export async function suggestClauses(
+  params: SuggestClausesParams,
+  onUsage?: (usage: { input_tokens: number; output_tokens: number }) => void
+): Promise<SuggestClausesResult> {
   const {
     propertyType,
     leaseTermMonths,
@@ -125,6 +128,10 @@ Return ONLY valid JSON with no markdown or preamble:
   // Track token usage
   if (response.usage) {
     trackTokenUsage('suggestClauses', {
+      input_tokens: response.usage.input_tokens,
+      output_tokens: response.usage.output_tokens,
+    });
+    onUsage?.({
       input_tokens: response.usage.input_tokens,
       output_tokens: response.usage.output_tokens,
     });

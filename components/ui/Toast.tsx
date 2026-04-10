@@ -25,8 +25,8 @@ const variantStyles: Record<ToastVariant, { container: string; icon: string }> =
     icon: 'text-amber-600',
   },
   info: {
-    container: 'border-blue-200 bg-blue-50 text-blue-900',
-    icon: 'text-blue-600',
+    container: 'border-warm-200 bg-warm-50 text-charcoal-900',
+    icon: 'text-charcoal-600',
   },
 };
 

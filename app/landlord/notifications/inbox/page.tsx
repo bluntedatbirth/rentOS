@@ -26,6 +26,7 @@ interface Notification {
 const TYPE_ROUTES_LANDLORD: Record<string, string> = {
   payment_due: '/landlord/payments',
   payment_overdue: '/landlord/payments',
+  payment_claimed: '/landlord/payments',
   lease_expiry: '/landlord/contracts',
   penalty_raised: '/landlord/penalties',
   penalty_appeal: '/landlord/penalties',
@@ -44,6 +45,7 @@ const DASHBOARD = '/landlord/dashboard';
 const TYPE_ICONS: Record<string, string> = {
   payment_due: '\u{1F4B3}',
   payment_overdue: '\u{1F6A8}',
+  payment_claimed: '\u{1F4B0}',
   lease_expiry: '\u{1F4C5}',
   penalty_raised: '\u{26A0}\uFE0F',
   penalty_appeal: '\u{1F4DD}',
@@ -72,11 +74,14 @@ function timeAgo(dateStr: string, t: (key: string) => string): string {
 /** Resolve the destination URL for a notification, adding role prefix if needed */
 function resolveUrl(notification: Notification): string {
   const url = notification.url;
-  if (url) {
+  // Security: only allow relative same-origin paths to prevent open-redirect.
+  // Blocks absolute URLs (no leading /) and protocol-relative URLs (//evil.com).
+  if (url && typeof url === 'string' && url.startsWith('/') && !url.startsWith('//')) {
     // Add landlord prefix if the stored URL is a bare /contracts/... path
     if (url.startsWith('/contracts/')) return '/landlord' + url;
     return url;
   }
+  // Fallback to type-based routing when url is absent or fails the safety check
   return TYPE_ROUTES_LANDLORD[notification.type] ?? DASHBOARD;
 }
 
@@ -151,7 +156,7 @@ export default function LandlordNotificationsInboxPage() {
             <div
               key={notification.id}
               className={`flex items-center gap-0 rounded-lg bg-white shadow-sm transition-colors hover:bg-gray-50 ${
-                !notification.read_at ? 'border-l-4 border-blue-500' : ''
+                !notification.read_at ? 'border-l-4 border-saffron-500' : ''
               }`}
             >
               <button
@@ -173,7 +178,7 @@ export default function LandlordNotificationsInboxPage() {
                           : (notification.title_th ?? notification.title)}
                       </p>
                       {!notification.read_at && (
-                        <span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
+                        <span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-saffron-500" />
                       )}
                     </div>
                     <p className="mt-0.5 text-sm text-gray-500 line-clamp-2">

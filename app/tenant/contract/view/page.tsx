@@ -111,7 +111,7 @@ export default function TenantContractViewPage() {
   if (loading) return <LoadingSkeleton count={4} />;
 
   if (!contract) {
-    return <div className="py-12 text-center text-gray-500">{t('tenant.no_contract')}</div>;
+    return <div className="py-12 text-center text-charcoal-500">{t('tenant.no_contract')}</div>;
   }
 
   const clauses = contract.structured_clauses ?? [];
@@ -122,16 +122,16 @@ export default function TenantContractViewPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6 flex items-center gap-3">
-        <h2 className="text-xl font-bold text-gray-900">{t('tenant.my_contract')}</h2>
+        <h2 className="text-xl font-bold text-charcoal-900">{t('tenant.my_contract')}</h2>
         <StatusBadge status={contract.status} />
       </div>
 
       {/* Property info */}
       {contract.properties && (
         <div className="mb-4 rounded-lg bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-gray-900">{contract.properties.name}</p>
+          <p className="text-sm font-semibold text-charcoal-900">{contract.properties.name}</p>
           {contract.properties.address && (
-            <p className="mt-1 text-xs text-gray-500">{contract.properties.address}</p>
+            <p className="mt-1 text-xs text-charcoal-500">{contract.properties.address}</p>
           )}
         </div>
       )}
@@ -142,26 +142,26 @@ export default function TenantContractViewPage() {
       {/* Contract summary */}
       <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg bg-white p-4 shadow-sm sm:grid-cols-4">
         <div className="col-span-2 sm:col-span-1">
-          <p className="text-xs text-gray-500">{t('contract.lease_period')}</p>
-          <p className="break-all text-sm font-medium text-gray-900">
+          <p className="text-xs text-charcoal-500">{t('contract.lease_period')}</p>
+          <p className="break-all text-sm font-medium text-charcoal-900">
             {contract.lease_start ?? '—'} → {contract.lease_end ?? '—'}
           </p>
         </div>
         <div>
-          <p className="text-xs text-gray-500">{t('contract.monthly_rent')}</p>
-          <p className="text-sm font-medium text-gray-900">
+          <p className="text-xs text-charcoal-500">{t('contract.monthly_rent')}</p>
+          <p className="text-sm font-medium text-charcoal-900">
             {contract.monthly_rent ? `฿${contract.monthly_rent.toLocaleString()}` : '—'}
           </p>
         </div>
         <div>
-          <p className="text-xs text-gray-500">{t('contract.security_deposit')}</p>
-          <p className="text-sm font-medium text-gray-900">
+          <p className="text-xs text-charcoal-500">{t('contract.security_deposit')}</p>
+          <p className="text-sm font-medium text-charcoal-900">
             {contract.security_deposit ? `฿${contract.security_deposit.toLocaleString()}` : '—'}
           </p>
         </div>
         <div>
-          <p className="text-xs text-gray-500">{t('contract.clauses')}</p>
-          <p className="text-sm font-medium text-gray-900">{clauses.length}</p>
+          <p className="text-xs text-charcoal-500">{t('contract.clauses')}</p>
+          <p className="text-sm font-medium text-charcoal-900">{clauses.length}</p>
         </div>
       </div>
 
@@ -172,8 +172,8 @@ export default function TenantContractViewPage() {
           onClick={() => setShowLang('th')}
           className={`min-h-[44px] rounded-lg px-4 py-2 text-sm font-medium ${
             showLang === 'th'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-saffron-500 text-white'
+              : 'bg-warm-100 text-charcoal-700 hover:bg-warm-200'
           }`}
         >
           {t('contract.thai')}
@@ -183,8 +183,8 @@ export default function TenantContractViewPage() {
           onClick={() => setShowLang('en')}
           className={`min-h-[44px] rounded-lg px-4 py-2 text-sm font-medium ${
             showLang === 'en'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              ? 'bg-saffron-500 text-white'
+              : 'bg-warm-100 text-charcoal-700 hover:bg-warm-200'
           }`}
         >
           {t('contract.english')}
@@ -193,7 +193,7 @@ export default function TenantContractViewPage() {
 
       {/* Clauses */}
       {clauses.length === 0 ? (
-        <div className="rounded-lg bg-gray-50 p-8 text-center text-sm text-gray-500">
+        <div className="rounded-lg bg-warm-50 p-8 text-center text-sm text-charcoal-500">
           {t('contract.no_clauses')}
         </div>
       ) : (
@@ -212,29 +212,29 @@ export default function TenantContractViewPage() {
             const highlighted = isChanged || isNew;
 
             if (highlighted) {
-              // Render highlighted clause card with blue styling
+              // Render highlighted clause card with saffron styling
               return (
                 <div
                   key={clause.clause_id}
-                  className="rounded-lg bg-blue-50 p-4 shadow-sm ring-2 ring-blue-200"
+                  className="rounded-lg bg-saffron-50 p-4 shadow-sm ring-2 ring-saffron-200"
                 >
                   <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-bold text-blue-600">
+                    <span className="text-xs font-bold text-saffron-700">
                       {clause.clause_id.toUpperCase()}
                     </span>
-                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                    <span className="rounded-full bg-saffron-100 px-2 py-0.5 text-xs font-medium text-saffron-700">
                       {isNew ? t('renewal.new_clause') : t('renewal.modified_clause')}
                     </span>
                     {clause.category && (
-                      <span className="rounded-full bg-blue-100/50 px-2 py-0.5 text-xs font-medium text-blue-600">
+                      <span className="rounded-full bg-saffron-100/50 px-2 py-0.5 text-xs font-medium text-saffron-600">
                         {clause.category}
                       </span>
                     )}
                   </div>
-                  <h3 className="mb-1 text-sm font-semibold text-blue-900">
+                  <h3 className="mb-1 text-sm font-semibold text-charcoal-900">
                     {showLang === 'th' ? clause.title_th : clause.title_en}
                   </h3>
-                  <p className="whitespace-pre-wrap text-sm text-blue-800">
+                  <p className="whitespace-pre-wrap text-sm text-charcoal-800">
                     {showLang === 'th' ? clause.text_th : clause.text_en}
                   </p>
                 </div>

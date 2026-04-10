@@ -20,12 +20,44 @@ interface Payment {
   status: 'pending' | 'paid' | 'overdue';
   promptpay_ref: string | null;
   notes: string | null;
+  claimed_by: string | null;
+  claimed_at: string | null;
+  claimed_note: string | null;
 }
 
 interface Contract {
   id: string;
   property_id: string;
+  monthly_rent: number | null;
   properties: { name: string } | null;
+}
+
+type PaymentBucket = 'due' | 'future' | 'completed';
+
+function categorisePayment(payment: Payment): PaymentBucket {
+  if (payment.status === 'paid') return 'completed';
+  if (payment.status === 'overdue') return 'due';
+  // claimed payments stay in Due until landlord confirms
+  if (payment.claimed_at != null) return 'due';
+  // pending: check if within 7 days
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sevenDaysOut = new Date(today);
+  sevenDaysOut.setDate(sevenDaysOut.getDate() + 7);
+  const due = new Date(payment.due_date);
+  if (due <= sevenDaysOut) return 'due';
+  return 'future';
+}
+
+function isPayableWindow(payment: Payment): boolean {
+  if (payment.payment_type === 'penalty') return true;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const thirtyDaysOut = new Date(today);
+  thirtyDaysOut.setDate(thirtyDaysOut.getDate() + 30);
+  const due = new Date(payment.due_date);
+  // Anything up to and including 30 days ahead is payable. Overdue is also payable.
+  return due <= thirtyDaysOut;
 }
 
 const TYPE_LABEL_KEYS: Record<string, string> = {
@@ -34,8 +66,6 @@ const TYPE_LABEL_KEYS: Record<string, string> = {
   deposit: 'payments.type_deposit',
   penalty: 'payments.type_penalty',
 };
-
-type FilterTab = 'all' | 'pending' | 'paid' | 'overdue';
 
 export default function LandlordPaymentsPage() {
   const { user } = useAuth();
@@ -49,14 +79,13 @@ export default function LandlordPaymentsPage() {
   const [showForm, setShowForm] = useState(false);
   const [creating, setCreating] = useState(false);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
+  const [completedExpanded, setCompletedExpanded] = useState(false);
 
   // Form state
   const [formContractId, setFormContractId] = useState('');
   const [formAmount, setFormAmount] = useState('');
   const [formDueDate, setFormDueDate] = useState('');
   const [formType, setFormType] = useState<'rent' | 'utility' | 'deposit' | 'penalty'>('rent');
-  const [formPromptpay, setFormPromptpay] = useState('');
   const [formNotes, setFormNotes] = useState('');
 
   useEffect(() => {
@@ -68,10 +97,11 @@ export default function LandlordPaymentsPage() {
   async function loadData() {
     setLoading(true);
 
-    // Load landlord's active contracts with property names
+    // Load landlord's active contracts with property names + monthly_rent (used
+    // as the default amount when landlord records a new rent payment)
     const { data: contractData } = await supabase
       .from('contracts')
-      .select('id, property_id, properties(name)')
+      .select('id, property_id, monthly_rent, properties(name)')
       .eq('landlord_id', user!.id)
       .eq('status', 'active');
 
@@ -89,11 +119,13 @@ export default function LandlordPaymentsPage() {
       const contractIds = activeContracts.map((c) => c.id);
       const { data: paymentData } = await supabase
         .from('payments')
-        .select('*')
+        .select(
+          'id, contract_id, amount, due_date, paid_date, payment_type, status, promptpay_ref, notes, claimed_by, claimed_at, claimed_note'
+        )
         .in('contract_id', contractIds)
         .order('due_date', { ascending: false });
 
-      setPayments((paymentData ?? []) as Payment[]);
+      setPayments((paymentData ?? []) as unknown as Payment[]);
     } else {
       setPayments([]);
     }
@@ -114,7 +146,6 @@ export default function LandlordPaymentsPage() {
         amount: parseFloat(formAmount),
         due_date: formDueDate,
         payment_type: formType,
-        promptpay_ref: formPromptpay || undefined,
         notes: formNotes || undefined,
       }),
     });
@@ -125,7 +156,6 @@ export default function LandlordPaymentsPage() {
       setFormAmount('');
       setFormDueDate('');
       setFormType('rent');
-      setFormPromptpay('');
       setFormNotes('');
       toast.success(t('payments.created_success'));
       await loadData();
@@ -153,98 +183,115 @@ export default function LandlordPaymentsPage() {
     setConfirmingId(null);
   }
 
-  // Filter payments
-  const getFilteredPayments = () => {
-    let filtered = payments;
-    switch (activeFilter) {
-      case 'pending':
-        filtered = payments.filter((p) => p.status === 'pending');
-        break;
-      case 'paid':
-        filtered = payments.filter((p) => p.status === 'paid');
-        break;
-      case 'overdue':
-        filtered = payments.filter(
-          (p) =>
-            p.status === 'overdue' || (p.status === 'pending' && new Date(p.due_date) < new Date())
-        );
-        break;
-    }
-    // Sort: overdue first, pending, paid
-    return filtered.sort((a, b) => {
-      const order = { overdue: 0, pending: 1, paid: 2 };
-      const aIsOverdue = a.status !== 'paid' && new Date(a.due_date) < new Date();
-      const bIsOverdue = b.status !== 'paid' && new Date(b.due_date) < new Date();
-      const aOrder = aIsOverdue ? 0 : (order[a.status] ?? 1);
-      const bOrder = bIsOverdue ? 0 : (order[b.status] ?? 1);
-      if (aOrder !== bOrder) return aOrder - bOrder;
-      return new Date(b.due_date).getTime() - new Date(a.due_date).getTime();
-    });
-  };
-
-  const filteredPayments = getFilteredPayments();
-
-  // Filter tab counts
-  const counts: Record<FilterTab, number> = {
-    all: payments.length,
-    pending: payments.filter((p) => p.status === 'pending').length,
-    paid: payments.filter((p) => p.status === 'paid').length,
-    overdue: payments.filter(
-      (p) => p.status === 'overdue' || (p.status === 'pending' && new Date(p.due_date) < new Date())
-    ).length,
-  };
-
-  const filterTabs: { key: FilterTab; label: string }[] = [
-    { key: 'all', label: t('penalties.filter_all') },
-    { key: 'pending', label: t('penalties.filter_pending') },
-    { key: 'paid', label: t('payments.status_paid') },
-    { key: 'overdue', label: t('payments.overdue') },
-  ];
-
   if (loading) return <LoadingSkeleton count={6} />;
+
+  // Categorise into three buckets
+  const duePayments = payments
+    .filter((p) => categorisePayment(p) === 'due')
+    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+
+  const futurePayments = payments
+    .filter((p) => categorisePayment(p) === 'future')
+    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+
+  const completedPayments = payments
+    .filter((p) => categorisePayment(p) === 'completed')
+    .sort((a, b) => {
+      const aDate = a.paid_date ?? a.due_date;
+      const bDate = b.paid_date ?? b.due_date;
+      return new Date(bDate).getTime() - new Date(aDate).getTime();
+    });
+
+  const allEmpty =
+    duePayments.length === 0 && futurePayments.length === 0 && completedPayments.length === 0;
+
+  const renderPaymentCard = (payment: Payment) => {
+    const isOverdue = payment.status !== 'paid' && new Date(payment.due_date) < new Date();
+    // A payment is "awaiting confirmation" when the tenant has clicked
+    // "I paid" but the landlord hasn't confirmed receipt yet.
+    const isClaimed = payment.status !== 'paid' && payment.claimed_at != null;
+
+    return (
+      <div
+        key={payment.id}
+        className={`rounded-lg bg-white p-4 shadow-sm ${
+          isClaimed ? 'border-l-4 border-amber-500' : isOverdue ? 'border-l-4 border-red-500' : ''
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <StatusBadge
+              status={payment.payment_type}
+              label={t(TYPE_LABEL_KEYS[payment.payment_type] ?? payment.payment_type)}
+            />
+            <span className="text-lg font-semibold text-charcoal-900">
+              ฿{payment.amount.toLocaleString()}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <StatusBadge status={isOverdue ? 'overdue' : payment.status} />
+            {/* Confirm button: only when within the payable window */}
+            {payment.status !== 'paid' &&
+              (isPayableWindow(payment) ? (
+                <button
+                  type="button"
+                  onClick={() => handleConfirmPayment(payment.id)}
+                  disabled={confirmingId === payment.id}
+                  className={`min-h-[44px] rounded-lg px-3 py-2 text-xs font-medium text-white disabled:opacity-50 ${
+                    isClaimed
+                      ? 'bg-amber-600 hover:bg-amber-700'
+                      : 'bg-green-600 hover:bg-green-700'
+                  }`}
+                >
+                  {confirmingId === payment.id
+                    ? t('common.loading')
+                    : isClaimed
+                      ? t('payments.confirm_claim')
+                      : t('payments.confirm_payment')}
+                </button>
+              ) : (
+                <span className="text-xs text-charcoal-400">
+                  {t('payments.v2_not_yet_payable')}
+                </span>
+              ))}
+          </div>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-4 text-sm text-charcoal-500">
+          {/* Tenant/contract identifier */}
+          <span className="font-medium text-charcoal-700">
+            {contractMap[payment.contract_id] ?? '\u2014'}
+          </span>
+          <span>
+            {t('payments.due_date')}: {payment.due_date}
+          </span>
+          {payment.paid_date && (
+            <span>
+              {t('payments.paid_date')}: {payment.paid_date}
+            </span>
+          )}
+        </div>
+        {isClaimed && (
+          <div className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <p className="font-medium">{t('payments.tenant_claimed')}</p>
+            {payment.claimed_note && <p className="mt-0.5">{payment.claimed_note}</p>}
+          </div>
+        )}
+        {payment.notes && <p className="mt-1 text-sm text-charcoal-400">{payment.notes}</p>}
+      </div>
+    );
+  };
 
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">{t('payments.title')}</h2>
+        <h2 className="text-xl font-bold text-charcoal-900">{t('payments.title')}</h2>
         <button
           type="button"
           onClick={() => setShowForm(!showForm)}
-          className="min-h-[44px] rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="min-h-[44px] rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600"
         >
           {t('payments.create')}
         </button>
-      </div>
-
-      {/* Filter tabs */}
-      <div className="mb-4 flex flex-wrap gap-2">
-        {filterTabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveFilter(tab.key)}
-            className={`min-h-[36px] whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              activeFilter === tab.key
-                ? 'bg-gray-900 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {tab.label}
-            {counts[tab.key] > 0 && (
-              <span
-                className={`ml-1.5 inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-bold ${
-                  activeFilter === tab.key
-                    ? 'bg-white/20 text-white'
-                    : tab.key === 'overdue'
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-gray-200 text-gray-600'
-                }`}
-              >
-                {counts[tab.key]}
-              </span>
-            )}
-          </button>
-        ))}
       </div>
 
       {/* Create payment form */}
@@ -254,16 +301,26 @@ export default function LandlordPaymentsPage() {
             <div>
               <label
                 htmlFor="pay-contract"
-                className="mb-1 block text-sm font-medium text-gray-700"
+                className="mb-1 block text-sm font-medium text-charcoal-700"
               >
                 {t('payments.select_contract')}
               </label>
               <select
                 id="pay-contract"
                 value={formContractId}
-                onChange={(e) => setFormContractId(e.target.value)}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  setFormContractId(id);
+                  // Pre-fill amount with contract's monthly_rent when selecting
+                  // a contract for a rent payment. Editable — landlord can adjust
+                  // for partial payments, late fees, etc.
+                  const selected = contracts.find((c) => c.id === id);
+                  if (selected?.monthly_rent != null && formType === 'rent' && !formAmount) {
+                    setFormAmount(String(selected.monthly_rent));
+                  }
+                }}
                 required
-                className="min-h-[44px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className="min-h-[44px] w-full rounded-lg border border-warm-200 px-3 py-2 text-sm"
               >
                 <option value="">{t('payments.select_contract')}</option>
                 {contracts.map((c) => (
@@ -274,7 +331,10 @@ export default function LandlordPaymentsPage() {
               </select>
             </div>
             <div>
-              <label htmlFor="pay-amount" className="mb-1 block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="pay-amount"
+                className="mb-1 block text-sm font-medium text-charcoal-700"
+              >
                 {t('payments.amount')} ({t('common.thb')})
               </label>
               <input
@@ -285,14 +345,14 @@ export default function LandlordPaymentsPage() {
                 value={formAmount}
                 onChange={(e) => setFormAmount(e.target.value)}
                 required
-                className="min-h-[44px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className="min-h-[44px] w-full rounded-lg border border-warm-200 px-3 py-2 text-sm"
                 placeholder="0.00"
               />
             </div>
             <div>
               <label
                 htmlFor="pay-due-date"
-                className="mb-1 block text-sm font-medium text-gray-700"
+                className="mb-1 block text-sm font-medium text-charcoal-700"
               >
                 {t('payments.due_date')}
               </label>
@@ -302,18 +362,21 @@ export default function LandlordPaymentsPage() {
                 value={formDueDate}
                 onChange={(e) => setFormDueDate(e.target.value)}
                 required
-                className="min-h-[44px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className="min-h-[44px] w-full rounded-lg border border-warm-200 px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label htmlFor="pay-type" className="mb-1 block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="pay-type"
+                className="mb-1 block text-sm font-medium text-charcoal-700"
+              >
                 {t('payments.type')}
               </label>
               <select
                 id="pay-type"
                 value={formType}
                 onChange={(e) => setFormType(e.target.value as typeof formType)}
-                className="min-h-[44px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className="min-h-[44px] w-full rounded-lg border border-warm-200 px-3 py-2 text-sm"
               >
                 <option value="rent">{t('payments.type_rent')}</option>
                 <option value="utility">{t('payments.type_utility')}</option>
@@ -323,22 +386,9 @@ export default function LandlordPaymentsPage() {
             </div>
             <div>
               <label
-                htmlFor="pay-promptpay"
-                className="mb-1 block text-sm font-medium text-gray-700"
+                htmlFor="pay-notes"
+                className="mb-1 block text-sm font-medium text-charcoal-700"
               >
-                {t('payments.promptpay_ref')}
-              </label>
-              <input
-                id="pay-promptpay"
-                type="text"
-                value={formPromptpay}
-                onChange={(e) => setFormPromptpay(e.target.value)}
-                className="min-h-[44px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                placeholder={t('payments.promptpay_placeholder')}
-              />
-            </div>
-            <div>
-              <label htmlFor="pay-notes" className="mb-1 block text-sm font-medium text-gray-700">
                 {t('payments.notes')}
               </label>
               <input
@@ -346,7 +396,7 @@ export default function LandlordPaymentsPage() {
                 type="text"
                 value={formNotes}
                 onChange={(e) => setFormNotes(e.target.value)}
-                className="min-h-[44px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className="min-h-[44px] w-full rounded-lg border border-warm-200 px-3 py-2 text-sm"
               />
             </div>
           </div>
@@ -354,14 +404,14 @@ export default function LandlordPaymentsPage() {
             <button
               type="submit"
               disabled={creating}
-              className="min-h-[44px] rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="min-h-[44px] rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
             >
               {creating ? t('payments.creating') : t('payments.create')}
             </button>
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="min-h-[44px] rounded-lg border border-warm-200 px-4 py-2 text-sm font-medium text-charcoal-700 hover:bg-warm-50"
             >
               {t('common.cancel')}
             </button>
@@ -369,70 +419,60 @@ export default function LandlordPaymentsPage() {
         </form>
       )}
 
-      {/* Payments list */}
-      {filteredPayments.length === 0 ? (
+      {/* No payments at all */}
+      {allEmpty ? (
         <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-          <p className="text-sm text-gray-500">{t('payments.no_payments')}</p>
+          <p className="text-sm text-charcoal-500">{t('payments.no_payments_yet')}</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filteredPayments.map((payment) => {
-            const isOverdue = payment.status !== 'paid' && new Date(payment.due_date) < new Date();
-            return (
-              <div
-                key={payment.id}
-                className={`rounded-lg bg-white p-4 shadow-sm ${
-                  isOverdue ? 'border-l-4 border-red-500' : ''
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <StatusBadge
-                      status={payment.payment_type}
-                      label={t(TYPE_LABEL_KEYS[payment.payment_type] ?? payment.payment_type)}
-                    />
-                    <span className="text-lg font-semibold text-gray-900">
-                      ฿{payment.amount.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={isOverdue ? 'overdue' : payment.status} />
-                    {payment.status !== 'paid' && (
-                      <button
-                        type="button"
-                        onClick={() => handleConfirmPayment(payment.id)}
-                        disabled={confirmingId === payment.id}
-                        className="min-h-[44px] rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
-                      >
-                        {confirmingId === payment.id
-                          ? t('common.loading')
-                          : t('payments.confirm_payment')}
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-500">
-                  <span>{contractMap[payment.contract_id] ?? '\u2014'}</span>
-                  <span>
-                    {t('payments.due_date')}: {payment.due_date}
-                  </span>
-                  {payment.paid_date && (
-                    <span>
-                      {t('payments.paid_date')}: {payment.paid_date}
-                    </span>
-                  )}
-                </div>
-                {payment.promptpay_ref && (
-                  <div className="mt-2 inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1">
-                    <span className="text-xs font-medium text-blue-700">PromptPay:</span>
-                    <span className="font-mono text-xs text-blue-900">{payment.promptpay_ref}</span>
-                  </div>
-                )}
-                {payment.notes && <p className="mt-1 text-sm text-gray-400">{payment.notes}</p>}
-              </div>
-            );
-          })}
-        </div>
+        <>
+          {/* Due section — expanded by default */}
+          <div className="mb-8">
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-charcoal-500">
+              {t('payments.section_due')}
+            </h3>
+            {duePayments.length === 0 ? (
+              <p className="text-sm text-charcoal-400">{t('payments.no_payments_due')}</p>
+            ) : (
+              <div className="space-y-3">{duePayments.map(renderPaymentCard)}</div>
+            )}
+          </div>
+
+          {/* Future section — expanded by default */}
+          <div className="mb-8">
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-charcoal-500">
+              {t('payments.section_future')}
+            </h3>
+            {futurePayments.length === 0 ? (
+              <p className="text-sm text-charcoal-400">{t('payments.no_future_payments')}</p>
+            ) : (
+              <div className="space-y-3">{futurePayments.map(renderPaymentCard)}</div>
+            )}
+          </div>
+
+          {/* Completed section — collapsed by default */}
+          <div>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-charcoal-500">
+                {t('payments.section_completed')}
+              </h3>
+              {completedPayments.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setCompletedExpanded((prev) => !prev)}
+                  className="text-xs font-medium text-saffron-600 hover:text-saffron-800"
+                >
+                  {completedExpanded
+                    ? `${t('payments.hide_completed')} ▴`
+                    : `${t('payments.show_completed').replace('{}', String(completedPayments.length))} ▾`}
+                </button>
+              )}
+            </div>
+            {completedPayments.length > 0 && completedExpanded && (
+              <div className="space-y-3">{completedPayments.map(renderPaymentCard)}</div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

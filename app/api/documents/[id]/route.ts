@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorized, notFound, serverError } from '@/lib/supabase/api';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { getSignedDocumentUrl } from '@/lib/storage/signedUrl';
 
 // GET /api/documents/[id]
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -17,7 +18,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   if (error || !data) return notFound('Document not found');
 
-  return NextResponse.json(data);
+  // PDPA: documents bucket is private. Replace stored public_url with a fresh signed URL.
+  const signedUrl = data.storage_path
+    ? await getSignedDocumentUrl(data.storage_path, 'documents', 3600)
+    : null;
+
+  return NextResponse.json({ ...data, public_url: signedUrl });
 }
 
 // DELETE /api/documents/[id]

@@ -15,12 +15,14 @@ const FREE_FEATURES = [
 ] as const;
 
 const PRO_FEATURES = [
-  'billing.pro_feature_6',
   'billing.pro_feature_1',
   'billing.pro_feature_2',
   'billing.pro_feature_3',
   'billing.pro_feature_4',
   'billing.pro_feature_5',
+  'billing.pro_feature_6',
+  'billing.pro_feature_7',
+  'billing.pro_feature_8',
 ] as const;
 
 export default function UpgradePage() {
@@ -155,25 +157,25 @@ export default function UpgradePage() {
         {/* Pro card */}
         <div
           className={`relative rounded-2xl border-2 bg-white p-6 shadow-sm ${
-            tier === 'pro' ? 'border-blue-500' : 'border-blue-400'
+            tier === 'pro' ? 'border-sage-500' : 'border-sage-400'
           }`}
         >
           {tier === 'pro' && (
-            <span className="absolute -top-3 left-5 rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white">
+            <span className="absolute -top-3 left-5 rounded-full bg-sage-600 px-3 py-1 text-xs font-semibold text-white">
               {t('billing.current_plan_badge')}
             </span>
           )}
 
           {/* Recommended ribbon */}
           <div className="absolute right-0 top-0 overflow-hidden rounded-tr-2xl">
-            <div className="bg-blue-600 px-4 py-1 text-xs font-semibold text-white">
+            <div className="bg-sage-600 px-4 py-1 text-xs font-semibold text-white">
               {billing === 'yearly' ? t('billing.save_badge') : t('billing.popular')}
             </div>
           </div>
 
           <h2 className="text-xl font-bold text-gray-900">{t('billing.pro_plan')}</h2>
           <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-3xl font-extrabold text-blue-700">
+            <span className="text-3xl font-extrabold text-sage-700">
               {billing === 'monthly' ? t('billing.monthly_price') : t('billing.yearly_price')}
             </span>
             <span className="text-sm text-gray-500">
@@ -193,7 +195,7 @@ export default function UpgradePage() {
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
-                  className="mt-0.5 h-4 w-4 shrink-0 text-blue-500"
+                  className="mt-0.5 h-4 w-4 shrink-0 text-sage-500"
                 >
                   <path
                     fillRule="evenodd"
@@ -208,7 +210,7 @@ export default function UpgradePage() {
 
           <div className="mt-6">
             {tier === 'pro' ? (
-              <div className="min-h-[44px] rounded-lg border border-blue-300 px-4 py-2.5 text-center text-sm font-medium text-blue-600">
+              <div className="min-h-[44px] rounded-lg border border-sage-300 px-4 py-2.5 text-center text-sm font-medium text-sage-600">
                 {t('billing.current_plan')}
               </div>
             ) : (
@@ -216,7 +218,7 @@ export default function UpgradePage() {
                 type="button"
                 onClick={handleUpgrade}
                 disabled={loading}
-                className="min-h-[44px] w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                className="min-h-[44px] w-full rounded-lg bg-sage-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sage-600 disabled:opacity-60"
               >
                 {loading ? t('common.loading') : t('billing.upgrade_now')}
               </button>

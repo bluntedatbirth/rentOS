@@ -106,7 +106,7 @@ export default function TenantOnboardingPage() {
   if (checking) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-saffron-500 border-t-transparent" />
       </div>
     );
   }
@@ -116,7 +116,7 @@ export default function TenantOnboardingPage() {
       {/* Step indicator */}
       {step !== 'welcome' && step !== 'done' && (
         <div className="mb-6">
-          <p className="mb-2 text-center text-xs text-gray-500">
+          <p className="mb-2 text-center text-xs text-charcoal-500">
             {t('onboarding.step_of')
               .replace('{}', String(stepIndex))
               .replace('{}', String(STEPS.length - 2))}
@@ -126,7 +126,7 @@ export default function TenantOnboardingPage() {
               <div
                 key={s}
                 className={`h-1.5 flex-1 rounded-full transition-colors ${
-                  i < stepIndex ? 'bg-primary-600' : 'bg-gray-200'
+                  i < stepIndex ? 'bg-saffron-500' : 'bg-charcoal-200'
                 }`}
               />
             ))}
@@ -138,7 +138,7 @@ export default function TenantOnboardingPage() {
       {step === 'welcome' && (
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary-100 text-4xl text-primary-600">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-saffron-100 text-4xl text-saffron-600">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -153,18 +153,20 @@ export default function TenantOnboardingPage() {
               </svg>
             </div>
           </div>
-          <h1 className="mb-2 text-2xl font-bold text-gray-900">
+          <h1 className="mb-2 text-2xl font-bold text-charcoal-900">
             {t('tenant_onboarding.welcome_title')}
           </h1>
-          <p className="mb-8 text-sm text-gray-500">{t('tenant_onboarding.welcome_subtitle')}</p>
+          <p className="mb-8 text-sm text-charcoal-500">
+            {t('tenant_onboarding.welcome_subtitle')}
+          </p>
           <ul className="mb-8 space-y-3 text-left">
             {[
               t('tenant_onboarding.feature_view_contract'),
               t('tenant_onboarding.feature_track_payments'),
               t('tenant_onboarding.feature_submit_maintenance'),
             ].map((feature) => (
-              <li key={feature} className="flex items-start gap-3 text-sm text-gray-700">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs text-primary-600">
+              <li key={feature} className="flex items-start gap-3 text-sm text-charcoal-700">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-saffron-100 text-xs text-saffron-600">
                   &#10003;
                 </span>
                 {feature}
@@ -174,7 +176,7 @@ export default function TenantOnboardingPage() {
           <button
             type="button"
             onClick={() => setStep('pair')}
-            className="min-h-[44px] w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-500 focus:ring-offset-2"
           >
             {t('onboarding.get_started')}
           </button>
@@ -184,13 +186,16 @@ export default function TenantOnboardingPage() {
       {/* Step: Enter Pairing Code */}
       {step === 'pair' && (
         <div>
-          <h2 className="mb-1 text-xl font-bold text-gray-900">
+          <h2 className="mb-1 text-xl font-bold text-charcoal-900">
             {t('tenant_onboarding.pair_title')}
           </h2>
-          <p className="mb-6 text-sm text-gray-500">{t('tenant_onboarding.pair_subtitle')}</p>
+          <p className="mb-6 text-sm text-charcoal-500">{t('tenant_onboarding.pair_subtitle')}</p>
 
           <div className="rounded-lg bg-white p-6 shadow-sm">
-            <label htmlFor="pairing-code" className="mb-2 block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="pairing-code"
+              className="mb-2 block text-sm font-medium text-charcoal-700"
+            >
               {t('pairing.enter_code')}
             </label>
             <input
@@ -203,7 +208,7 @@ export default function TenantOnboardingPage() {
               }}
               maxLength={6}
               placeholder="ABC123"
-              className="mb-4 block w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-mono text-2xl font-bold tracking-widest text-gray-900 placeholder:text-gray-300 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              className="mb-4 block w-full rounded-lg border border-warm-200 px-4 py-3 text-center font-mono text-2xl font-bold tracking-widest text-charcoal-900 placeholder:text-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
             />
 
             {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
@@ -212,7 +217,7 @@ export default function TenantOnboardingPage() {
               type="button"
               onClick={handlePair}
               disabled={pairing || code.length !== 6}
-              className="min-h-[44px] w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+              className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
             >
               {pairing ? t('common.loading') : t('pairing.pair_button')}
             </button>
@@ -222,7 +227,7 @@ export default function TenantOnboardingPage() {
             <button
               type="button"
               onClick={() => setStep('welcome')}
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm text-charcoal-500 hover:text-charcoal-700"
             >
               {t('onboarding.back')}
             </button>
@@ -233,44 +238,44 @@ export default function TenantOnboardingPage() {
       {/* Step: Review Contract */}
       {step === 'review' && (
         <div>
-          <h2 className="mb-1 text-xl font-bold text-gray-900">
+          <h2 className="mb-1 text-xl font-bold text-charcoal-900">
             {t('tenant_onboarding.review_title')}
           </h2>
-          <p className="mb-6 text-sm text-gray-500">{t('tenant_onboarding.review_subtitle')}</p>
+          <p className="mb-6 text-sm text-charcoal-500">{t('tenant_onboarding.review_subtitle')}</p>
 
           {contract ? (
             <div className="rounded-lg bg-white p-6 shadow-sm">
               <div className="space-y-4">
                 <div>
-                  <p className="text-xs text-gray-500">{t('property.name')}</p>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-xs text-charcoal-500">{t('property.name')}</p>
+                  <p className="text-sm font-semibold text-charcoal-900">
                     {contract.properties?.name ?? '-'}
                   </p>
                 </div>
                 {contract.properties?.address && (
                   <div>
-                    <p className="text-xs text-gray-500">{t('property.address')}</p>
-                    <p className="text-sm text-gray-900">{contract.properties.address}</p>
+                    <p className="text-xs text-charcoal-500">{t('property.address')}</p>
+                    <p className="text-sm text-charcoal-900">{contract.properties.address}</p>
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-gray-500">{t('contract.lease_period')}</p>
-                    <p className="text-sm text-gray-900">
+                    <p className="text-xs text-charcoal-500">{t('contract.lease_period')}</p>
+                    <p className="text-sm text-charcoal-900">
                       {contract.lease_start ?? '-'} &rarr; {contract.lease_end ?? '-'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">{t('contract.monthly_rent')}</p>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-xs text-charcoal-500">{t('contract.monthly_rent')}</p>
+                    <p className="text-sm font-medium text-charcoal-900">
                       {contract.monthly_rent ? `฿${contract.monthly_rent.toLocaleString()}` : '-'}
                     </p>
                   </div>
                 </div>
                 {contract.security_deposit != null && contract.security_deposit > 0 && (
                   <div>
-                    <p className="text-xs text-gray-500">{t('contract.security_deposit')}</p>
-                    <p className="text-sm text-gray-900">
+                    <p className="text-xs text-charcoal-500">{t('contract.security_deposit')}</p>
+                    <p className="text-sm text-charcoal-900">
                       ฿{contract.security_deposit.toLocaleString()}
                     </p>
                   </div>
@@ -285,7 +290,7 @@ export default function TenantOnboardingPage() {
             <button
               type="button"
               onClick={() => setStep('done')}
-              className="min-h-[44px] w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
+              className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600"
             >
               {t('tenant_onboarding.confirm_continue')}
             </button>
@@ -312,14 +317,14 @@ export default function TenantOnboardingPage() {
               </svg>
             </div>
           </div>
-          <h2 className="mb-2 text-2xl font-bold text-gray-900">
+          <h2 className="mb-2 text-2xl font-bold text-charcoal-900">
             {t('tenant_onboarding.done_title')}
           </h2>
-          <p className="mb-8 text-sm text-gray-500">{t('tenant_onboarding.done_subtitle')}</p>
+          <p className="mb-8 text-sm text-charcoal-500">{t('tenant_onboarding.done_subtitle')}</p>
           <button
             type="button"
             onClick={() => router.push('/tenant/dashboard')}
-            className="min-h-[44px] w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-500 focus:ring-offset-2"
           >
             {t('onboarding.go_to_dashboard')}
           </button>

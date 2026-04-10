@@ -16,7 +16,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('properties')
-    .select('*')
+    .select('id, name, address, unit_number, created_at')
     .eq('landlord_id', user.id)
     .eq('is_active', true)
     .order('created_at', { ascending: false });
@@ -42,12 +42,13 @@ export async function POST(request: Request) {
   const adminClient = createServiceRoleClient();
   const { data: profile } = await adminClient
     .from('profiles')
-    .select('tier')
+    .select('tier, purchased_slots')
     .eq('id', user.id)
     .single();
 
   const userTier = profile?.tier ?? 'free';
-  const limit = getPropertyLimit(userTier);
+  const purchasedSlots = profile?.purchased_slots ?? 0;
+  const limit = getPropertyLimit(userTier, purchasedSlots);
 
   if (isFinite(limit)) {
     const { count } = await supabase
@@ -59,9 +60,11 @@ export async function POST(request: Request) {
     if ((count ?? 0) >= limit) {
       return NextResponse.json(
         {
-          allowed: false,
-          reason: `Free plan is limited to ${limit} properties`,
-          upgradeUrl: '/landlord/billing/upgrade',
+          error: 'property_limit_reached',
+          limit,
+          purchased_slots: purchasedSlots,
+          upgrade_url: '/landlord/billing/upgrade',
+          unlock_slots_url: '/landlord/billing/slots',
         },
         { status: 403 }
       );

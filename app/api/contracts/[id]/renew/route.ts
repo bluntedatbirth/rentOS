@@ -17,7 +17,7 @@ const renewSchema = z.object({
   monthly_rent: z.number().positive().optional(),
   security_deposit: z.number().nonnegative().optional(),
   changes_summary: z.string().optional(),
-  contract_text: z.string().optional(),
+  contract_text: z.string().max(200_000).optional(),
 });
 
 interface ContractRow {

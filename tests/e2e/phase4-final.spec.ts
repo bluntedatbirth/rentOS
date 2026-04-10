@@ -104,7 +104,7 @@ test.describe('Phase 4 - Landlord Complete Journey', () => {
     await expect(page.locator('text=Pro').or(page.locator('text=โปร')).first()).toBeVisible();
 
     // Monthly price should be visible
-    await expect(page.locator('text=฿299')).toBeVisible();
+    await expect(page.locator('text=฿199')).toBeVisible();
 
     // Upgrade Now CTA
     await expect(

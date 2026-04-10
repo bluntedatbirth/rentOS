@@ -34,18 +34,26 @@ export async function middleware(request: NextRequest) {
   );
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
 
-  // Block dev routes in production
-  if (pathname.startsWith('/api/dev') && process.env.NODE_ENV === 'production') {
+  // Block dev routes unless NODE_ENV is not production AND DEV_ENDPOINTS_ENABLED=true
+  if (
+    pathname.startsWith('/api/dev') &&
+    (process.env.NODE_ENV === 'production' || process.env.DEV_ENDPOINTS_ENABLED !== 'true')
+  ) {
     return NextResponse.json({ error: 'Not available' }, { status: 404 });
   }
 
   // API routes — skip middleware (handled by route handlers)
   if (pathname.startsWith('/api/')) {
+    return response;
+  }
+
+  // Legal pages — always public, never redirect even when logged in
+  if (pathname === '/legal') {
     return response;
   }
 
@@ -57,11 +65,11 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/auth/')
   ) {
     // If logged in and visiting public pages, redirect to dashboard
-    if (session?.user) {
+    if (user) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', session.user.id)
+        .eq('id', user.id)
         .single();
 
       if (profile) {
@@ -74,7 +82,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protected routes — require auth
-  if (!session?.user) {
+  if (!user) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
@@ -82,7 +90,7 @@ export async function middleware(request: NextRequest) {
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
-    .eq('id', session.user.id)
+    .eq('id', user.id)
     .single();
 
   if (!profile) {

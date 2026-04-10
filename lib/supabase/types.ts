@@ -33,7 +33,7 @@ export interface Database {
           role: 'landlord' | 'tenant';
           full_name: string | null;
           phone: string | null;
-          language: 'th' | 'en';
+          language: 'th' | 'en' | 'zh';
           fcm_token: string | null;
           tier: 'free' | 'pro';
           notification_preferences: Json | null;
@@ -42,13 +42,15 @@ export interface Database {
           omise_schedule_id: string | null;
           tier_expires_at: string | null;
           billing_cycle: string | null;
+          founding_member: boolean | null;
+          purchased_slots: number;
         };
         Insert: {
           id: string;
           role: 'landlord' | 'tenant';
           full_name?: string | null;
           phone?: string | null;
-          language?: 'th' | 'en';
+          language?: 'th' | 'en' | 'zh';
           fcm_token?: string | null;
           tier?: 'free' | 'pro';
           notification_preferences?: Json | null;
@@ -57,13 +59,15 @@ export interface Database {
           omise_schedule_id?: string | null;
           tier_expires_at?: string | null;
           billing_cycle?: string | null;
+          founding_member?: boolean | null;
+          purchased_slots?: number;
         };
         Update: {
           id?: string;
           role?: 'landlord' | 'tenant';
           full_name?: string | null;
           phone?: string | null;
-          language?: 'th' | 'en';
+          language?: 'th' | 'en' | 'zh';
           fcm_token?: string | null;
           tier?: 'free' | 'pro';
           notification_preferences?: Json | null;
@@ -72,6 +76,8 @@ export interface Database {
           omise_schedule_id?: string | null;
           tier_expires_at?: string | null;
           billing_cycle?: string | null;
+          founding_member?: boolean | null;
+          purchased_slots?: number;
         };
         Relationships: [];
       };
@@ -128,10 +134,19 @@ export interface Database {
           lease_end: string | null;
           monthly_rent: number | null;
           security_deposit: number | null;
-          status: 'active' | 'expired' | 'terminated' | 'pending' | 'awaiting_signature';
+          status:
+            | 'active'
+            | 'expired'
+            | 'terminated'
+            | 'pending'
+            | 'awaiting_signature'
+            | 'scheduled'
+            | 'parse_failed';
           pairing_code: string | null;
           pairing_expires_at: string | null;
           co_tenants: Json | null;
+          renewed_from: string | null;
+          renewal_changes: Json | null;
           created_at: string;
         };
         Insert: {
@@ -148,10 +163,19 @@ export interface Database {
           lease_end?: string | null;
           monthly_rent?: number | null;
           security_deposit?: number | null;
-          status?: 'active' | 'expired' | 'terminated' | 'pending' | 'awaiting_signature';
+          status?:
+            | 'active'
+            | 'expired'
+            | 'terminated'
+            | 'pending'
+            | 'awaiting_signature'
+            | 'scheduled'
+            | 'parse_failed';
           pairing_code?: string | null;
           pairing_expires_at?: string | null;
           co_tenants?: Json | null;
+          renewed_from?: string | null;
+          renewal_changes?: Json | null;
           created_at?: string;
         };
         Update: {
@@ -168,10 +192,19 @@ export interface Database {
           lease_end?: string | null;
           monthly_rent?: number | null;
           security_deposit?: number | null;
-          status?: 'active' | 'expired' | 'terminated' | 'pending' | 'awaiting_signature';
+          status?:
+            | 'active'
+            | 'expired'
+            | 'terminated'
+            | 'pending'
+            | 'awaiting_signature'
+            | 'scheduled'
+            | 'parse_failed';
           pairing_code?: string | null;
           pairing_expires_at?: string | null;
           co_tenants?: Json | null;
+          renewed_from?: string | null;
+          renewal_changes?: Json | null;
           created_at?: string;
         };
         Relationships: [
@@ -340,7 +373,7 @@ export interface Database {
           landlord_id: string;
           category: 'contract' | 'tenant_id' | 'inspection' | 'receipt' | 'other';
           storage_path: string;
-          public_url: string;
+          public_url: string | null;
           file_name: string;
           file_size: number | null;
           mime_type: string | null;
@@ -355,7 +388,7 @@ export interface Database {
           landlord_id: string;
           category: 'contract' | 'tenant_id' | 'inspection' | 'receipt' | 'other';
           storage_path: string;
-          public_url: string;
+          public_url?: string | null;
           file_name: string;
           file_size?: number | null;
           mime_type?: string | null;
@@ -370,7 +403,7 @@ export interface Database {
           landlord_id?: string;
           category?: 'contract' | 'tenant_id' | 'inspection' | 'receipt' | 'other';
           storage_path?: string;
-          public_url?: string;
+          public_url?: string | null;
           file_name?: string;
           file_size?: number | null;
           mime_type?: string | null;
@@ -647,74 +680,242 @@ export interface Database {
       contract_templates: {
         Row: {
           id: string;
-          name: string;
-          description: string | null;
+          name_en: string;
+          name_th: string;
+          description_en: string | null;
+          description_th: string | null;
           template_text: string;
-          language: string;
-          category: string;
+          category: 'residential' | 'condo' | 'furnished' | 'short_term' | 'commercial';
           is_system: boolean;
-          created_by: string | null;
+          landlord_id: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
-          name: string;
-          description?: string | null;
+          name_en: string;
+          name_th: string;
+          description_en?: string | null;
+          description_th?: string | null;
           template_text: string;
-          language?: string;
-          category?: string;
+          category: 'residential' | 'condo' | 'furnished' | 'short_term' | 'commercial';
           is_system?: boolean;
-          created_by?: string | null;
+          landlord_id?: string | null;
+          created_at?: string;
         };
         Update: {
-          name?: string;
-          description?: string | null;
+          id?: string;
+          name_en?: string;
+          name_th?: string;
+          description_en?: string | null;
+          description_th?: string | null;
           template_text?: string;
-          language?: string;
-          category?: string;
+          category?: 'residential' | 'condo' | 'furnished' | 'short_term' | 'commercial';
           is_system?: boolean;
+          landlord_id?: string | null;
+          created_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'contract_templates_landlord_id_fkey';
+            columns: ['landlord_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       contract_analyses: {
         Row: {
           id: string;
           contract_id: string;
-          risks: Json | null;
-          missing_clauses: Json | null;
-          summary: string | null;
-          created_at: string;
+          risks: Json;
+          missing_clauses: Json;
+          summary_en: string | null;
+          summary_th: string | null;
+          clause_ratings: Json;
+          analyzed_at: string;
         };
         Insert: {
           id?: string;
           contract_id: string;
-          risks?: Json | null;
-          missing_clauses?: Json | null;
-          summary?: string | null;
+          risks?: Json;
+          missing_clauses?: Json;
+          summary_en?: string | null;
+          summary_th?: string | null;
+          clause_ratings?: Json;
+          analyzed_at?: string;
         };
-        Update: { risks?: Json | null; missing_clauses?: Json | null; summary?: string | null };
+        Update: {
+          id?: string;
+          contract_id?: string;
+          risks?: Json;
+          missing_clauses?: Json;
+          summary_en?: string | null;
+          summary_th?: string | null;
+          clause_ratings?: Json;
+          analyzed_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'contract_analyses_contract_id_fkey';
+            columns: ['contract_id'];
+            isOneToOne: true;
+            referencedRelation: 'contracts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      ai_rate_limits: {
+        Row: {
+          user_id: string;
+          endpoint: string;
+          window_start: string;
+          count: number;
+        };
+        Insert: {
+          user_id: string;
+          endpoint: string;
+          window_start: string;
+          count?: number;
+        };
+        Update: {
+          user_id?: string;
+          endpoint?: string;
+          window_start?: string;
+          count?: number;
+        };
         Relationships: [];
       };
-      bug_reports: {
+      ai_spend_log: {
         Row: {
           id: string;
-          user_id: string | null;
-          page_url: string | null;
-          description: string;
+          user_id: string;
+          endpoint: string;
+          input_tokens: number;
+          output_tokens: number;
+          cost_usd: number;
+          called_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          endpoint: string;
+          input_tokens: number;
+          output_tokens: number;
+          cost_usd: number;
+          called_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          endpoint?: string;
+          input_tokens?: number;
+          output_tokens?: number;
+          cost_usd?: number;
+          called_at?: string;
+        };
+        Relationships: [];
+      };
+      slot_purchases: {
+        Row: {
+          id: string;
+          user_id: string;
+          slots_added: number;
+          amount_thb: number;
+          omise_charge_id: string | null;
+          status: 'pending' | 'paid' | 'failed' | 'refunded';
+          created_at: string;
+          paid_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          slots_added: number;
+          amount_thb: number;
+          omise_charge_id?: string | null;
+          status?: 'pending' | 'paid' | 'failed' | 'refunded';
+          created_at?: string;
+          paid_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          slots_added?: number;
+          amount_thb?: number;
+          omise_charge_id?: string | null;
+          status?: 'pending' | 'paid' | 'failed' | 'refunded';
+          created_at?: string;
+          paid_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'slot_purchases_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      translation_reports: {
+        Row: {
+          id: string;
+          locale: 'th' | 'en' | 'zh';
+          key: string;
+          current_value: string;
+          suggestion: string | null;
+          user_id: string;
+          status: 'pending' | 'accepted' | 'rejected' | 'applied';
+          reviewed_by: string | null;
+          reviewed_at: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
-          user_id?: string | null;
-          page_url?: string | null;
-          description: string;
+          locale: 'th' | 'en' | 'zh';
+          key: string;
+          current_value: string;
+          suggestion?: string | null;
+          user_id: string;
+          status?: 'pending' | 'accepted' | 'rejected' | 'applied';
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
         };
-        Update: { description?: string };
-        Relationships: [];
+        Update: {
+          id?: string;
+          locale?: 'th' | 'en' | 'zh';
+          key?: string;
+          current_value?: string;
+          suggestion?: string | null;
+          user_id?: string;
+          status?: 'pending' | 'accepted' | 'rejected' | 'applied';
+          reviewed_by?: string | null;
+          reviewed_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'translation_reports_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      increment_rate_limit: {
+        Args: {
+          p_user_id: string;
+          p_endpoint: string;
+          p_window_start: string;
+        };
+        Returns: number;
+      };
+    };
     Enums: Record<string, never>;
   };
 }

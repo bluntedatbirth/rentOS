@@ -4,12 +4,11 @@ import { extractAndTranslateContract } from '@/lib/claude/extractContract';
 import type { Database } from '@/lib/supabase/types';
 import fs from 'fs';
 import path from 'path';
+import { isDevEndpointAllowed } from '@/lib/devGuard';
 
 // DEV ONLY — test the OCR pipeline with an actual Thai PDF file
 export async function POST() {
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Not available in production' }, { status: 403 });
-  }
+  if (!isDevEndpointAllowed()) return new Response(null, { status: 404 });
 
   const adminClient = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

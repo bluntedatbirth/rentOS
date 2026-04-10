@@ -24,7 +24,9 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from('maintenance_requests')
-    .select('*')
+    .select(
+      'id, contract_id, raised_by, title, description, photo_urls, status, assigned_to, estimated_cost, actual_cost, sla_deadline, completed_at, created_at'
+    )
     .order('created_at', { ascending: false });
 
   if (contractId) {

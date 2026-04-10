@@ -8,7 +8,7 @@ import {
   serverError,
 } from '@/lib/supabase/api';
 import { calculatePenalty } from '@/lib/claude/calculatePenalty';
-import { rateLimit, rateLimitResponse } from '@/lib/rateLimit';
+import { checkRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
 
 const calculateSchema = z.object({
   contract_id: z.string().uuid(),
@@ -20,8 +20,21 @@ export async function POST(request: Request) {
   const { user, supabase } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
-  const rl = rateLimit(`penalty-calc:${user.id}`, 10, 60000);
-  if (!rl.success) return rateLimitResponse();
+  // Persistent rate limit: 20/hour, 50/day per user
+  const rl = await checkRateLimit(user.id, 'penalty-calculate', 20, 50);
+  if (!rl.allowed) {
+    console.warn('[rateLimit] penalty-calculate blocked, reason:', rl.reason, 'user:', user.id);
+    return new Response(
+      JSON.stringify({ error: 'ai_unavailable', retryAfterSeconds: rl.retryAfterSeconds }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(rl.retryAfterSeconds),
+        },
+      }
+    );
+  }
 
   const body: unknown = await request.json();
   const parsed = calculateSchema.safeParse(body);
@@ -64,18 +77,23 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await calculatePenalty({
-      clause_text_th: clause.text_th,
-      clause_text_en: clause.text_en,
-      clause_title_th: clause.title_th,
-      clause_title_en: clause.title_en,
-      penalty_amount: clause.penalty_amount,
-      penalty_description: clause.penalty_description,
-      violation_description,
-      monthly_rent: contract.monthly_rent as number | null,
-      lease_start: contract.lease_start as string | null,
-      lease_end: contract.lease_end as string | null,
-    });
+    const result = await calculatePenalty(
+      {
+        clause_text_th: clause.text_th,
+        clause_text_en: clause.text_en,
+        clause_title_th: clause.title_th,
+        clause_title_en: clause.title_en,
+        penalty_amount: clause.penalty_amount,
+        penalty_description: clause.penalty_description,
+        violation_description,
+        monthly_rent: contract.monthly_rent as number | null,
+        lease_start: contract.lease_start as string | null,
+        lease_end: contract.lease_end as string | null,
+      },
+      (usage) => {
+        void logAISpend(user.id, 'penalty-calculate', usage.input_tokens, usage.output_tokens);
+      }
+    );
 
     return NextResponse.json(result);
   } catch (err) {

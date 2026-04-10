@@ -3,7 +3,6 @@ export type TierCheckResult =
   | { allowed: false; reason: string; upgradeUrl: string };
 
 export const PRO_FEATURES = [
-  'unlimited_properties',
   'contract_generation',
   'contract_qa',
   'contract_comparison',
@@ -48,7 +47,15 @@ export function requirePro(
   };
 }
 
-export function getPropertyLimit(tier: string): number {
+export function getPropertyLimit(tier: string, purchasedSlots: number = 0): number {
   if (process.env.DEFER_TIER_ENFORCEMENT === 'true') return Infinity;
-  return tier === 'pro' ? Infinity : 3;
+  return 2 + purchasedSlots;
 }
+
+export const SLOT_UNLOCK_PACKS = [
+  { packIndex: 0, slots: 1, thb: 99 },
+  { packIndex: 1, slots: 5, thb: 399 },
+  { packIndex: 2, slots: 10, thb: 699 },
+] as const;
+
+export const PRO_MONTHLY_THB = 199;

@@ -5,14 +5,13 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { requirePro } from '@/lib/tier';
 import { withRetry } from '@/lib/claude/retry';
 import { trackTokenUsage } from '@/lib/claude/tokenTracker';
+import { checkRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
 import type { StructuredClause } from '@/lib/supabase/types';
 
 const client = new Anthropic();
 
-// Typed shape for cached analysis row (new table not yet in generated Database type)
+// Typed shape for cached analysis row (projected columns only)
 interface CachedAnalysis {
-  id: string;
-  contract_id: string;
   risks: AnalysisResult['risks'];
   missing_clauses: AnalysisResult['missing_clauses'];
   summary_en: string | null;
@@ -53,6 +52,22 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   const { user, supabase } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
+  // Persistent rate limit: 3/hour, 10/day per user
+  const rl = await checkRateLimit(user.id, 'analyze', 3, 10);
+  if (!rl.allowed) {
+    console.warn('[rateLimit] analyze blocked, reason:', rl.reason, 'user:', user.id);
+    return new Response(
+      JSON.stringify({ error: 'ai_unavailable', retryAfterSeconds: rl.retryAfterSeconds }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(rl.retryAfterSeconds),
+        },
+      }
+    );
+  }
+
   // Pro feature gate
   const profile = await supabase.from('profiles').select('tier').eq('id', user.id).single();
 
@@ -87,7 +102,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   // Check cache first — return existing analysis if present
   const { data: cached } = (await (serviceClient as unknown as AnyClient)
     .from('contract_analyses')
-    .select('*')
+    .select('risks, missing_clauses, summary_en, summary_th, clause_ratings, analyzed_at')
     .eq('contract_id', params.id)
     .single()) as { data: CachedAnalysis | null; error: unknown };
 
@@ -212,6 +227,7 @@ IMPORTANT for missing_clauses:
       input_tokens: response.usage.input_tokens,
       output_tokens: response.usage.output_tokens,
     });
+    void logAISpend(user.id, 'analyze', response.usage.input_tokens, response.usage.output_tokens);
   }
 
   const textContent = response.content.find((b) => b.type === 'text');

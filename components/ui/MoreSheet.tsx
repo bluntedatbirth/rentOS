@@ -35,20 +35,20 @@ export function MoreSheet({ items, open, onClose }: MoreSheetProps) {
       />
 
       {/* Sheet */}
-      <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-white pb-safe md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl bg-warm-50 pb-safe md:hidden">
         {/* Handle bar */}
         <div className="flex justify-center pt-3 pb-1">
-          <div className="h-1 w-10 rounded-full bg-gray-300" />
+          <div className="h-1 w-10 rounded-full bg-warm-300" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
-          <h2 className="text-sm font-semibold text-gray-800">{t('nav.more')}</h2>
+        <div className="flex items-center justify-between border-b border-warm-200 px-5 py-3">
+          <h2 className="text-sm font-semibold text-charcoal-900">{t('nav.more')}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-charcoal-500 hover:bg-warm-100"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -77,11 +77,11 @@ export function MoreSheet({ items, open, onClose }: MoreSheetProps) {
                 onClick={onClose}
                 className={`relative overflow-hidden flex flex-col items-center gap-2 rounded-xl px-2 py-4 text-center transition-colors ${
                   isActive
-                    ? 'bg-primary-50 text-primary-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-saffron-50 text-saffron-600'
+                    : 'text-charcoal-600 hover:bg-warm-100 hover:text-charcoal-900'
                 }`}
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-600">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-warm-100 text-charcoal-600">
                   {item.icon}
                 </span>
                 <span className="text-xs font-medium leading-tight">{item.label}</span>

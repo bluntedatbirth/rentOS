@@ -1,12 +1,11 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { isDevEndpointAllowed } from '@/lib/devGuard';
 
 // DEV ONLY — password sign-in that sets session cookies
 export async function GET() {
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Not available in production' }, { status: 403 });
-  }
+  if (!isDevEndpointAllowed()) return new Response(null, { status: 404 });
 
   const cookieStore = cookies();
 

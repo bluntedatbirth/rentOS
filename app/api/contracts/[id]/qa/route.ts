@@ -7,7 +7,7 @@ import {
   notFound,
   serverError,
 } from '@/lib/supabase/api';
-import { rateLimit, rateLimitResponse } from '@/lib/rateLimit';
+import { checkRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
 import { answerContractQuestion, StructuredClause } from '@/lib/claude/contractQA';
 
 const qaSchema = z.object({
@@ -18,9 +18,21 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const { user, supabase } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
-  // Rate limit: 10 questions per minute per user
-  const rl = rateLimit(`contract-qa:${user.id}`, 10, 60000);
-  if (!rl.success) return rateLimitResponse();
+  // Persistent rate limit: 20/hour, 60/day per user
+  const rl = await checkRateLimit(user.id, 'qa', 20, 60);
+  if (!rl.allowed) {
+    console.warn('[rateLimit] qa blocked, reason:', rl.reason, 'user:', user.id);
+    return new Response(
+      JSON.stringify({ error: 'ai_unavailable', retryAfterSeconds: rl.retryAfterSeconds }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(rl.retryAfterSeconds),
+        },
+      }
+    );
+  }
 
   const body: unknown = await request.json();
   const parsed = qaSchema.safeParse(body);
@@ -53,13 +65,18 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const clauses = (contract.structured_clauses ?? []) as StructuredClause[];
 
   try {
-    const result = await answerContractQuestion({
-      question,
-      contractText_th: (contract.raw_text_th as string) ?? '',
-      contractText_en: (contract.translated_text_en as string) ?? '',
-      clauses,
-      userLanguage,
-    });
+    const result = await answerContractQuestion(
+      {
+        question,
+        contractText_th: (contract.raw_text_th as string) ?? '',
+        contractText_en: (contract.translated_text_en as string) ?? '',
+        clauses,
+        userLanguage,
+      },
+      (usage) => {
+        void logAISpend(user.id, 'qa', usage.input_tokens, usage.output_tokens);
+      }
+    );
 
     return NextResponse.json(result);
   } catch (err) {

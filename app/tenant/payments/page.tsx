@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
+import { useToast } from '@/components/ui/ToastProvider';
 
 import { createClient } from '@/lib/supabase/client';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -21,6 +22,45 @@ interface Payment {
   status: 'pending' | 'paid' | 'overdue';
   promptpay_ref: string | null;
   notes: string | null;
+  claimed_by: string | null;
+  claimed_at: string | null;
+  claimed_note: string | null;
+}
+
+interface ActiveContract {
+  id: string;
+  monthly_rent: number;
+  lease_start: string;
+  lease_end: string;
+  property_name: string | null;
+}
+
+type PaymentBucket = 'due' | 'future' | 'completed';
+
+function categorisePayment(payment: Payment): PaymentBucket {
+  if (payment.status === 'paid') return 'completed';
+  if (payment.status === 'overdue') return 'due';
+  // claimed payments stay in Due until landlord confirms
+  if (payment.claimed_at != null) return 'due';
+  // pending: check if within 7 days
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sevenDaysOut = new Date(today);
+  sevenDaysOut.setDate(sevenDaysOut.getDate() + 7);
+  const due = new Date(payment.due_date);
+  if (due <= sevenDaysOut) return 'due';
+  return 'future';
+}
+
+function isPayableWindow(payment: Payment): boolean {
+  if (payment.payment_type === 'penalty') return true;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const thirtyDaysOut = new Date(today);
+  thirtyDaysOut.setDate(thirtyDaysOut.getDate() + 30);
+  const due = new Date(payment.due_date);
+  // Anything up to and including 30 days ahead is payable. Overdue is also payable.
+  return due <= thirtyDaysOut;
 }
 
 const TYPE_LABEL_KEYS: Record<string, string> = {
@@ -30,54 +70,128 @@ const TYPE_LABEL_KEYS: Record<string, string> = {
   penalty: 'payments.type_penalty',
 };
 
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 export default function TenantPaymentsPage() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const { toast } = useToast();
 
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [activeContract, setActiveContract] = useState<ActiveContract | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showQR, setShowQR] = useState<string | null>(null);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [activeClaimId, setActiveClaimId] = useState<string | null>(null);
+  const [claimNote, setClaimNote] = useState('');
+  const [completedExpanded, setCompletedExpanded] = useState(false);
+
+  const load = async () => {
+    if (!user) return;
+    // Get tenant's active contract with property join
+    const { data: contracts } = await supabase
+      .from('contracts')
+      .select('id, monthly_rent, lease_start, lease_end, properties(name)')
+      .eq('tenant_id', user.id)
+      .eq('status', 'active')
+      .limit(1);
+
+    const raw = contracts?.[0];
+
+    if (raw) {
+      const propertiesData = raw.properties as { name: string } | { name: string }[] | null;
+      const propertyName =
+        propertiesData == null
+          ? null
+          : Array.isArray(propertiesData)
+            ? (propertiesData[0]?.name ?? null)
+            : propertiesData.name;
+
+      const contract: ActiveContract = {
+        id: raw.id as string,
+        monthly_rent: raw.monthly_rent as number,
+        lease_start: raw.lease_start as string,
+        lease_end: raw.lease_end as string,
+        property_name: propertyName,
+      };
+      setActiveContract(contract);
+
+      const { data: paymentData } = await supabase
+        .from('payments')
+        .select(
+          'id, contract_id, amount, due_date, paid_date, payment_type, status, promptpay_ref, notes, claimed_by, claimed_at, claimed_note'
+        )
+        .eq('contract_id', contract.id)
+        .order('due_date', { ascending: false });
+
+      setPayments((paymentData ?? []) as unknown as Payment[]);
+    } else {
+      setActiveContract(null);
+      setPayments([]);
+    }
+
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!user) return;
-
-    const load = async () => {
-      // Get tenant's active contract
-      const { data: contracts } = await supabase
-        .from('contracts')
-        .select('id')
-        .eq('tenant_id', user.id)
-        .eq('status', 'active')
-        .limit(1);
-
-      const activeContract = contracts?.[0];
-
-      if (activeContract) {
-        const { data: paymentData } = await supabase
-          .from('payments')
-          .select('*')
-          .eq('contract_id', activeContract.id)
-          .order('due_date', { ascending: false });
-
-        setPayments((paymentData ?? []) as Payment[]);
-      }
-
-      setLoading(false);
-    };
-
-    load();
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  const submitClaim = async (paymentId: string) => {
+    setClaimingId(paymentId);
+    try {
+      const res = await fetch(`/api/payments/${paymentId}/claim`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: claimNote || undefined }),
+      });
+      if (res.ok) {
+        toast.success(t('payments.claim_sent'));
+        setActiveClaimId(null);
+        setClaimNote('');
+        await load();
+      } else {
+        toast.error(t('auth.error'));
+      }
+    } catch {
+      toast.error(t('auth.error'));
+    } finally {
+      setClaimingId(null);
+    }
+  };
 
   if (loading) return <LoadingSkeleton count={4} />;
 
-  // Group: overdue first, pending, paid
-  const overduePayments = payments.filter((p) => p.status === 'overdue');
-  const pendingPayments = payments.filter((p) => p.status === 'pending');
-  const paidPayments = payments.filter((p) => p.status === 'paid');
-  const groupedPayments = [...overduePayments, ...pendingPayments, ...paidPayments];
+  // Categorise into three buckets
+  const duePayments = payments
+    .filter((p) => categorisePayment(p) === 'due')
+    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
 
-  // Calculate totals
-  const totalDue = [...overduePayments, ...pendingPayments].reduce((sum, p) => sum + p.amount, 0);
+  const futurePayments = payments
+    .filter((p) => categorisePayment(p) === 'future')
+    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+
+  const completedPayments = payments
+    .filter((p) => categorisePayment(p) === 'completed')
+    .sort((a, b) => {
+      const aDate = a.paid_date ?? a.due_date;
+      const bDate = b.paid_date ?? b.due_date;
+      return new Date(bDate).getTime() - new Date(aDate).getTime();
+    });
+
+  // Total due: sum from Due section only
+  const totalDue = duePayments.reduce((sum, p) => sum + p.amount, 0);
+  const overdueCount = duePayments.filter((p) => p.status === 'overdue').length;
+
+  const allEmpty =
+    duePayments.length === 0 && futurePayments.length === 0 && completedPayments.length === 0;
 
   const getDaysUntilDue = (dueDate: string) => {
     const now = new Date();
@@ -86,160 +200,233 @@ export default function TenantPaymentsPage() {
     return diff;
   };
 
-  return (
-    <div className="mx-auto max-w-3xl">
-      <h2 className="mb-6 text-xl font-bold text-gray-900">{t('payments.title')}</h2>
+  const renderPaymentCard = (payment: Payment) => {
+    const isOverdue = payment.status !== 'paid' && new Date(payment.due_date) < new Date();
+    const daysUntil = getDaysUntilDue(payment.due_date);
+    const isClaimed = payment.status !== 'paid' && payment.claimed_at != null;
+    const isClaimable = payment.status !== 'paid' && !isClaimed;
 
-      {/* Summary card */}
-      {totalDue > 0 && (
-        <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
-          <p className="text-xs text-gray-500">{t('payments.total_due')}</p>
-          <p className="text-2xl font-bold text-gray-900">฿{totalDue.toLocaleString()}</p>
-          {overduePayments.length > 0 && (
-            <p className="mt-1 text-xs font-medium text-red-600">
-              {overduePayments.length} {t('payments.overdue')}
-            </p>
+    return (
+      <div
+        key={payment.id}
+        className={`rounded-lg bg-white p-4 shadow-sm ${
+          isClaimed ? 'border-l-4 border-amber-500' : isOverdue ? 'border-l-4 border-red-500' : ''
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <StatusBadge
+              status={payment.payment_type}
+              label={t(TYPE_LABEL_KEYS[payment.payment_type] ?? payment.payment_type)}
+            />
+            <span className="text-lg font-semibold text-charcoal-900">
+              ฿{payment.amount.toLocaleString()}
+            </span>
+          </div>
+          <StatusBadge status={isOverdue ? 'overdue' : payment.status} />
+        </div>
+
+        <div className="mt-2 flex flex-wrap gap-4 text-sm text-charcoal-500">
+          <span>
+            {t('payments.due_date')}: {payment.due_date}
+          </span>
+          {payment.status !== 'paid' && !isOverdue && daysUntil >= 0 && (
+            <span className={daysUntil <= 3 ? 'text-amber-600 font-medium' : ''}>
+              {daysUntil === 0
+                ? t('payments.due_today')
+                : `${daysUntil} ${t('create_contract.days')}`}
+            </span>
+          )}
+          {payment.paid_date && (
+            <span>
+              {t('payments.paid_date')}: {payment.paid_date}
+            </span>
           )}
         </div>
-      )}
 
-      {groupedPayments.length === 0 ? (
+        {payment.notes && <p className="mt-1 text-sm text-charcoal-400">{payment.notes}</p>}
+
+        {/* "Already claimed" banner — waiting for landlord confirmation */}
+        {isClaimed && (
+          <div className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <p className="font-medium">{t('payments.claim_pending_confirmation')}</p>
+            {payment.claimed_note && (
+              <p className="mt-0.5 italic">&ldquo;{payment.claimed_note}&rdquo;</p>
+            )}
+          </div>
+        )}
+
+        {/* "I've paid this" button — only on unpaid, unclaimed rows within the payable window */}
+        {isClaimable && activeClaimId !== payment.id && (
+          <div className="mt-3">
+            {isPayableWindow(payment) ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveClaimId(payment.id);
+                  setClaimNote('');
+                }}
+                className="min-h-[36px] rounded-lg border border-saffron-500 bg-white px-3 py-1.5 text-xs font-semibold text-saffron-700 hover:bg-saffron-50"
+              >
+                {t('payments.claim_paid')}
+              </button>
+            ) : (
+              <span className="text-xs text-charcoal-400">{t('payments.v2_not_yet_payable')}</span>
+            )}
+          </div>
+        )}
+
+        {/* Inline claim form — only shown when within the payable window */}
+        {isClaimable && activeClaimId === payment.id && isPayableWindow(payment) && (
+          <div className="mt-3 rounded-md bg-saffron-50 p-3">
+            <p className="mb-2 text-xs text-charcoal-900">{t('payments.claim_paid_prompt')}</p>
+            <input
+              type="text"
+              value={claimNote}
+              onChange={(e) => setClaimNote(e.target.value)}
+              placeholder={t('payments.claim_note_placeholder')}
+              className="mb-2 w-full rounded-md border border-saffron-200 bg-white px-2 py-1.5 text-xs"
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => submitClaim(payment.id)}
+                disabled={claimingId === payment.id}
+                className="min-h-[36px] rounded-lg bg-saffron-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-saffron-600 disabled:opacity-50"
+              >
+                {claimingId === payment.id ? t('common.loading') : t('payments.claim_paid')}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveClaimId(null);
+                  setClaimNote('');
+                }}
+                className="min-h-[36px] rounded-lg border border-warm-200 px-3 py-1.5 text-xs font-medium text-charcoal-700 hover:bg-warm-100"
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="mx-auto max-w-3xl">
+      <h2 className="mb-6 text-xl font-bold text-charcoal-900">{t('payments.title')}</h2>
+
+      {/* No active lease state */}
+      {!activeContract ? (
         <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-          <p className="text-sm text-gray-500">{t('payments.no_payments')}</p>
+          <p className="text-base font-semibold text-charcoal-700">
+            {t('payments.no_active_lease')}
+          </p>
+          <p className="mt-1 text-sm text-charcoal-500">{t('payments.no_active_lease_hint')}</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {groupedPayments.map((payment) => {
-            const isOverdue = payment.status !== 'paid' && new Date(payment.due_date) < new Date();
-            const daysUntil = getDaysUntilDue(payment.due_date);
-            const canPay = payment.status !== 'paid';
+        <>
+          {/* Contract context block */}
+          <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
+            {activeContract.property_name && (
+              <div className="mb-2">
+                <p className="text-xs text-charcoal-500">{t('payments.your_property')}</p>
+                <p className="text-sm font-semibold text-charcoal-900">
+                  {activeContract.property_name}
+                </p>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-x-6 gap-y-1">
+              <div>
+                <p className="text-xs text-charcoal-500">{t('payments.total_due')}</p>
+                <p className="text-sm font-semibold text-charcoal-900">
+                  ฿{activeContract.monthly_rent.toLocaleString()}
+                  {t('payments.per_month')}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-charcoal-500">{t('payments.lease_period')}</p>
+                <p className="text-sm font-semibold text-charcoal-900">
+                  {formatDate(activeContract.lease_start)} → {formatDate(activeContract.lease_end)}
+                </p>
+              </div>
+            </div>
+          </div>
 
-            return (
-              <div key={payment.id}>
-                <div
-                  className={`rounded-lg bg-white p-4 shadow-sm ${
-                    isOverdue ? 'border-l-4 border-red-500' : ''
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <StatusBadge
-                        status={payment.payment_type}
-                        label={t(TYPE_LABEL_KEYS[payment.payment_type] ?? payment.payment_type)}
-                      />
-                      <span className="text-lg font-semibold text-gray-900">
-                        ฿{payment.amount.toLocaleString()}
-                      </span>
-                    </div>
-                    <StatusBadge status={isOverdue ? 'overdue' : payment.status} />
-                  </div>
+          {/* No payments at all */}
+          {allEmpty ? (
+            <div className="rounded-lg bg-white p-8 text-center shadow-sm">
+              <p className="text-sm font-medium text-charcoal-500">
+                {t('payments.no_payments_yet')}
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Total due summary card — from Due section only */}
+              {totalDue > 0 && (
+                <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
+                  <p className="text-xs text-charcoal-500">{t('payments.total_due')}</p>
+                  <p className="text-2xl font-bold text-charcoal-900">
+                    ฿{totalDue.toLocaleString()}
+                  </p>
+                  {overdueCount > 0 && (
+                    <p className="mt-1 text-xs font-medium text-red-600">
+                      {overdueCount} {t('payments.overdue')}
+                    </p>
+                  )}
+                </div>
+              )}
 
-                  <div className="mt-2 flex flex-wrap gap-4 text-sm text-gray-500">
-                    <span>
-                      {t('payments.due_date')}: {payment.due_date}
-                    </span>
-                    {payment.status !== 'paid' && !isOverdue && daysUntil >= 0 && (
-                      <span className={daysUntil <= 3 ? 'text-amber-600 font-medium' : ''}>
-                        {daysUntil === 0
-                          ? t('payments.due_today')
-                          : `${daysUntil} ${t('create_contract.days')}`}
-                      </span>
-                    )}
-                    {payment.paid_date && (
-                      <span>
-                        {t('payments.paid_date')}: {payment.paid_date}
-                      </span>
-                    )}
-                  </div>
+              {/* Due section — expanded by default */}
+              <div className="mb-8">
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-charcoal-500">
+                  {t('payments.section_due')}
+                </h3>
+                {duePayments.length === 0 ? (
+                  <p className="text-sm text-charcoal-400">{t('payments.no_payments_due')}</p>
+                ) : (
+                  <div className="space-y-3">{duePayments.map(renderPaymentCard)}</div>
+                )}
+              </div>
 
-                  {payment.notes && <p className="mt-1 text-sm text-gray-400">{payment.notes}</p>}
+              {/* Future section — expanded by default */}
+              <div className="mb-8">
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-charcoal-500">
+                  {t('payments.section_future')}
+                </h3>
+                {futurePayments.length === 0 ? (
+                  <p className="text-sm text-charcoal-400">{t('payments.no_future_payments')}</p>
+                ) : (
+                  <div className="space-y-3">{futurePayments.map(renderPaymentCard)}</div>
+                )}
+              </div>
 
-                  {/* Pay button for unpaid payments */}
-                  {canPay && (
+              {/* Completed section — collapsed by default */}
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-charcoal-500">
+                    {t('payments.section_completed')}
+                  </h3>
+                  {completedPayments.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowQR(showQR === payment.id ? null : payment.id);
-                      }}
-                      className={`mt-3 min-h-[44px] w-full rounded-lg px-4 py-2.5 text-sm font-medium ${
-                        isOverdue
-                          ? 'bg-red-600 text-white hover:bg-red-700'
-                          : 'bg-blue-600 text-white hover:bg-blue-700'
-                      }`}
+                      onClick={() => setCompletedExpanded((prev) => !prev)}
+                      className="text-xs font-medium text-saffron-600 hover:text-saffron-700"
                     >
-                      {showQR === payment.id ? t('payments.hide_qr') : t('payments.pay_now')}
+                      {completedExpanded
+                        ? `${t('payments.hide_completed')} ▴`
+                        : `${t('payments.show_completed').replace('{}', String(completedPayments.length))} ▾`}
                     </button>
                   )}
                 </div>
-
-                {/* PromptPay QR Section */}
-                {showQR === payment.id && (
-                  <div className="mt-2 rounded-lg border border-blue-200 bg-blue-50 p-4">
-                    <div className="text-center">
-                      {/* PromptPay primary */}
-                      <div className="mb-4">
-                        <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-blue-600 px-3 py-1">
-                          <span className="text-xs font-bold text-white">PromptPay</span>
-                        </div>
-                        {payment.promptpay_ref ? (
-                          <>
-                            {/* QR placeholder - shows PromptPay reference as scannable text */}
-                            <div className="mx-auto mb-3 flex h-48 w-48 items-center justify-center rounded-lg border-2 border-dashed border-blue-300 bg-white">
-                              <div className="text-center">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 24 24"
-                                  fill="currentColor"
-                                  className="mx-auto mb-2 h-12 w-12 text-blue-400"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M3 4.875C3 3.839 3.84 3 4.875 3h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5A1.875 1.875 0 013 9.375v-4.5zM4.875 4.5a.375.375 0 00-.375.375v4.5c0 .207.168.375.375.375h4.5a.375.375 0 00.375-.375v-4.5a.375.375 0 00-.375-.375h-4.5zM3 14.625c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5A1.875 1.875 0 013 19.125v-4.5zM4.875 14.25a.375.375 0 00-.375.375v4.5c0 .207.168.375.375.375h4.5a.375.375 0 00.375-.375v-4.5a.375.375 0 00-.375-.375h-4.5zM12.75 4.875c0-1.036.84-1.875 1.875-1.875h4.5c1.036 0 1.875.84 1.875 1.875v4.5c0 1.036-.84 1.875-1.875 1.875h-4.5a1.875 1.875 0 01-1.875-1.875v-4.5zM14.625 4.5a.375.375 0 00-.375.375v4.5c0 .207.168.375.375.375h4.5a.375.375 0 00.375-.375v-4.5a.375.375 0 00-.375-.375h-4.5z"
-                                    clipRule="evenodd"
-                                  />
-                                  <path d="M12.75 14.25a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H13.5a.75.75 0 01-.75-.75v-.008zM15.75 14.25a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H16.5a.75.75 0 01-.75-.75v-.008zM18.75 14.25a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H19.5a.75.75 0 01-.75-.75v-.008zM12.75 17.25a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H13.5a.75.75 0 01-.75-.75v-.008zM15.75 17.25a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H16.5a.75.75 0 01-.75-.75v-.008zM18.75 17.25a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H19.5a.75.75 0 01-.75-.75v-.008zM12.75 20.25a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H13.5a.75.75 0 01-.75-.75v-.008zM15.75 20.25a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H16.5a.75.75 0 01-.75-.75v-.008zM18.75 20.25a.75.75 0 01.75-.75h.008a.75.75 0 01.75.75v.008a.75.75 0 01-.75.75H19.5a.75.75 0 01-.75-.75v-.008z" />
-                                </svg>
-                                <p className="text-xs text-blue-500">{t('payments.scan_qr')}</p>
-                              </div>
-                            </div>
-                            <div className="rounded-lg bg-white px-3 py-2">
-                              <p className="text-xs font-medium text-blue-700">
-                                {t('payments.promptpay_ref')}
-                              </p>
-                              <p className="font-mono text-lg font-bold text-blue-900">
-                                {payment.promptpay_ref}
-                              </p>
-                            </div>
-                          </>
-                        ) : (
-                          <p className="text-sm text-gray-500">{t('payments.no_promptpay')}</p>
-                        )}
-                      </div>
-
-                      {/* Bank transfer secondary */}
-                      <div className="mb-3 border-t border-blue-200 pt-3">
-                        <p className="mb-1 text-xs font-medium text-gray-600">
-                          {t('payments.bank_transfer')}
-                        </p>
-                        <p className="text-xs text-gray-500">{t('payments.bank_transfer_desc')}</p>
-                      </div>
-
-                      {/* Amount reminder */}
-                      <div className="rounded-lg bg-white px-4 py-2">
-                        <p className="text-xs text-gray-500">{t('payments.amount')}</p>
-                        <p className="text-xl font-bold text-gray-900">
-                          ฿{payment.amount.toLocaleString()}
-                        </p>
-                      </div>
-
-                      <p className="mt-3 text-xs text-gray-400">{t('payments.confirm_note')}</p>
-                    </div>
-                  </div>
-                )}
+                {completedPayments.length === 0 ? null : completedExpanded ? (
+                  <div className="space-y-3">{completedPayments.map(renderPaymentCard)}</div>
+                ) : null}
               </div>
-            );
-          })}
-        </div>
+            </>
+          )}
+        </>
       )}
     </div>
   );

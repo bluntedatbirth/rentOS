@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { getAuthenticatedUser, unauthorized, badRequest } from '@/lib/supabase/api';
-import { extractContractWithProgress } from '@/lib/claude/extractContract';
-import { rateLimit, rateLimitResponse } from '@/lib/rateLimit';
+import { extractContractWithProgress, ContractValidationError } from '@/lib/claude/extractContract';
+import { checkRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
 import type { Database } from '@/lib/supabase/types';
 
 const ocrRequestSchema = z.object({
@@ -26,8 +26,21 @@ export async function POST(request: Request) {
   const { user } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
-  const rl = rateLimit(`ocr:${user.id}`, 5, 60000);
-  if (!rl.success) return rateLimitResponse();
+  // Persistent rate limit: 10/hour, 20/day per user
+  const rl = await checkRateLimit(user.id, 'ocr', 10, 20);
+  if (!rl.allowed) {
+    console.warn('[rateLimit] ocr blocked, reason:', rl.reason, 'user:', user.id);
+    return new Response(
+      JSON.stringify({ error: 'ai_unavailable', retryAfterSeconds: rl.retryAfterSeconds }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(rl.retryAfterSeconds),
+        },
+      }
+    );
+  }
 
   const body: unknown = await request.json();
   const parsed = ocrRequestSchema.safeParse(body);
@@ -81,44 +94,57 @@ export async function POST(request: Request) {
         send({ step: 'pass1', progress: 15, message: 'ocr.step_analyzing' });
 
         // Step 2-3: Claude OCR with progress callback
-        const extracted = await extractContractWithProgress(base64, mimeType, (step) => {
-          if (step === 'pass1_done') {
-            send({ step: 'pass2', progress: 40, message: 'ocr.step_extracting' });
-          } else if (step === 'pass2_done') {
-            send({ step: 'saving', progress: 85, message: 'ocr.step_saving' });
+        // logAISpend is called once per Claude call (Pass 1 and Pass 2 each trigger onUsage)
+        const extracted = await extractContractWithProgress(
+          base64,
+          mimeType,
+          (step) => {
+            if (step === 'pass1_done') {
+              send({ step: 'pass2', progress: 40, message: 'ocr.step_extracting' });
+            } else if (step === 'pass2_done') {
+              send({ step: 'saving', progress: 85, message: 'ocr.step_saving' });
+            }
+          },
+          (usage) => {
+            // Called once for Pass 1 and once for Pass 2
+            void logAISpend(user.id, 'ocr', usage.input_tokens, usage.output_tokens);
           }
-        });
+        );
 
-        // Step 4: Update property
-        if (extracted.property) {
-          const { data: currentContract } = await adminClient
-            .from('contracts')
-            .select('property_id')
-            .eq('id', contract_id)
+        // Step 4: Verify ownership then update property
+        const { data: currentContract } = await adminClient
+          .from('contracts')
+          .select('property_id, landlord_id')
+          .eq('id', contract_id)
+          .single();
+
+        if (!currentContract || currentContract.landlord_id !== user.id) {
+          send({ step: 'error', error: 'Forbidden' });
+          controller.close();
+          return;
+        }
+
+        if (extracted.property && currentContract.property_id) {
+          const prop = extracted.property;
+          const propertyName =
+            prop.name_en || prop.name_th || prop.address_en || 'Unnamed Property';
+          const propertyAddress = prop.address_en || prop.address_th || '';
+
+          const { data: existingProp } = await adminClient
+            .from('properties')
+            .select('name')
+            .eq('id', currentContract.property_id)
             .single();
 
-          if (currentContract?.property_id) {
-            const prop = extracted.property;
-            const propertyName =
-              prop.name_en || prop.name_th || prop.address_en || 'Unnamed Property';
-            const propertyAddress = prop.address_en || prop.address_th || '';
-
-            const { data: existingProp } = await adminClient
+          if (existingProp?.name === 'Detecting from contract...') {
+            await adminClient
               .from('properties')
-              .select('name')
-              .eq('id', currentContract.property_id)
-              .single();
-
-            if (existingProp?.name === 'Detecting from contract...') {
-              await adminClient
-                .from('properties')
-                .update({
-                  name: propertyName,
-                  address: propertyAddress,
-                  unit_number: prop.unit_number || null,
-                })
-                .eq('id', currentContract.property_id);
-            }
+              .update({
+                name: propertyName,
+                address: propertyAddress,
+                unit_number: prop.unit_number || null,
+              })
+              .eq('id', currentContract.property_id);
           }
         }
 
@@ -155,10 +181,14 @@ export async function POST(request: Request) {
           property_detected: extracted.property?.name_en || extracted.property?.name_th || null,
         });
       } catch (err) {
-        send({
-          step: 'error',
-          error: err instanceof Error ? err.message : 'OCR processing failed',
-        });
+        if (err instanceof ContractValidationError) {
+          send({ step: 'error', error: err.code });
+        } else {
+          send({
+            step: 'error',
+            error: err instanceof Error ? err.message : 'OCR processing failed',
+          });
+        }
       } finally {
         controller.close();
       }

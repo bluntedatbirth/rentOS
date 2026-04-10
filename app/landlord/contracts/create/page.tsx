@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { useToast } from '@/components/ui/ToastProvider';
+import { TopDownNotification } from '@/components/ui/TopDownNotification';
 
 import { useProGate } from '@/lib/hooks/useProGate';
 import { TemplateStartStep } from '@/components/landlord/TemplateStartStep';
@@ -133,6 +134,8 @@ export default function ContractCreatePage() {
   const [step, setStep] = useState<Step>(1);
   const [generating, setGenerating] = useState(false);
   const [generatedContract, setGeneratedContract] = useState<string | null>(null);
+  const [generatedContractId, setGeneratedContractId] = useState<string | null>(null);
+  const [showGenerationNotification, setShowGenerationNotification] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [error, setError] = useState('');
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -157,6 +160,33 @@ export default function ContractCreatePage() {
     }
     setDraftLoaded(true);
   }, []);
+
+  // If arriving from properties page with ?property_id=, prefill property fields
+  useEffect(() => {
+    const pid = searchParams.get('property_id');
+    if (!pid || !draftLoaded) return;
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/properties/${pid}`);
+        if (!res.ok) return;
+        const prop = (await res.json()) as {
+          name?: string;
+          address?: string;
+          unit_number?: string;
+        };
+        setData((d) => ({
+          ...d,
+          property_name: prop.name ?? d.property_name,
+          property_address: prop.address ?? d.property_address,
+          property_unit: prop.unit_number ?? d.property_unit,
+        }));
+      } catch {
+        // non-fatal — form still works without prefill
+      }
+    };
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, draftLoaded]);
 
   // If arriving from template library with ?template_id=, fetch and pre-load the template
   useEffect(() => {
@@ -290,7 +320,7 @@ export default function ContractCreatePage() {
         if (propRes.ok) {
           const prop = await propRes.json();
           const contractText = result.contract_text as string;
-          await fetch('/api/contracts', {
+          const contractRes = await fetch('/api/contracts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -303,6 +333,12 @@ export default function ContractCreatePage() {
               translated_text_en: data.output_language !== 'thai' ? contractText : undefined,
             }),
           });
+          if (contractRes.ok) {
+            const savedContract = (await contractRes.json()) as { id?: string };
+            if (savedContract.id) {
+              setGeneratedContractId(savedContract.id);
+            }
+          }
 
           // TM.30 reminder is sent server-side from the generate API
         }
@@ -311,7 +347,8 @@ export default function ContractCreatePage() {
       }
       // Clear draft after successful generation
       localStorage.removeItem(DRAFT_KEY);
-      toast.success(t('create_contract.generated_success'));
+      // Show slide-in notification
+      setShowGenerationNotification(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('create_contract.error'));
       toast.error(t('create_contract.error'));
@@ -322,16 +359,46 @@ export default function ContractCreatePage() {
 
   const [downloadingPdf, setDownloadingPdf] = useState(false);
 
-  const handleDownloadPdf = async () => {
+  const handleDownloadAndStore = async () => {
     if (!generatedContract) return;
     setDownloadingPdf(true);
     try {
       const { generateContractPdf, downloadPdf } = await import('@/lib/pdf/generateContractPdf');
       const pdfBytes = await generateContractPdf(generatedContract);
-      const filename = `${data.property_name || 'contract'}-${data.lease_start_date || 'lease'}.pdf`
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-.ก-๙]/g, '');
-      downloadPdf(pdfBytes, filename || 'contract.pdf');
+      const filename =
+        `${data.property_name || 'contract'}-${data.lease_start_date || 'lease'}.pdf`
+          .replace(/\s+/g, '-')
+          .replace(/[^\w\-.ก-๙]/g, '') || 'contract.pdf';
+
+      // 1. Trigger browser download
+      downloadPdf(pdfBytes, filename);
+
+      // 2. In parallel, upload to Documents vault
+      try {
+        const pdfFile = new File([pdfBytes.buffer as ArrayBuffer], filename, {
+          type: 'application/pdf',
+        });
+        const formData = new FormData();
+        formData.append('file', pdfFile);
+        formData.append('category', 'contract');
+        if (generatedContractId) formData.append('contract_id', generatedContractId);
+
+        // Check if a document row already exists for this contract (idempotency)
+        const existingCheck = generatedContractId
+          ? await fetch(`/api/documents?contract_id=${generatedContractId}&category=contract`)
+          : null;
+        const existingDocs = existingCheck?.ok
+          ? ((await existingCheck.json()) as Array<{ id: string }>)
+          : [];
+
+        if (existingDocs.length === 0) {
+          await fetch('/api/documents', { method: 'POST', body: formData });
+        }
+        toast.success(t('contracts.download_and_store_success'));
+      } catch {
+        // Non-fatal: download already succeeded
+        toast.success(t('contracts.download_and_store_success'));
+      }
     } catch (err) {
       console.error('PDF generation failed:', err);
       toast.error(t('create_contract.pdf_error'));
@@ -348,7 +415,7 @@ export default function ContractCreatePage() {
   };
 
   const inputClass =
-    'block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500';
+    'block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500';
   const inputErrorClass =
     'block w-full rounded-lg border border-red-300 px-3 py-2.5 text-sm text-gray-900 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500';
   const labelClass = 'mb-1 block text-sm font-medium text-gray-700';
@@ -356,7 +423,7 @@ export default function ContractCreatePage() {
   const chipClass = (active: boolean) =>
     `min-h-[44px] rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
       active
-        ? 'border-blue-500 bg-blue-50 text-blue-700'
+        ? 'border-saffron-500 bg-saffron-50 text-saffron-700'
         : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
     }`;
 
@@ -366,7 +433,7 @@ export default function ContractCreatePage() {
   if (!draftLoaded) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-saffron-500 border-t-transparent" />
       </div>
     );
   }
@@ -380,7 +447,7 @@ export default function ContractCreatePage() {
           <p className="mt-0.5 text-sm text-amber-700">{t('upgrade_prompt.contract_gen')}</p>
           <Link
             href="/landlord/billing/upgrade"
-            className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-saffron-500 px-4 py-2 text-sm font-semibold text-white hover:bg-saffron-600"
           >
             {t('upgrade_prompt.cta')}
           </Link>
@@ -392,6 +459,19 @@ export default function ContractCreatePage() {
   return (
     <div className="mx-auto max-w-lg">
       {PromptModal}
+
+      {/* Top-down notification when generation completes */}
+      {showGenerationNotification && (
+        <TopDownNotification
+          message={t('contracts.generation_complete')}
+          onClick={() => {
+            if (generatedContractId) {
+              router.push(`/landlord/contracts/${generatedContractId}`);
+            }
+          }}
+          onDismiss={() => setShowGenerationNotification(false)}
+        />
+      )}
 
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">{t('create_contract.title')}</h2>
@@ -439,7 +519,7 @@ export default function ContractCreatePage() {
             {[1, 2, 3, 4, 5, 6].map((s) => (
               <div key={s} className="flex flex-1 flex-col items-center">
                 <div
-                  className={`h-2 w-full rounded-full ${s <= step ? 'bg-blue-600' : 'bg-gray-200'}`}
+                  className={`h-2 w-full rounded-full ${s <= step ? 'bg-saffron-500' : 'bg-gray-200'}`}
                 />
                 <span className="mt-1 hidden text-xs text-gray-500 sm:block">
                   {s === 1
@@ -522,7 +602,7 @@ export default function ContractCreatePage() {
                     ))}
                   </div>
                   {data.property_type === 'condo' && (
-                    <p className="mt-1 text-xs text-blue-600">
+                    <p className="mt-1 text-xs text-saffron-600">
                       {t('create_contract.condo_act_note')}
                     </p>
                   )}
@@ -882,14 +962,14 @@ export default function ContractCreatePage() {
               </div>
 
               {/* Non-waivable tenant rights (OCPB 2025) */}
-              <div className={`${cardClass} border-blue-200 bg-blue-50`}>
-                <p className="mb-2 text-sm font-semibold text-blue-900">
+              <div className={`${cardClass} border-saffron-200 bg-saffron-50`}>
+                <p className="mb-2 text-sm font-semibold text-saffron-900">
                   {t('create_contract.legal_rights_title')}
                 </p>
-                <p className="mb-2 text-xs text-blue-700">
+                <p className="mb-2 text-xs text-saffron-700">
                   {t('create_contract.legal_rights_note')}
                 </p>
-                <ul className="space-y-1 text-xs text-blue-800">
+                <ul className="space-y-1 text-xs text-saffron-800">
                   <li>• {t('create_contract.right_early_termination')}</li>
                   <li>• {t('create_contract.right_utility_tariff')}</li>
                   <li>• {t('create_contract.right_deposit_return')}</li>
@@ -1074,8 +1154,8 @@ export default function ContractCreatePage() {
                     ))}
                   </select>
                 </div>
-                <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
-                  <p className="text-xs text-blue-800">
+                <div className="mt-3 rounded-lg border border-saffron-200 bg-saffron-50 p-3">
+                  <p className="text-xs text-saffron-800">
                     {t('create_contract.ocpb_termination_note')}
                   </p>
                 </div>
@@ -1198,7 +1278,7 @@ export default function ContractCreatePage() {
                       <button
                         type="button"
                         onClick={() => setShowPreview(true)}
-                        className="mb-4 w-full rounded-lg border border-blue-300 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 hover:bg-blue-100"
+                        className="mb-4 w-full rounded-lg border border-saffron-300 bg-saffron-50 px-4 py-2.5 text-sm font-medium text-saffron-700 hover:bg-saffron-100"
                       >
                         {t('create_contract.show_full_preview')}
                       </button>
@@ -1388,7 +1468,7 @@ export default function ContractCreatePage() {
                     type="button"
                     disabled={generating}
                     onClick={handleGenerate}
-                    className="min-h-[44px] w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                    className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-500 focus:ring-offset-2 disabled:opacity-50"
                   >
                     {generating
                       ? t('create_contract.generating')
@@ -1397,13 +1477,13 @@ export default function ContractCreatePage() {
 
                   {generating && (
                     <div className="mt-4 flex flex-col items-center">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-                      <p className="mt-2 text-sm text-blue-700">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-saffron-500 border-t-transparent" />
+                      <p className="mt-2 text-sm text-saffron-700">
                         {t('create_contract.generating_desc')}
                       </p>
-                      <div className="mt-2 h-1.5 w-48 overflow-hidden rounded-full bg-blue-100">
+                      <div className="mt-2 h-1.5 w-48 overflow-hidden rounded-full bg-saffron-100">
                         <div
-                          className="h-full animate-pulse rounded-full bg-blue-500"
+                          className="h-full animate-pulse rounded-full bg-saffron-500"
                           style={{ width: '60%' }}
                         />
                       </div>
@@ -1424,7 +1504,7 @@ export default function ContractCreatePage() {
                     <textarea
                       value={generatedContract}
                       onChange={(e) => setGeneratedContract(e.target.value)}
-                      className="block w-full resize-y rounded-lg border-0 bg-white px-6 py-5 font-serif text-sm leading-relaxed text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="block w-full resize-y rounded-lg border-0 bg-white px-6 py-5 font-serif text-sm leading-relaxed text-gray-800 focus:outline-none focus:ring-2 focus:ring-saffron-500"
                       style={{ minHeight: '500px' }}
                       spellCheck={false}
                     />
@@ -1433,13 +1513,13 @@ export default function ContractCreatePage() {
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={handleDownloadPdf}
+                      onClick={() => void handleDownloadAndStore()}
                       disabled={downloadingPdf}
-                      className="min-h-[44px] flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                      className="min-h-[44px] flex-1 rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
                     >
                       {downloadingPdf
                         ? t('create_contract.generating_pdf')
-                        : t('create_contract.download_pdf')}
+                        : t('contracts.download_and_store')}
                     </button>
                     <button
                       type="button"
@@ -1449,26 +1529,6 @@ export default function ContractCreatePage() {
                       {t('create_contract.copy')}
                     </button>
                   </div>
-
-                  {/* Upload signed contract */}
-                  <button
-                    type="button"
-                    onClick={() => router.push('/landlord/contracts/upload')}
-                    className="mt-2 min-h-[44px] w-full rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-green-700"
-                  >
-                    {t('create_contract.upload_signed')}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setGeneratedContract(null);
-                      setError('');
-                    }}
-                    className="mt-2 min-h-[44px] w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                    {t('create_contract.regenerate')}
-                  </button>
                 </>
               )}
             </div>
@@ -1490,7 +1550,7 @@ export default function ContractCreatePage() {
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="min-h-[44px] flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  className="min-h-[44px] flex-1 rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
                 >
                   {t('create_contract.next')}
                 </button>

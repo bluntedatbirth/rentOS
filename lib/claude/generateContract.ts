@@ -110,7 +110,10 @@ export interface GeneratedContract {
   error_en?: string;
 }
 
-export async function generateContract(input: ContractWizardInput): Promise<GeneratedContract> {
+export async function generateContract(
+  input: ContractWizardInput,
+  onUsage?: (usage: { input_tokens: number; output_tokens: number }) => void
+): Promise<GeneratedContract> {
   const securityDeposit = input.monthly_rent * input.security_deposit_months;
   const leaseEnd = calculateLeaseEnd(input.lease_start_date, input.lease_duration_months);
 
@@ -274,6 +277,10 @@ Return ONLY the contract text. No JSON wrapping, no markdown code fences. Just t
   // Track token usage
   if (response.usage) {
     trackTokenUsage('generateContract', {
+      input_tokens: response.usage.input_tokens,
+      output_tokens: response.usage.output_tokens,
+    });
+    onUsage?.({
       input_tokens: response.usage.input_tokens,
       output_tokens: response.usage.output_tokens,
     });

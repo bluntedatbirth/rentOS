@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { sendNotification } from '@/lib/notifications/send';
 import { unauthorized } from '@/lib/apiErrors';
+import { activateContract } from '@/lib/contracts/activate';
 
 /**
  * GET /api/cron/daily
@@ -37,6 +38,8 @@ export async function GET(request: Request) {
     overdueUpdates: 0,
     leaseExpiryWarnings: 0,
     customRuleNotifications: 0,
+    scheduledContractsActivated: 0,
+    paymentsSeeded: 0,
     errors: [] as string[],
   };
 
@@ -557,6 +560,76 @@ export async function GET(request: Request) {
     console.error('[Cron] Signing reminder error:', msg);
   }
 
+  // ----------------------------------------------------------------
+  // 8. Anthropic spend threshold alerting (log-only, founder visibility)
+  // ----------------------------------------------------------------
+  let spendAlertUsd = 0;
+  try {
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+
+    const { data: spendRows, error: spendError } = await supabase
+      .from('ai_spend_log' as never)
+      .select('cost_usd')
+      .gte('called_at', monthStart);
+
+    if (spendError) throw spendError;
+
+    const monthTotal = ((spendRows ?? []) as { cost_usd: number }[]).reduce(
+      (s, r) => s + r.cost_usd,
+      0
+    );
+    spendAlertUsd = monthTotal;
+
+    if (monthTotal >= 95) {
+      console.error(
+        `[SPEND_ALERT] Anthropic monthly spend CRITICAL: $${monthTotal.toFixed(4)} of $100 cap`
+      );
+    } else if (monthTotal >= 80) {
+      console.warn(
+        `[SPEND_ALERT] Anthropic monthly spend at 80% threshold: $${monthTotal.toFixed(4)} of $100 cap`
+      );
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    summary.errors.push(`spend_alert: ${msg}`);
+    console.error('[Cron] Spend alert error:', msg);
+  }
+
+  // ----------------------------------------------------------------
+  // 9. Auto-activate scheduled contracts whose lease_start has arrived
+  // ----------------------------------------------------------------
+  try {
+    const { data: scheduledContracts, error: scheduledError } = await supabase
+      .from('contracts')
+      .select('id, property_id')
+      .eq('status', 'scheduled')
+      .lte('lease_start', today);
+
+    if (scheduledError) throw scheduledError;
+
+    for (const sc of scheduledContracts ?? []) {
+      const contract = sc as unknown as { id: string; property_id: string };
+      try {
+        const result = await activateContract(supabase, contract.id);
+        if (!result.success) {
+          // Could be the 1-active-per-property constraint — log and skip
+          console.warn(`[Cron] Skipping scheduled contract ${contract.id}: ${result.error}`);
+          summary.errors.push(`scheduled_activate ${contract.id}: ${result.error}`);
+        } else {
+          summary.scheduledContractsActivated++;
+          summary.paymentsSeeded += result.seededCount;
+        }
+      } catch (contractErr) {
+        const msg = contractErr instanceof Error ? contractErr.message : String(contractErr);
+        summary.errors.push(`scheduled_activate ${contract.id}: ${msg}`);
+      }
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    summary.errors.push(`scheduled_activation: ${msg}`);
+    console.error('[Cron] Scheduled activation error:', msg);
+  }
+
   return NextResponse.json({
     ok: true,
     ran_at: new Date().toISOString(),
@@ -566,6 +639,7 @@ export async function GET(request: Request) {
       tierExpiryWarnings,
       tierDowngrades,
       signingReminders,
+      spendAlertUsd,
     },
   });
 }

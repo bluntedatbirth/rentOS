@@ -3,6 +3,20 @@ import { extractedContractSchema, type FieldConfidence, type DocumentComplexity 
 import { withRetry } from './retry';
 import { trackTokenUsage } from './tokenTracker';
 
+/**
+ * Thrown when the uploaded document fails input validation before or after OCR.
+ * The OCR route catches this and emits a specific SSE error code instead of
+ * treating it as an unexpected exception.
+ */
+export class ContractValidationError extends Error {
+  constructor(
+    public readonly code: 'ocr_insufficient_text' | 'ocr_no_thai_text' | 'not_a_contract'
+  ) {
+    super(code);
+    this.name = 'ContractValidationError';
+  }
+}
+
 const client = new Anthropic();
 
 export interface ExtractedProperty {
@@ -78,9 +92,18 @@ interface Pass1Result {
   image_quality: 'good' | 'fair' | 'poor';
 }
 
+/** Sentinel returned by runPass1 when the document is not a contract. */
+interface Pass1Refusal {
+  is_contract: false;
+  reason: string;
+}
+
 // ─── Pass 1: Structural Analysis ────────────────────────────────────────────
 
-async function runPass1(contentBlock: Anthropic.ContentBlockParam): Promise<Pass1Result> {
+async function runPass1(
+  contentBlock: Anthropic.ContentBlockParam,
+  onUsage?: (usage: { input_tokens: number; output_tokens: number }) => void
+): Promise<Pass1Result | Pass1Refusal> {
   const response = await withRetry(() =>
     client.messages.create({
       model: 'claude-sonnet-4-20250514',
@@ -94,7 +117,14 @@ async function runPass1(contentBlock: Anthropic.ContentBlockParam): Promise<Pass
               type: 'text',
               text: `You are a Thai rental contract OCR specialist.
 
-PASS 1 — STRUCTURAL ANALYSIS
+BEFORE doing anything else: verify this document is an actual Thai residential rental contract.
+If the document is blank, contains no meaningful text, is random noise, is a receipt, ID card, menu,
+photo, or any document that does NOT contain the typical elements of a rental contract
+(parties/names, rent amount, lease dates, property description), respond with EXACTLY this JSON
+and nothing else:
+{"is_contract": false, "reason": "<brief reason in English>"}
+
+If it IS a rental contract, proceed with PASS 1 — STRUCTURAL ANALYSIS:
 
 Your tasks:
 1. Extract ALL raw text from the document exactly as it appears.
@@ -123,6 +153,10 @@ Return ONLY valid JSON — no markdown, no preamble:
       input_tokens: response.usage.input_tokens,
       output_tokens: response.usage.output_tokens,
     });
+    onUsage?.({
+      input_tokens: response.usage.input_tokens,
+      output_tokens: response.usage.output_tokens,
+    });
   }
 
   const textContent = response.content.find((block) => block.type === 'text');
@@ -131,6 +165,15 @@ Return ONLY valid JSON — no markdown, no preamble:
 
   try {
     const obj = JSON.parse(rawText) as Record<string, unknown>;
+
+    // Contract-verification refusal from Claude
+    if (obj.is_contract === false) {
+      return {
+        is_contract: false,
+        reason: typeof obj.reason === 'string' ? obj.reason : 'not a contract',
+      };
+    }
+
     return {
       raw_text: typeof obj.raw_text === 'string' ? obj.raw_text : rawText,
       section_headers: Array.isArray(obj.section_headers)
@@ -160,7 +203,8 @@ Return ONLY valid JSON — no markdown, no preamble:
 
 async function runPass2(
   contentBlock: Anthropic.ContentBlockParam,
-  pass1: Pass1Result
+  pass1: Pass1Result,
+  onUsage?: (usage: { input_tokens: number; output_tokens: number }) => void
 ): Promise<{ parsed: unknown; needsConfidence: boolean }> {
   const confidenceInstruction =
     pass1.image_quality === 'poor'
@@ -255,6 +299,10 @@ Return ONLY valid JSON — no markdown, no preamble:
       input_tokens: response.usage.input_tokens,
       output_tokens: response.usage.output_tokens,
     });
+    onUsage?.({
+      input_tokens: response.usage.input_tokens,
+      output_tokens: response.usage.output_tokens,
+    });
   }
 
   const textContent = response.content.find((block) => block.type === 'text');
@@ -283,7 +331,8 @@ export async function extractAndTranslateContract(
 export async function extractContractWithProgress(
   fileBase64: string,
   mimeType: ImageMediaType | 'application/pdf',
-  onProgress?: (step: 'pass1_done' | 'pass2_done') => void
+  onProgress?: (step: 'pass1_done' | 'pass2_done') => void,
+  onUsage?: (usage: { input_tokens: number; output_tokens: number }) => void
 ): Promise<ExtractedContract> {
   const contentBlock: Anthropic.ContentBlockParam =
     mimeType === 'application/pdf'
@@ -307,12 +356,42 @@ export async function extractContractWithProgress(
   // ── Pass 1: structural analysis ──────────────────────────────────────────
   let pass1: Pass1Result;
   try {
-    pass1 = await runPass1(contentBlock);
+    const pass1Result = await runPass1(contentBlock, onUsage);
+
+    // Layer 2: Claude refused — document is not a contract
+    if ('is_contract' in pass1Result && pass1Result.is_contract === false) {
+      console.warn(
+        '[extractContract] Claude refused document as non-contract:',
+        pass1Result.reason
+      );
+      throw new ContractValidationError('not_a_contract');
+    }
+
+    pass1 = pass1Result as Pass1Result;
   } catch (error) {
+    if (error instanceof ContractValidationError) throw error;
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('[extractContract] Pass 1 failed:', errorMessage);
     return buildPartialResult('', [`Pass 1 structural analysis failed: ${errorMessage}`]);
   }
+
+  // ── Layer 1: OCR output gates ─────────────────────────────────────────────
+  // Gate 1: minimum text length
+  if (pass1.raw_text.length < 200) {
+    console.warn('[extractContract] OCR text too short:', pass1.raw_text.length, 'chars');
+    throw new ContractValidationError('ocr_insufficient_text');
+  }
+
+  // Gate 2: Thai character presence
+  const thaiCount = (pass1.raw_text.match(/[\u0E00-\u0E7F]/g) ?? []).length;
+  if (thaiCount < 50) {
+    console.warn('[extractContract] Insufficient Thai characters:', thaiCount);
+    throw new ContractValidationError('ocr_no_thai_text');
+  }
+
+  // Note: The OCR provider (Claude) does not expose a separate numeric confidence score
+  // for Pass 1 text extraction; image_quality is a categorical enum ('good'|'fair'|'poor'),
+  // not a numeric float — no ocr_low_confidence gate is applicable here.
 
   onProgress?.('pass1_done');
   const complexity = estimateComplexity(pass1);
@@ -321,7 +400,7 @@ export async function extractContractWithProgress(
   let parsed: unknown;
   let needsConfidence: boolean;
   try {
-    ({ parsed, needsConfidence } = await runPass2(contentBlock, pass1));
+    ({ parsed, needsConfidence } = await runPass2(contentBlock, pass1, onUsage));
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('[extractContract] Pass 2 failed:', errorMessage);
@@ -389,7 +468,10 @@ export async function extractContractWithProgress(
  * Used when a landlord edits the raw contract text during renewal.
  * Single-pass: sends the text to Claude and gets structured clauses back.
  */
-export async function reparseContractText(rawText: string): Promise<ExtractedContract['clauses']> {
+export async function reparseContractText(
+  rawText: string,
+  onUsage?: (usage: { input_tokens: number; output_tokens: number }) => void
+): Promise<ExtractedContract['clauses']> {
   const response = await withRetry(() =>
     client.messages.create({
       model: 'claude-sonnet-4-20250514',
@@ -429,6 +511,10 @@ Return ONLY valid JSON — no markdown, no preamble:
 
   if (response.usage) {
     trackTokenUsage('reparseContractText', {
+      input_tokens: response.usage.input_tokens,
+      output_tokens: response.usage.output_tokens,
+    });
+    onUsage?.({
       input_tokens: response.usage.input_tokens,
       output_tokens: response.usage.output_tokens,
     });

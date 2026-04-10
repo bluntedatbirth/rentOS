@@ -23,13 +23,13 @@ interface NotificationPrefs {
 
 const DEFAULT_PREFS: NotificationPrefs = {
   payment_due: true,
-  payment_overdue: true,
+  payment_overdue: false,
   lease_expiry: true,
-  penalty_raised: true,
-  penalty_appeal: true,
-  maintenance_raised: true,
-  maintenance_updated: true,
-  tenant_paired: true,
+  penalty_raised: false,
+  penalty_appeal: false,
+  maintenance_raised: false,
+  maintenance_updated: false,
+  tenant_paired: false,
 };
 
 interface NotificationGroup {
@@ -193,7 +193,7 @@ export default function NotificationSettingsPage() {
                     type="button"
                     onClick={() => handleToggle(item.key)}
                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors ${
-                      prefs[item.key] ? 'bg-blue-600' : 'bg-gray-200'
+                      prefs[item.key] ? 'bg-saffron-500' : 'bg-gray-200'
                     }`}
                     role="switch"
                     aria-checked={prefs[item.key]}
@@ -217,7 +217,7 @@ export default function NotificationSettingsPage() {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="min-h-[44px] rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="min-h-[44px] rounded-lg bg-saffron-500 px-6 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
         >
           {saving ? t('common.loading') : t('common.save')}
         </button>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorized, badRequest, serverError } from '@/lib/supabase/api';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { requirePro } from '@/lib/tier';
+import { getSignedDocumentUrl } from '@/lib/storage/signedUrl';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
@@ -84,6 +85,7 @@ export async function GET(request: Request) {
   if (error) return serverError(error.message);
 
   // If not showing all versions, deduplicate to latest version per (file_name, category, property_id)
+  let rows = data ?? [];
   if (!showVersions && data) {
     const seen = new Map<string, (typeof data)[0]>();
     for (const doc of data) {
@@ -93,10 +95,20 @@ export async function GET(request: Request) {
         seen.set(key, doc);
       }
     }
-    return NextResponse.json(Array.from(seen.values()));
+    rows = Array.from(seen.values());
   }
 
-  return NextResponse.json(data);
+  // Replace stored public_url with a fresh signed URL (PDPA: documents bucket is private)
+  const withSignedUrls = await Promise.all(
+    rows.map(async (doc) => ({
+      ...doc,
+      public_url: doc.storage_path
+        ? await getSignedDocumentUrl(doc.storage_path, 'documents', 3600)
+        : null,
+    }))
+  );
+
+  return NextResponse.json(withSignedUrls);
 }
 
 // POST /api/documents
@@ -191,8 +203,8 @@ export async function POST(request: Request) {
       return serverError('Storage upload failed: ' + uploadError.message);
     }
 
-    const { data: urlData } = adminClient.storage.from('documents').getPublicUrl(storagePath);
-
+    // PDPA: documents bucket is private — never store a public URL.
+    // Signed URLs must be generated on read via getSignedDocumentUrl().
     const { data: doc, error: insertError } = await adminClient
       .from('documents')
       .insert({
@@ -201,7 +213,7 @@ export async function POST(request: Request) {
         contract_id: contractId ?? null,
         category: category as DocumentCategory,
         storage_path: storagePath,
-        public_url: urlData.publicUrl,
+        public_url: null,
         file_name: file.name,
         file_size: file.size,
         mime_type: file.type,
@@ -216,7 +228,9 @@ export async function POST(request: Request) {
       return serverError('Failed to save document record: ' + (insertError?.message ?? 'unknown'));
     }
 
-    return NextResponse.json(doc, { status: 201 });
+    // Return a fresh signed URL for immediate client use
+    const signedUrl = await getSignedDocumentUrl(storagePath, 'documents', 3600);
+    return NextResponse.json({ ...doc, public_url: signedUrl }, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Upload failed';
     return serverError(message);

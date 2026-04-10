@@ -19,7 +19,7 @@ export function BugReportButton() {
     const body = encodeURIComponent(
       `Issue:\n${desc}\n\nPage: ${window.location.href}\nTime: ${new Date().toISOString()}`
     );
-    window.open(`mailto:john.caules@gmail.com?subject=${subject}&body=${body}`);
+    window.open(`mailto:hello@rentos.homes?subject=${subject}&body=${body}`);
   }, []);
 
   // Close on outside click — also reset sent state
@@ -77,13 +77,15 @@ export function BugReportButton() {
         <div
           role="dialog"
           aria-label={t('bug_report.title')}
-          className="mb-2 w-72 rounded-lg border border-gray-200 bg-white p-4 shadow-lg"
+          className="mb-2 w-72 rounded-lg border border-warm-200 bg-warm-50 p-4 shadow-lg"
         >
           {sent ? (
             <p className="text-center text-sm font-medium text-green-700">{t('bug_report.sent')}</p>
           ) : (
             <>
-              <h3 className="mb-2 text-sm font-semibold text-gray-900">{t('bug_report.title')}</h3>
+              <h3 className="mb-2 text-sm font-semibold text-charcoal-900">
+                {t('bug_report.title')}
+              </h3>
               <textarea
                 ref={textareaRef}
                 value={description}
@@ -91,13 +93,13 @@ export function BugReportButton() {
                 placeholder={t('bug_report.placeholder')}
                 rows={3}
                 maxLength={MAX_DESCRIPTION_LENGTH}
-                className="mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                className="mb-3 w-full rounded-lg border border-warm-200 px-3 py-2 text-sm text-charcoal-900 placeholder-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
               />
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={!description.trim() || sending}
-                className="min-h-[44px] w-full rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-charcoal-900 hover:bg-saffron-600 disabled:opacity-50"
               >
                 {sending ? t('bug_report.sending') : t('bug_report.submit')}
               </button>
@@ -114,7 +116,7 @@ export function BugReportButton() {
           setSent(false);
         }}
         aria-label={t('bug_report.title')}
-        className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-lg transition-transform hover:scale-105 hover:bg-red-700 active:scale-95"
+        className="flex h-12 w-12 items-center justify-center rounded-full bg-charcoal-800 text-white shadow-lg transition-all hover:scale-105 hover:bg-saffron-500 hover:text-charcoal-900 active:scale-95"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

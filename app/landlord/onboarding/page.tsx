@@ -100,7 +100,7 @@ export default function OnboardingPage() {
   if (checkingOnboarding) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-saffron-500 border-t-transparent" />
       </div>
     );
   }
@@ -110,7 +110,7 @@ export default function OnboardingPage() {
       {/* Step indicator */}
       {step !== 'welcome' && step !== 'done' && (
         <div className="mb-6">
-          <p className="mb-2 text-center text-xs text-gray-500">
+          <p className="mb-2 text-center text-xs text-charcoal-500">
             {t('onboarding.step_of')
               .replace('{}', String(stepIndex))
               .replace('{}', String(STEPS.length - 2))}
@@ -121,10 +121,10 @@ export default function OnboardingPage() {
                 key={s}
                 className={`h-1.5 flex-1 rounded-full transition-colors ${
                   i < stepIndex
-                    ? 'bg-primary-600'
+                    ? 'bg-saffron-500'
                     : i === stepIndex - 1
-                      ? 'bg-primary-600'
-                      : 'bg-gray-200'
+                      ? 'bg-saffron-500'
+                      : 'bg-warm-200'
                 }`}
               />
             ))}
@@ -136,7 +136,7 @@ export default function OnboardingPage() {
       {step === 'welcome' && (
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary-100 text-4xl text-primary-600">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-saffron-100 text-4xl text-saffron-600">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -148,16 +148,18 @@ export default function OnboardingPage() {
               </svg>
             </div>
           </div>
-          <h1 className="mb-2 text-2xl font-bold text-gray-900">{t('onboarding.welcome_title')}</h1>
-          <p className="mb-8 text-sm text-gray-500">{t('onboarding.welcome_subtitle')}</p>
+          <h1 className="mb-2 text-2xl font-bold text-charcoal-900">
+            {t('onboarding.welcome_title')}
+          </h1>
+          <p className="mb-8 text-sm text-charcoal-500">{t('onboarding.welcome_subtitle')}</p>
           <ul className="mb-8 space-y-3 text-left">
             {[
               t('onboarding.welcome_feature_1'),
               t('onboarding.welcome_feature_2'),
               t('onboarding.welcome_feature_3'),
             ].map((feature) => (
-              <li key={feature} className="flex items-start gap-3 text-sm text-gray-700">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs text-primary-600">
+              <li key={feature} className="flex items-start gap-3 text-sm text-charcoal-700">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-saffron-100 text-xs text-saffron-600">
                   &#10003;
                 </span>
                 {feature}
@@ -167,7 +169,7 @@ export default function OnboardingPage() {
           <button
             type="button"
             onClick={goNext}
-            className="min-h-[44px] w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-400 focus:ring-offset-2"
           >
             {t('onboarding.get_started')}
           </button>
@@ -177,14 +179,17 @@ export default function OnboardingPage() {
       {/* Step: Add Property */}
       {step === 'property' && (
         <div>
-          <h2 className="mb-1 text-xl font-bold text-gray-900">
+          <h2 className="mb-1 text-xl font-bold text-charcoal-900">
             {t('onboarding.step_property_title')}
           </h2>
-          <p className="mb-6 text-sm text-gray-500">{t('onboarding.step_property_subtitle')}</p>
+          <p className="mb-6 text-sm text-charcoal-500">{t('onboarding.step_property_subtitle')}</p>
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="prop-name" className="mb-1 block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="prop-name"
+                className="mb-1 block text-sm font-medium text-charcoal-700"
+              >
                 {t('onboarding.property_name')} *
               </label>
               <input
@@ -193,14 +198,14 @@ export default function OnboardingPage() {
                 value={propertyName}
                 onChange={(e) => setPropertyName(e.target.value)}
                 placeholder={t('onboarding.property_name_placeholder')}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="block w-full rounded-lg border border-warm-300 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400"
               />
             </div>
 
             <div>
               <label
                 htmlFor="prop-address"
-                className="mb-1 block text-sm font-medium text-gray-700"
+                className="mb-1 block text-sm font-medium text-charcoal-700"
               >
                 {t('onboarding.property_address')}
               </label>
@@ -210,12 +215,15 @@ export default function OnboardingPage() {
                 value={propertyAddress}
                 onChange={(e) => setPropertyAddress(e.target.value)}
                 placeholder={t('onboarding.property_address_placeholder')}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="block w-full rounded-lg border border-warm-300 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400"
               />
             </div>
 
             <div>
-              <label htmlFor="prop-units" className="mb-1 block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="prop-units"
+                className="mb-1 block text-sm font-medium text-charcoal-700"
+              >
                 {t('onboarding.property_units')}
               </label>
               <input
@@ -224,7 +232,7 @@ export default function OnboardingPage() {
                 value={propertyUnits}
                 onChange={(e) => setPropertyUnits(e.target.value)}
                 placeholder={t('onboarding.property_units_placeholder')}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="block w-full rounded-lg border border-warm-300 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400"
               />
             </div>
           </div>
@@ -233,7 +241,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={goBack}
-              className="min-h-[44px] flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="min-h-[44px] flex-1 rounded-lg border border-warm-300 px-4 py-2.5 text-sm font-medium text-charcoal-700 hover:bg-warm-50"
             >
               {t('onboarding.back')}
             </button>
@@ -241,7 +249,7 @@ export default function OnboardingPage() {
               type="button"
               onClick={handleAddProperty}
               disabled={!propertyName.trim() || loading}
-              className="min-h-[44px] flex-1 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+              className="min-h-[44px] flex-1 rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
             >
               {loading ? t('onboarding.adding') : t('onboarding.add_property')}
             </button>
@@ -253,7 +261,7 @@ export default function OnboardingPage() {
       {step === 'contract' && (
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-100 text-primary-600">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-saffron-100 text-saffron-600">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -269,23 +277,23 @@ export default function OnboardingPage() {
               </svg>
             </div>
           </div>
-          <h2 className="mb-1 text-xl font-bold text-gray-900">
+          <h2 className="mb-1 text-xl font-bold text-charcoal-900">
             {t('onboarding.step_contract_title')}
           </h2>
-          <p className="mb-8 text-sm text-gray-500">{t('onboarding.step_contract_subtitle')}</p>
+          <p className="mb-8 text-sm text-charcoal-500">{t('onboarding.step_contract_subtitle')}</p>
 
           <div className="space-y-3">
             <button
               type="button"
               onClick={() => router.push('/landlord/contracts/upload')}
-              className="min-h-[44px] w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
+              className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600"
             >
               {t('onboarding.upload_contract')}
             </button>
             <button
               type="button"
               onClick={goNext}
-              className="min-h-[44px] w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="min-h-[44px] w-full rounded-lg border border-warm-300 px-4 py-2.5 text-sm font-medium text-charcoal-700 hover:bg-warm-50"
             >
               {t('onboarding.skip_step')}
             </button>
@@ -295,7 +303,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={goBack}
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm text-charcoal-500 hover:text-charcoal-700"
             >
               {t('onboarding.back')}
             </button>
@@ -307,7 +315,7 @@ export default function OnboardingPage() {
       {step === 'tenant' && (
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-100 text-primary-600">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-saffron-100 text-saffron-600">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -318,10 +326,10 @@ export default function OnboardingPage() {
               </svg>
             </div>
           </div>
-          <h2 className="mb-1 text-xl font-bold text-gray-900">
+          <h2 className="mb-1 text-xl font-bold text-charcoal-900">
             {t('onboarding.step_tenant_title')}
           </h2>
-          <p className="mb-8 text-sm text-gray-500">{t('onboarding.step_tenant_subtitle')}</p>
+          <p className="mb-8 text-sm text-charcoal-500">{t('onboarding.step_tenant_subtitle')}</p>
 
           <div className="space-y-3">
             <button
@@ -331,14 +339,14 @@ export default function OnboardingPage() {
                 // Otherwise just show instructions
                 router.push('/landlord/properties');
               }}
-              className="min-h-[44px] w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
+              className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600"
             >
               {t('onboarding.invite_tenant')}
             </button>
             <button
               type="button"
               onClick={goNext}
-              className="min-h-[44px] w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="min-h-[44px] w-full rounded-lg border border-warm-300 px-4 py-2.5 text-sm font-medium text-charcoal-700 hover:bg-warm-50"
             >
               {t('onboarding.skip_step')}
             </button>
@@ -348,7 +356,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={goBack}
-              className="text-sm text-gray-500 hover:text-gray-700"
+              className="text-sm text-charcoal-500 hover:text-charcoal-700"
             >
               {t('onboarding.back')}
             </button>
@@ -375,12 +383,14 @@ export default function OnboardingPage() {
               </svg>
             </div>
           </div>
-          <h2 className="mb-2 text-2xl font-bold text-gray-900">{t('onboarding.done_title')}</h2>
-          <p className="mb-8 text-sm text-gray-500">{t('onboarding.done_subtitle')}</p>
+          <h2 className="mb-2 text-2xl font-bold text-charcoal-900">
+            {t('onboarding.done_title')}
+          </h2>
+          <p className="mb-8 text-sm text-charcoal-500">{t('onboarding.done_subtitle')}</p>
           <button
             type="button"
             onClick={() => router.push('/landlord/dashboard')}
-            className="min-h-[44px] w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-400 focus:ring-offset-2"
           >
             {t('onboarding.go_to_dashboard')}
           </button>

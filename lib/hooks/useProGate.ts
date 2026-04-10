@@ -5,7 +5,11 @@ import { createElement } from 'react';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
 
-export function useProGate(feature: string) {
+interface UseProGateOptions {
+  showSlotUnlock?: boolean;
+}
+
+export function useProGate(feature: string, options: UseProGateOptions = {}) {
   const { profile } = useAuth();
   const [showingPrompt, setShowingPrompt] = useState(false);
 
@@ -31,6 +35,7 @@ export function useProGate(feature: string) {
   const PromptModal = showingPrompt
     ? createElement(UpgradePrompt, {
         feature,
+        showSlotUnlock: options.showSlotUnlock,
         onDismiss: () => setShowingPrompt(false),
       })
     : null;

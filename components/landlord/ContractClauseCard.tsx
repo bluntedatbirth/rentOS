@@ -48,6 +48,7 @@ export function ContractClauseCard({ clause, showLang, onRaisePenalty }: Contrac
           </span>
         )}
       </div>
+      <span className="text-xs text-charcoal-500 italic">{t('contract.ai_parsed_label')}</span>
       <h3 className="mb-1 text-sm font-semibold text-gray-900">
         {showLang === 'th' ? clause.title_th : clause.title_en}
       </h3>

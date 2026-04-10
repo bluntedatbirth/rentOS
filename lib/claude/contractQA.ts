@@ -42,7 +42,10 @@ const contractQASchema = z.object({
 
 // ─── Main Function ─────────────────────────────────────────────────
 
-export async function answerContractQuestion(params: ContractQAParams): Promise<ContractQAResult> {
+export async function answerContractQuestion(
+  params: ContractQAParams,
+  onUsage?: (usage: { input_tokens: number; output_tokens: number }) => void
+): Promise<ContractQAResult> {
   const { question, contractText_th, contractText_en, clauses, userLanguage } = params;
 
   const clausesSummary = clauses
@@ -118,6 +121,10 @@ Return ONLY valid JSON with no markdown or preamble:
   // Track token usage
   if (response.usage) {
     trackTokenUsage('contractQA', {
+      input_tokens: response.usage.input_tokens,
+      output_tokens: response.usage.output_tokens,
+    });
+    onUsage?.({
       input_tokens: response.usage.input_tokens,
       output_tokens: response.usage.output_tokens,
     });

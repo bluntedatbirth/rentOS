@@ -8,7 +8,7 @@ export function registerServiceWorker(): void {
 
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/sw.js', { scope: '/' })
+      .register('/sw.js', { scope: '/', updateViaCache: 'none' })
       .then((registration) => {
         if (process.env.NODE_ENV === 'development') {
           console.log('[PWA] Service worker registered:', registration.scope);

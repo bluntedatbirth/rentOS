@@ -28,7 +28,8 @@ export interface PenaltyCalculationResult {
 }
 
 export async function calculatePenalty(
-  input: PenaltyCalculationInput
+  input: PenaltyCalculationInput,
+  onUsage?: (usage: { input_tokens: number; output_tokens: number }) => void
 ): Promise<PenaltyCalculationResult> {
   let response: Anthropic.Message;
   try {
@@ -97,6 +98,10 @@ Return ONLY valid JSON with no markdown or preamble:
   // Track token usage
   if (response.usage) {
     trackTokenUsage('calculatePenalty', {
+      input_tokens: response.usage.input_tokens,
+      output_tokens: response.usage.output_tokens,
+    });
+    onUsage?.({
       input_tokens: response.usage.input_tokens,
       output_tokens: response.usage.output_tokens,
     });

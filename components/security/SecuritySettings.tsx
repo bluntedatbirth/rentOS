@@ -35,6 +35,27 @@ export default function SecuritySettings() {
   const [deleteInput, setDeleteInput] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState('');
+  const [deletePrecheck, setDeletePrecheck] = useState<{
+    role: 'landlord' | 'tenant';
+    active_contracts: number;
+    pending_contracts: number;
+    can_delete: boolean;
+  } | null>(null);
+  const [precheckLoading, setPrecheckLoading] = useState(false);
+
+  const openDeleteConfirm = async () => {
+    setShowDeleteConfirm(true);
+    setDeleteMessage('');
+    setPrecheckLoading(true);
+    try {
+      const res = await fetch('/api/account/delete');
+      if (res.ok) setDeletePrecheck(await res.json());
+    } catch {
+      // Non-blocking — user can still attempt deletion; server will reject if needed
+    } finally {
+      setPrecheckLoading(false);
+    }
+  };
 
   const handleChangeEmail = async () => {
     if (!newEmail) return;
@@ -129,7 +150,16 @@ export default function SecuritySettings() {
         }, 1500);
       } else {
         const data = await res.json();
-        setDeleteMessage(data.error || t('auth.error'));
+        if (data.error === 'active_contracts') {
+          setDeleteMessage(
+            t('security.delete_blocked_active').replace(
+              '{count}',
+              String(data.active_contracts ?? 0)
+            )
+          );
+        } else {
+          setDeleteMessage(data.error || t('auth.error'));
+        }
       }
     } catch {
       setDeleteMessage(t('auth.error'));
@@ -311,13 +341,44 @@ export default function SecuritySettings() {
           {!showDeleteConfirm ? (
             <button
               type="button"
-              onClick={() => setShowDeleteConfirm(true)}
+              onClick={openDeleteConfirm}
               className="min-h-[44px] rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
             >
               {t('security.delete_account')}
             </button>
           ) : (
             <div className="space-y-3">
+              {precheckLoading && (
+                <p className="text-sm text-red-700">{t('security.delete_checking')}</p>
+              )}
+
+              {deletePrecheck && !deletePrecheck.can_delete && (
+                <div className="rounded-lg border border-red-300 bg-white p-3">
+                  <p className="text-sm font-semibold text-red-900">
+                    {t('security.delete_blocked_title')}
+                  </p>
+                  <p className="mt-1 text-sm text-red-700">
+                    {t('security.delete_blocked_active').replace(
+                      '{count}',
+                      String(deletePrecheck.active_contracts)
+                    )}
+                  </p>
+                </div>
+              )}
+
+              {deletePrecheck &&
+                deletePrecheck.can_delete &&
+                deletePrecheck.pending_contracts > 0 && (
+                  <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
+                    <p className="text-sm text-amber-900">
+                      {(deletePrecheck.role === 'landlord'
+                        ? t('security.delete_warn_landlord_pending')
+                        : t('security.delete_warn_tenant_pending')
+                      ).replace('{count}', String(deletePrecheck.pending_contracts))}
+                    </p>
+                  </div>
+                )}
+
               <p className="text-sm text-red-700">{t('security.delete_confirm')}</p>
               <label htmlFor="sec-delete-confirm" className="sr-only">
                 {t('security.delete_confirm')}
@@ -334,7 +395,11 @@ export default function SecuritySettings() {
                 <button
                   type="button"
                   onClick={handleDeleteAccount}
-                  disabled={deleteLoading || deleteInput !== 'DELETE'}
+                  disabled={
+                    deleteLoading ||
+                    deleteInput !== 'DELETE' ||
+                    (deletePrecheck !== null && !deletePrecheck.can_delete)
+                  }
                   className="min-h-[44px] rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
                 >
                   {deleteLoading ? t('security.updating') : t('security.delete_account')}

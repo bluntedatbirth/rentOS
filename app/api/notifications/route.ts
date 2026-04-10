@@ -10,7 +10,9 @@ export async function GET(request: Request) {
 
   let query = supabase
     .from('notifications')
-    .select('*')
+    .select(
+      'id, recipient_id, type, title, body, title_en, title_th, body_en, body_th, url, sent_at, read_at'
+    )
     .eq('recipient_id', user.id)
     .order('sent_at', { ascending: false });
 

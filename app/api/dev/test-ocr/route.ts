@@ -2,12 +2,11 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import type { Database } from '@/lib/supabase/types';
+import { isDevEndpointAllowed } from '@/lib/devGuard';
 
 // DEV ONLY — test the OCR pipeline with a sample Thai contract
 export async function POST() {
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Not available in production' }, { status: 403 });
-  }
+  if (!isDevEndpointAllowed()) return new Response(null, { status: 404 });
 
   const anthropic = new Anthropic();
 

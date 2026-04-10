@@ -484,7 +484,7 @@ export default function ContractRenewPage() {
               <button
                 type="button"
                 onClick={() => setEditingTerms(!editingTerms)}
-                className="text-xs font-medium text-blue-600 hover:text-blue-800"
+                className="text-xs font-medium text-saffron-600 hover:text-saffron-800"
               >
                 {editingTerms ? t('renewal.hide_terms') : t('renewal.edit_terms')}
               </button>
@@ -527,7 +527,7 @@ export default function ContractRenewPage() {
                     type="date"
                     value={leaseStart}
                     onChange={(e) => setLeaseStart(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                   />
                 </div>
                 <div>
@@ -538,7 +538,7 @@ export default function ContractRenewPage() {
                     type="date"
                     value={leaseEnd}
                     onChange={(e) => setLeaseEnd(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                   />
                 </div>
                 <div>
@@ -554,7 +554,7 @@ export default function ContractRenewPage() {
                       value={monthlyRent}
                       onChange={(e) => setMonthlyRent(e.target.value)}
                       min="0"
-                      className="w-full rounded-lg border border-gray-300 py-2 pl-7 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full rounded-lg border border-gray-300 py-2 pl-7 pr-3 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                     />
                   </div>
                 </div>
@@ -571,7 +571,7 @@ export default function ContractRenewPage() {
                       value={securityDeposit}
                       onChange={(e) => setSecurityDeposit(e.target.value)}
                       min="0"
-                      className="w-full rounded-lg border border-gray-300 py-2 pl-7 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full rounded-lg border border-gray-300 py-2 pl-7 pr-3 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                     />
                   </div>
                 </div>
@@ -593,7 +593,7 @@ export default function ContractRenewPage() {
                   runAnalysis();
                 }}
                 disabled={analysisLoading}
-                className="relative overflow-hidden min-h-[44px] rounded-lg bg-blue-600 px-4 py-2 pr-6 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="relative overflow-hidden min-h-[44px] rounded-lg bg-saffron-500 px-4 py-2 pr-6 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-saffron-500 focus:ring-offset-2"
               >
                 {analysisLoading ? t('renewal.analysis_loading') : t('renewal.run_analysis')}
                 <ProRibbon size="sm" />
@@ -604,7 +604,7 @@ export default function ContractRenewPage() {
               {/* Loading spinner */}
               {analysisLoading && (
                 <div className="flex flex-col items-center gap-3 py-8 text-center">
-                  <div className="h-7 w-7 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+                  <div className="h-7 w-7 animate-spin rounded-full border-4 border-saffron-200 border-t-blue-600" />
                   <p className="text-sm text-gray-500">{t('renewal.analysis_loading')}</p>
                 </div>
               )}
@@ -623,11 +623,11 @@ export default function ContractRenewPage() {
               {analysis && !analysisLoading && (
                 <div className="space-y-5">
                   {/* AI Summary */}
-                  <div className="rounded-lg bg-blue-50 p-4">
-                    <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-blue-800">
+                  <div className="rounded-lg bg-saffron-50 p-4">
+                    <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-saffron-800">
                       {t('renewal.summary_title')}
                     </h3>
-                    <p className="text-sm leading-relaxed text-blue-900">
+                    <p className="text-sm leading-relaxed text-saffron-900">
                       {locale === 'th' ? analysis.summary_th : analysis.summary_en}
                     </p>
                   </div>
@@ -710,7 +710,7 @@ export default function ContractRenewPage() {
                                       <button
                                         type="button"
                                         onClick={() => applyRiskFix(risk, idx)}
-                                        className="min-h-[44px] rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+                                        className="min-h-[44px] rounded-lg bg-saffron-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-saffron-600"
                                       >
                                         {t('renewal.apply_fix')}
                                       </button>
@@ -809,7 +809,7 @@ export default function ContractRenewPage() {
                 value={contractText}
                 onChange={(e) => setContractText(e.target.value)}
                 rows={20}
-                className="w-full resize-y rounded-lg border border-gray-300 p-3 font-mono text-sm leading-relaxed text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full resize-y rounded-lg border border-gray-300 p-3 font-mono text-sm leading-relaxed text-gray-800 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                 spellCheck={false}
               />
             </div>
@@ -825,7 +825,7 @@ export default function ContractRenewPage() {
               type="button"
               onClick={handleSend}
               disabled={sending || sentSuccess}
-              className="min-h-[44px] w-full rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="min-h-[44px] w-full rounded-xl bg-saffron-500 px-6 py-3 text-sm font-semibold text-white hover:bg-saffron-600 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-saffron-500 focus:ring-offset-2"
             >
               {sending ? t('renewal.sending') : t('renewal.send_to_tenant')}
             </button>

@@ -30,14 +30,15 @@ export function createApiClient() {
 export async function getAuthenticatedUser() {
   const supabase = createApiClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
 
-  if (!session?.user) {
+  if (error || !user) {
     return { user: null, supabase };
   }
 
-  return { user: session.user, supabase };
+  return { user, supabase };
 }
 
 // Re-export error utilities from the shared module

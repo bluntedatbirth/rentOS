@@ -32,15 +32,15 @@ test.describe('Phase 3 - Pricing / Upgrade Page', () => {
     await expect(page.locator('text=Pro').or(page.locator('text=โปร')).first()).toBeVisible();
   });
 
-  test('upgrade page shows ฿299/month price', async ({ page }) => {
+  test('upgrade page shows ฿199/month price', async ({ page }) => {
     await loginAsLandlord(page);
     await page.goto('/landlord/billing/upgrade');
 
-    // Monthly is the default toggle state — ฿299 should be visible on load
-    await expect(page.locator('text=฿299')).toBeVisible();
+    // Monthly is the default toggle state — ฿199 should be visible on load
+    await expect(page.locator('text=฿199')).toBeVisible();
   });
 
-  test('upgrade page shows ฿2,990/year price after switching to yearly', async ({ page }) => {
+  test('upgrade page shows ฿1,990/year price after switching to yearly', async ({ page }) => {
     await loginAsLandlord(page);
     await page.goto('/landlord/billing/upgrade');
 
@@ -48,7 +48,7 @@ test.describe('Phase 3 - Pricing / Upgrade Page', () => {
     const yearlyBtn = page.locator('button').filter({ hasText: /Yearly|รายปี/ });
     await yearlyBtn.click();
 
-    await expect(page.locator('text=฿2,990')).toBeVisible();
+    await expect(page.locator('text=฿1,990')).toBeVisible();
   });
 
   test('monthly/yearly toggle switches billing period', async ({ page }) => {
@@ -56,17 +56,17 @@ test.describe('Phase 3 - Pricing / Upgrade Page', () => {
     await page.goto('/landlord/billing/upgrade');
 
     // Default should be monthly
-    await expect(page.locator('text=฿299')).toBeVisible();
+    await expect(page.locator('text=฿199')).toBeVisible();
 
     // Switch to yearly
     const yearlyBtn = page.locator('button').filter({ hasText: /Yearly|รายปี/ });
     await yearlyBtn.click();
-    await expect(page.locator('text=฿2,990')).toBeVisible();
+    await expect(page.locator('text=฿1,990')).toBeVisible();
 
     // Switch back to monthly
     const monthlyBtn = page.locator('button').filter({ hasText: /^Monthly$|^รายเดือน$/ });
     await monthlyBtn.click();
-    await expect(page.locator('text=฿299')).toBeVisible();
+    await expect(page.locator('text=฿199')).toBeVisible();
   });
 
   test('"Upgrade Now" button is visible for free-tier users', async ({ page }) => {

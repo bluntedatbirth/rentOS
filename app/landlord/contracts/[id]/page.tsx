@@ -21,6 +21,7 @@ interface ContractData {
   property_id: string;
   tenant_id: string | null;
   structured_clauses: StructuredClause[] | null;
+  raw_text_th: string | null;
   lease_start: string | null;
   lease_end: string | null;
   monthly_rent: number | null;
@@ -44,6 +45,8 @@ export default function ContractReviewPage() {
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLang, setShowLang] = useState<'th' | 'en'>('th');
+  const [reparseLoading, setReparseLoading] = useState(false);
+  const [reparseError, setReparseError] = useState<string | null>(null);
 
   // Auto-dismiss notifications related to this contract
   useAutoDismissNotifications({ url: `/contracts/${id}` });
@@ -60,7 +63,7 @@ export default function ContractReviewPage() {
     const { data } = await supabase
       .from('contracts')
       .select(
-        'id, property_id, tenant_id, structured_clauses, lease_start, lease_end, monthly_rent, security_deposit, status, created_at'
+        'id, property_id, tenant_id, structured_clauses, raw_text_th, lease_start, lease_end, monthly_rent, security_deposit, status, created_at'
       )
       .eq('id', id)
       .single();
@@ -81,6 +84,30 @@ export default function ContractReviewPage() {
 
     setLoading(false);
   }, [user, id]);
+
+  const handleReparse = useCallback(async () => {
+    if (!id) return;
+    setReparseLoading(true);
+    setReparseError(null);
+    try {
+      const res = await fetch(`/api/contracts/${id}/reparse`, { method: 'POST' });
+      if (res.status === 429) {
+        const body = (await res.json()) as { retryAfterSeconds?: number };
+        const seconds = body.retryAfterSeconds ?? 60;
+        setReparseError(t('contract.reparse_rate_limited').replace('{seconds}', String(seconds)));
+        return;
+      }
+      if (!res.ok) {
+        setReparseError(t('contract.reparse_failed'));
+        return;
+      }
+      await loadContract();
+    } catch {
+      setReparseError(t('contract.reparse_failed'));
+    } finally {
+      setReparseLoading(false);
+    }
+  }, [id, t, loadContract]);
 
   useEffect(() => {
     loadContract();
@@ -125,10 +152,23 @@ export default function ContractReviewPage() {
         </div>
         <Link
           href={`/landlord/contracts/${id}/pair`}
-          className="min-h-[44px] flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+          className="min-h-[44px] flex items-center rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600"
         >
           {t('pairing.pair_tenant')}
         </Link>
+      </div>
+
+      {/* AI-parsed content warning */}
+      <div className="mb-6 rounded-lg border border-warning-100 bg-warning-50 p-4 text-warning-700">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 shrink-0 text-lg leading-none" aria-hidden="true">
+            ⚠
+          </span>
+          <div>
+            <p className="text-sm font-bold">{t('contract.ai_parsed_top_warning_title')}</p>
+            <p className="mt-1 text-sm">{t('contract.ai_parsed_top_warning_body')}</p>
+          </div>
+        </div>
       </div>
 
       {/* Contract summary */}
@@ -171,7 +211,7 @@ export default function ContractReviewPage() {
           onClick={() => setShowLang('th')}
           className={`min-h-[44px] rounded-lg px-4 py-2 text-sm font-medium ${
             showLang === 'th'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-saffron-500 text-white'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -182,7 +222,7 @@ export default function ContractReviewPage() {
           onClick={() => setShowLang('en')}
           className={`min-h-[44px] rounded-lg px-4 py-2 text-sm font-medium ${
             showLang === 'en'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-saffron-500 text-white'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
@@ -193,7 +233,40 @@ export default function ContractReviewPage() {
       {/* Clauses list */}
       {clauses.length === 0 ? (
         <div className="rounded-lg bg-gray-50 p-8 text-center text-sm text-gray-500">
-          {t('contract.no_clauses')}
+          {contract.raw_text_th ? (
+            <div className="space-y-3">
+              <p>{t('contract.reparse_empty_state_hint')}</p>
+              {reparseError && <p className="text-red-500 text-xs">{reparseError}</p>}
+              <button
+                type="button"
+                onClick={() => void handleReparse()}
+                disabled={reparseLoading}
+                className="inline-flex items-center gap-2 rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-60"
+              >
+                {reparseLoading ? (
+                  <svg
+                    className="h-4 w-4 animate-spin"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                  </svg>
+                ) : null}
+                {t('contract.reparse_button')}
+              </button>
+            </div>
+          ) : (
+            t('contract.no_clauses')
+          )}
         </div>
       ) : (
         <div className="space-y-3">

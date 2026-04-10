@@ -19,7 +19,7 @@ export function ProRibbon({ size = 'md' }: { size?: 'sm' | 'md' }) {
 
   return (
     <span
-      className={`pointer-events-none absolute rotate-45 bg-gradient-to-r from-violet-600 to-indigo-600 text-center font-bold uppercase tracking-wider text-white shadow-sm ${styles}`}
+      className={`pointer-events-none absolute rotate-45 bg-gradient-to-r from-sage-500 to-sage-600 text-center font-bold uppercase tracking-wider text-white shadow-sm ${styles}`}
       aria-label="Pro feature"
     >
       PRO

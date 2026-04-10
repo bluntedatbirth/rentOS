@@ -1,9 +1,34 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getAuthenticatedUser, unauthorized, badRequest, serverError } from '@/lib/supabase/api';
+import { createServiceRoleClient } from '@/lib/supabase/server';
+import { checkRateLimit } from '@/lib/rateLimit/persistent';
+
+const sendNotificationSchema = z.object({
+  recipient_id: z.string().uuid(),
+  title: z.string().max(200),
+  body: z.string().max(2000),
+});
 
 export async function POST(request: Request) {
   const { user, supabase } = await getAuthenticatedUser();
   if (!user) return unauthorized();
+
+  // Rate limit: 20/hour, 100/day per landlord
+  const rl = await checkRateLimit(user.id, 'notifications-send', 20, 100);
+  if (!rl.allowed) {
+    console.warn('[rateLimit] notifications-send blocked, reason:', rl.reason, 'user:', user.id);
+    return new Response(
+      JSON.stringify({ error: 'rate_limit_exceeded', retryAfterSeconds: rl.retryAfterSeconds }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(rl.retryAfterSeconds),
+        },
+      }
+    );
+  }
 
   // Verify sender is a landlord
   const { data: senderProfile } = await supabase
@@ -16,14 +41,15 @@ export async function POST(request: Request) {
     return badRequest('Only landlords can send notifications');
   }
 
-  const body = await request.json();
-  const { recipient_id, title, body: messageBody } = body;
-
-  if (!recipient_id || !title || !messageBody) {
-    return badRequest('recipient_id, title, and body are required');
+  const rawBody: unknown = await request.json();
+  const parsed = sendNotificationSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return badRequest(parsed.error.issues.map((i) => i.message).join(', '));
   }
 
-  // Get landlord's property IDs
+  const { recipient_id, title, body: messageBody } = parsed.data;
+
+  // Get landlord's property IDs (user client — RLS scoped to this landlord)
   const { data: properties } = await supabase
     .from('properties')
     .select('id')
@@ -35,7 +61,7 @@ export async function POST(request: Request) {
     return badRequest('Recipient is not a tenant linked to one of your properties');
   }
 
-  // Verify the recipient is a tenant linked to one of the sender's contracts
+  // Verify the recipient is a tenant linked to one of the sender's contracts (user client)
   const { data: linkedContract } = await supabase
     .from('contracts')
     .select('id')
@@ -48,8 +74,9 @@ export async function POST(request: Request) {
     return badRequest('Recipient is not a tenant linked to one of your properties');
   }
 
-  // Insert notification
-  const { error } = await supabase.from('notifications').insert({
+  // Insert notification using service-role client (notifications table has no INSERT policy for users)
+  const serviceClient = createServiceRoleClient();
+  const { error } = await serviceClient.from('notifications').insert({
     recipient_id,
     type: 'maintenance_raised' as const,
     title,

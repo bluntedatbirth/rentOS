@@ -18,6 +18,9 @@ export function badRequest(message: string) {
   return apiError(message, 400);
 }
 
-export function serverError(message: string) {
-  return apiError(message, 500);
+export function serverError(internalMessage?: string) {
+  if (internalMessage) {
+    console.error('[serverError]', internalMessage);
+  }
+  return apiError('internal_error', 500);
 }

@@ -52,7 +52,8 @@ const compareContractsSchema = z.object({
 // ─── Main Function ───────────────────────────────────────────────────────────
 
 export async function compareContracts(
-  params: CompareContractsParams
+  params: CompareContractsParams,
+  onUsage?: (usage: { input_tokens: number; output_tokens: number }) => void
 ): Promise<CompareContractsResult> {
   const { contract1, contract2, language } = params;
 
@@ -173,6 +174,10 @@ Return ONLY valid JSON — no markdown, no preamble:
   // Track token usage
   if (response.usage) {
     trackTokenUsage('compareContracts', {
+      input_tokens: response.usage.input_tokens,
+      output_tokens: response.usage.output_tokens,
+    });
+    onUsage?.({
       input_tokens: response.usage.input_tokens,
       output_tokens: response.usage.output_tokens,
     });

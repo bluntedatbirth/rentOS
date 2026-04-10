@@ -28,11 +28,11 @@ export function BottomNav({ items, action }: BottomNavProps) {
 
   const baseClasses =
     'flex min-h-[56px] flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2 text-xs font-medium transition-colors';
-  const activeClasses = 'text-primary-600';
-  const inactiveClasses = 'text-gray-500 hover:text-gray-700';
+  const activeClasses = 'text-saffron-600';
+  const inactiveClasses = 'text-charcoal-500 hover:text-charcoal-700';
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-warm-200 bg-warm-50 md:hidden">
       <div className="flex items-stretch justify-around">
         {items.map((item) => {
           const isActive =

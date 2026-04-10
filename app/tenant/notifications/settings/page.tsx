@@ -151,25 +151,27 @@ export default function TenantNotificationSettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="mb-1 text-xl font-bold text-gray-900">{t('notifications.settings_title')}</h2>
-      <p className="mb-6 text-sm text-gray-500">{t('notifications.settings_description')}</p>
+      <h2 className="mb-1 text-xl font-bold text-charcoal-900">
+        {t('notifications.settings_title')}
+      </h2>
+      <p className="mb-6 text-sm text-charcoal-500">{t('notifications.settings_description')}</p>
 
       <div className="space-y-6">
         {groups.map((group) => (
           <div key={group.label} className="rounded-lg bg-white p-4 shadow-sm">
-            <h3 className="mb-3 text-sm font-semibold text-gray-900">{group.label}</h3>
+            <h3 className="mb-3 text-sm font-semibold text-charcoal-900">{group.label}</h3>
             <div className="space-y-3">
               {group.items.map((item) => (
                 <div key={item.key} className="flex items-center justify-between gap-4">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{item.label}</p>
-                    <p className="text-xs text-gray-500">{item.description}</p>
+                    <p className="text-sm font-medium text-charcoal-900">{item.label}</p>
+                    <p className="text-xs text-charcoal-500">{item.description}</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => handleToggle(item.key)}
                     className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors ${
-                      prefs[item.key] ? 'bg-blue-600' : 'bg-gray-200'
+                      prefs[item.key] ? 'bg-saffron-500' : 'bg-charcoal-200'
                     }`}
                     role="switch"
                     aria-checked={prefs[item.key]}
@@ -193,7 +195,7 @@ export default function TenantNotificationSettingsPage() {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="min-h-[44px] rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="min-h-[44px] rounded-lg bg-saffron-500 px-6 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
         >
           {saving ? t('common.loading') : t('common.save')}
         </button>

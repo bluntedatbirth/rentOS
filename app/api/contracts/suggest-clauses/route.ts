@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { getAuthenticatedUser, unauthorized, badRequest, serverError } from '@/lib/supabase/api';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { rateLimit, rateLimitResponse } from '@/lib/rateLimit';
+import { checkRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
 import { suggestClauses } from '@/lib/claude/suggestClauses';
 
 const suggestSchema = z.object({
@@ -16,9 +16,21 @@ export async function POST(request: Request) {
   const { user } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
-  // Rate limit: 5 suggestions per minute
-  const rl = rateLimit(`suggest-clauses:${user.id}`, 5, 60000);
-  if (!rl.success) return rateLimitResponse();
+  // Persistent rate limit: 10/hour, 20/day per user
+  const rl = await checkRateLimit(user.id, 'suggest-clauses', 10, 20);
+  if (!rl.allowed) {
+    console.warn('[rateLimit] suggest-clauses blocked, reason:', rl.reason, 'user:', user.id);
+    return new Response(
+      JSON.stringify({ error: 'ai_unavailable', retryAfterSeconds: rl.retryAfterSeconds }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(rl.retryAfterSeconds),
+        },
+      }
+    );
+  }
 
   // Auth: must be landlord
   const adminClient = createServiceRoleClient();
@@ -39,7 +51,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await suggestClauses(parsed.data);
+    const result = await suggestClauses(parsed.data, (usage) => {
+      void logAISpend(user.id, 'suggest-clauses', usage.input_tokens, usage.output_tokens);
+    });
     return Response.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to suggest clauses';

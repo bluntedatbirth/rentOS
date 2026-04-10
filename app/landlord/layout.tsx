@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
@@ -8,6 +9,17 @@ import { NotificationBell } from '@/components/ui/NotificationBell';
 import { BottomNav, type NavItem } from '@/components/ui/BottomNav';
 import { SideNav, type SideNavItem } from '@/components/ui/SideNav';
 import { MoreSheet, type MoreSheetItem } from '@/components/ui/MoreSheet';
+
+const SimulationPanel =
+  process.env.NEXT_PUBLIC_BETA_SIMULATIONS === 'true'
+    ? dynamic(
+        () =>
+          import('@/components/beta/SimulationPanel').then((m) => ({
+            default: m.SimulationPanel,
+          })),
+        { ssr: false }
+      )
+    : () => null;
 
 export default function LandlordLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading, signOut } = useAuth();
@@ -126,25 +138,6 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
 
   // More sheet items — everything not in the bottom tabs
   const moreSheetItems: MoreSheetItem[] = [
-    {
-      href: '/landlord/contracts',
-      label: t('nav.contracts'),
-      matchPrefix: '/landlord/contracts',
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          className="h-5 w-5"
-        >
-          <path
-            fillRule="evenodd"
-            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-            clipRule="evenodd"
-          />
-        </svg>
-      ),
-    },
     {
       href: '/landlord/analytics',
       label: t('nav.analytics'),
@@ -298,7 +291,6 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
       label: t('nav.properties'),
       matchPrefix: '/landlord/properties',
     },
-    { href: '/landlord/contracts', label: t('nav.contracts'), matchPrefix: '/landlord/contracts' },
     { href: '/landlord/payments', label: t('nav.payments'), matchPrefix: '/landlord/payments' },
     {
       href: '/landlord/analytics',
@@ -357,13 +349,13 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
               <div className="hidden items-center gap-1.5 sm:flex">
                 <span className="text-sm text-gray-600">{profile.full_name}</span>
                 {profile.tier === 'pro' && (
-                  <span className="rounded-full bg-blue-600 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
+                  <span className="rounded-full bg-saffron-500 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
                     {t('billing.pro_badge')}
                   </span>
                 )}
               </div>
             )}
-            <NotificationBell href="/landlord/notifications/inbox" />
+            <NotificationBell role="landlord" />
             <button
               type="button"
               onClick={() => setLocale(locale === 'th' ? 'en' : 'th')}
@@ -411,6 +403,7 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
         }}
       />
       <MoreSheet items={moreSheetItems} open={moreOpen} onClose={() => setMoreOpen(false)} />
+      <SimulationPanel role="landlord" />
     </div>
   );
 }

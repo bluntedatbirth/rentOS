@@ -30,9 +30,9 @@ interface TM30FormData {
   foreigner_visa_expiry: string;
 }
 
-const labelClass = 'mb-1 block text-xs font-medium text-gray-600';
+const labelClass = 'mb-1 block text-xs font-medium text-charcoal-600';
 const inputClass =
-  'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500';
+  'w-full rounded-lg border border-warm-200 px-3 py-2 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500';
 
 export default function TM30GeneratorPage() {
   const { profile } = useAuth();
@@ -98,7 +98,7 @@ export default function TM30GeneratorPage() {
       {/* Back link */}
       <Link
         href="/landlord/documents"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-charcoal-500 hover:text-charcoal-700"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -117,17 +117,17 @@ export default function TM30GeneratorPage() {
 
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900">{t('tm30.title')}</h2>
-        <p className="mt-1 text-sm text-gray-500">{t('tm30.subtitle')}</p>
+        <h2 className="text-xl font-bold text-charcoal-900">{t('tm30.title')}</h2>
+        <p className="mt-1 text-sm text-charcoal-500">{t('tm30.subtitle')}</p>
       </div>
 
       {/* Info banner */}
-      <div className="mb-6 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3">
+      <div className="mb-6 flex items-start gap-3 rounded-lg border border-saffron-200 bg-saffron-50 px-4 py-3">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
           fill="currentColor"
-          className="mt-0.5 h-5 w-5 shrink-0 text-blue-500"
+          className="mt-0.5 h-5 w-5 shrink-0 text-saffron-500"
         >
           <path
             fillRule="evenodd"
@@ -136,16 +136,29 @@ export default function TM30GeneratorPage() {
           />
         </svg>
         <div>
-          <p className="text-sm font-medium text-blue-800">{t('tm30.info_title')}</p>
-          <p className="mt-0.5 text-xs text-blue-700">{t('tm30.info_description')}</p>
+          <p className="text-sm font-medium text-saffron-800">{t('tm30.info_title')}</p>
+          <p className="mt-0.5 text-xs text-saffron-700">{t('tm30.info_description')}</p>
           <a
             href="https://tm30.immigration.go.th"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-1 inline-block text-xs font-medium text-blue-600 underline"
+            className="mt-1 inline-block text-xs font-medium text-saffron-600 underline"
           >
             tm30.immigration.go.th &rarr;
           </a>
+        </div>
+      </div>
+
+      {/* Legal notice warning banner */}
+      <div className="mb-6 rounded-lg border border-warning-100 bg-warning-50 p-4 text-warning-700">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 shrink-0 text-lg leading-none" aria-hidden="true">
+            ⚠
+          </span>
+          <div>
+            <p className="text-sm font-bold">{t('tm30.legal_notice_title')}</p>
+            <p className="mt-1 text-sm">{t('tm30.legal_notice_body')}</p>
+          </div>
         </div>
       </div>
 
@@ -153,7 +166,7 @@ export default function TM30GeneratorPage() {
       <div className="space-y-6 print:hidden">
         {/* Section 1: Owner */}
         <div className="rounded-lg bg-white p-5 shadow-sm">
-          <h3 className="mb-4 text-sm font-semibold text-gray-900">{t('tm30.section1')}</h3>
+          <h3 className="mb-4 text-sm font-semibold text-charcoal-900">{t('tm30.section1')}</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={labelClass}>{t('tm30.owner_name')}</label>
@@ -218,7 +231,7 @@ export default function TM30GeneratorPage() {
 
         {/* Section 2: Accommodation */}
         <div className="rounded-lg bg-white p-5 shadow-sm">
-          <h3 className="mb-4 text-sm font-semibold text-gray-900">{t('tm30.section2')}</h3>
+          <h3 className="mb-4 text-sm font-semibold text-charcoal-900">{t('tm30.section2')}</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={labelClass}>{t('tm30.place_name')}</label>
@@ -264,7 +277,7 @@ export default function TM30GeneratorPage() {
 
         {/* Section 3: Foreigner */}
         <div className="rounded-lg bg-white p-5 shadow-sm">
-          <h3 className="mb-4 text-sm font-semibold text-gray-900">{t('tm30.section3')}</h3>
+          <h3 className="mb-4 text-sm font-semibold text-charcoal-900">{t('tm30.section3')}</h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className={labelClass}>{t('tm30.foreigner_name')}</label>
@@ -349,7 +362,7 @@ export default function TM30GeneratorPage() {
             type="button"
             onClick={handleDownloadPdf}
             disabled={downloadingPdf || !form.owner_name || !form.foreigner_name}
-            className="min-h-[44px] rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="min-h-[44px] rounded-lg bg-saffron-500 px-5 py-2 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
           >
             {downloadingPdf ? t('common.loading') : t('tm30.download_pdf')}
           </button>
@@ -357,14 +370,14 @@ export default function TM30GeneratorPage() {
             type="button"
             onClick={handlePrint}
             disabled={!form.owner_name || !form.foreigner_name}
-            className="min-h-[44px] rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            className="min-h-[44px] rounded-lg border border-warm-200 px-5 py-2 text-sm font-medium text-charcoal-700 hover:bg-warm-50 disabled:opacity-50"
           >
             {t('tm30.print')}
           </button>
           <button
             type="button"
             onClick={() => setShowPreview(!showPreview)}
-            className="min-h-[44px] rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="min-h-[44px] rounded-lg border border-warm-200 px-5 py-2 text-sm font-medium text-charcoal-700 hover:bg-warm-50"
           >
             {showPreview ? t('tm30.hide_preview') : t('tm30.show_preview')}
           </button>
@@ -373,57 +386,59 @@ export default function TM30GeneratorPage() {
 
       {/* Print preview — always rendered for print, visually toggled */}
       <div ref={printRef} className={`mt-6 ${showPreview ? '' : 'hidden'} print:block`}>
-        <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm print:border-0 print:shadow-none">
+        <div className="rounded-lg border border-warm-200 bg-white p-8 shadow-sm print:border-0 print:shadow-none">
           {/* Form header */}
           <div className="mb-6 text-center">
-            <h1 className="text-xl font-bold text-gray-900">แบบ ตม.30</h1>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h1 className="text-xl font-bold text-charcoal-900">แบบ ตม.30</h1>
+            <h2 className="text-lg font-semibold text-charcoal-900">
               TM.30 — Notification of Residence for Foreigners
             </h2>
-            <p className="mt-1 text-sm text-gray-700">แบบแจ้งที่พักอาศัยของคนต่างด้าว</p>
-            <p className="text-xs text-gray-600">Immigration Act B.E. 2522 (1979), Section 38</p>
-            <p className="mt-2 text-sm text-gray-900">Date / วันที่: {today}</p>
+            <p className="mt-1 text-sm text-charcoal-700">แบบแจ้งที่พักอาศัยของคนต่างด้าว</p>
+            <p className="text-xs text-charcoal-600">
+              Immigration Act B.E. 2522 (1979), Section 38
+            </p>
+            <p className="mt-2 text-sm text-charcoal-900">Date / วันที่: {today}</p>
           </div>
 
           {/* Section 1: Owner */}
           <div className="mb-6">
-            <h3 className="mb-3 border-b border-gray-300 pb-1 text-sm font-bold">
+            <h3 className="mb-3 border-b border-charcoal-300 pb-1 text-sm font-bold">
               Section 1: Notifier / House Owner (ผู้แจ้ง / เจ้าของบ้าน)
             </h3>
             <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
               <div>
-                <span className="text-gray-600">Name (ชื่อ-นามสกุล):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Name (ชื่อ-นามสกุล):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.owner_name || '____________________'}
                 </strong>
               </div>
               <div>
-                <span className="text-gray-600">Nationality (สัญชาติ):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Nationality (สัญชาติ):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.owner_nationality || '____________________'}
                 </strong>
               </div>
               <div>
-                <span className="text-gray-600">ID Card No. (เลขประจำตัว):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">ID Card No. (เลขประจำตัว):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.owner_id_number || '____________________'}
                 </strong>
               </div>
               <div>
-                <span className="text-gray-600">Phone (โทรศัพท์):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Phone (โทรศัพท์):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.owner_phone || '____________________'}
                 </strong>
               </div>
               <div className="col-span-2">
-                <span className="text-gray-600">Address (ที่อยู่):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Address (ที่อยู่):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.owner_address || '____________________'}
                 </strong>
               </div>
               <div>
-                <span className="text-gray-600">Relationship (ความสัมพันธ์):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Relationship (ความสัมพันธ์):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.owner_relationship === 'owner'
                     ? 'Owner (เจ้าของ)'
                     : form.owner_relationship === 'lessee'
@@ -436,31 +451,31 @@ export default function TM30GeneratorPage() {
 
           {/* Section 2: Accommodation */}
           <div className="mb-6">
-            <h3 className="mb-3 border-b border-gray-300 pb-1 text-sm font-bold">
+            <h3 className="mb-3 border-b border-charcoal-300 pb-1 text-sm font-bold">
               Section 2: Accommodation (สถานที่พัก)
             </h3>
             <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
               <div>
-                <span className="text-gray-600">Name (ชื่อสถานที่):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Name (ชื่อสถานที่):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.place_name || '____________________'}
                 </strong>
               </div>
               <div>
-                <span className="text-gray-600">Type (ประเภท):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Type (ประเภท):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.place_type || '____________________'}
                 </strong>
               </div>
               <div className="col-span-2">
-                <span className="text-gray-600">Address (ที่อยู่):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Address (ที่อยู่):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.place_address || '____________________'}
                 </strong>
               </div>
               <div>
-                <span className="text-gray-600">Phone (โทรศัพท์):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Phone (โทรศัพท์):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.place_phone || '____________________'}
                 </strong>
               </div>
@@ -469,55 +484,55 @@ export default function TM30GeneratorPage() {
 
           {/* Section 3: Foreigner */}
           <div className="mb-6">
-            <h3 className="mb-3 border-b border-gray-300 pb-1 text-sm font-bold">
+            <h3 className="mb-3 border-b border-charcoal-300 pb-1 text-sm font-bold">
               Section 3: Foreigner Details (รายละเอียดคนต่างด้าว)
             </h3>
             <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
               <div>
-                <span className="text-gray-600">Name (ชื่อ-นามสกุล):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Name (ชื่อ-นามสกุล):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.foreigner_name || '____________________'}
                 </strong>
               </div>
               <div>
-                <span className="text-gray-600">Nationality (สัญชาติ):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Nationality (สัญชาติ):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.foreigner_nationality || '____________________'}
                 </strong>
               </div>
               <div>
-                <span className="text-gray-600">Passport No. (หนังสือเดินทาง):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Passport No. (หนังสือเดินทาง):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.foreigner_passport_number || '____________________'}
                 </strong>
               </div>
               <div>
-                <span className="text-gray-600">Arrival Date (วันที่เดินทางถึง):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Arrival Date (วันที่เดินทางถึง):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.foreigner_arrival_date || '____________________'}
                 </strong>
               </div>
               <div>
-                <span className="text-gray-600">From (เดินทางมาจาก):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">From (เดินทางมาจาก):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.foreigner_arrival_from || '____________________'}
                 </strong>
               </div>
               <div>
-                <span className="text-gray-600">Stay From (พักตั้งแต่):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Stay From (พักตั้งแต่):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.foreigner_stay_date || '____________________'}
                 </strong>
               </div>
               <div>
-                <span className="text-gray-600">Visa Type (ประเภทวีซ่า):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Visa Type (ประเภทวีซ่า):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.foreigner_visa_type || '____________________'}
                 </strong>
               </div>
               <div>
-                <span className="text-gray-600">Visa Expiry (วีซ่าหมดอายุ):</span>{' '}
-                <strong className="text-gray-900">
+                <span className="text-charcoal-600">Visa Expiry (วีซ่าหมดอายุ):</span>{' '}
+                <strong className="text-charcoal-900">
                   {form.foreigner_visa_expiry || '____________________'}
                 </strong>
               </div>
@@ -527,22 +542,22 @@ export default function TM30GeneratorPage() {
           {/* Signature block */}
           <div className="mt-10 grid grid-cols-2 gap-8 text-sm">
             <div className="text-center">
-              <div className="mx-auto mb-2 h-16 w-48 border-b border-gray-400" />
-              <p className="text-gray-900">Signature of Notifier</p>
-              <p className="text-gray-600">(ลงชื่อผู้แจ้ง)</p>
-              <p className="mt-1 text-xs text-gray-500">Date: {today}</p>
+              <div className="mx-auto mb-2 h-16 w-48 border-b border-charcoal-400" />
+              <p className="text-charcoal-900">Signature of Notifier</p>
+              <p className="text-charcoal-600">(ลงชื่อผู้แจ้ง)</p>
+              <p className="mt-1 text-xs text-charcoal-500">Date: {today}</p>
             </div>
             <div className="text-center">
-              <div className="mx-auto mb-2 h-16 w-48 border-b border-gray-400" />
-              <p className="text-gray-900">Receiving Officer</p>
-              <p className="text-gray-600">(เจ้าหน้าที่ผู้รับแจ้ง)</p>
-              <p className="mt-1 text-xs text-gray-500">Date: ____/____/________</p>
+              <div className="mx-auto mb-2 h-16 w-48 border-b border-charcoal-400" />
+              <p className="text-charcoal-900">Receiving Officer</p>
+              <p className="text-charcoal-600">(เจ้าหน้าที่ผู้รับแจ้ง)</p>
+              <p className="mt-1 text-xs text-charcoal-500">Date: ____/____/________</p>
             </div>
           </div>
 
           {/* Footer notes */}
-          <div className="mt-8 rounded border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 print:bg-white">
-            <p className="font-semibold text-gray-900">Important Notes:</p>
+          <div className="mt-8 rounded border border-warm-200 bg-warm-50 p-3 text-xs text-charcoal-700 print:bg-white">
+            <p className="font-semibold text-charcoal-900">Important Notes:</p>
             <ul className="mt-1 list-disc pl-4 space-y-0.5">
               <li>File within 24 hours of foreigner moving in (ยื่นภายใน 24 ชม. หลังเข้าพัก)</li>
               <li>Re-file after each re-entry to Thailand (ยื่นใหม่ทุกครั้งที่กลับเข้าประเทศ)</li>

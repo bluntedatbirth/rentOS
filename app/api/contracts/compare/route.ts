@@ -8,7 +8,7 @@ import {
   serverError,
 } from '@/lib/supabase/api';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { rateLimit, rateLimitResponse } from '@/lib/rateLimit';
+import { checkRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
 import { compareContracts } from '@/lib/claude/compareContracts';
 
 const compareRequestSchema = z.object({
@@ -21,9 +21,21 @@ export async function POST(request: Request) {
   const { user, supabase } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
-  // Rate limit: 3 comparisons per minute
-  const { success } = rateLimit(`compare:${user.id}`, 3, 60000);
-  if (!success) return rateLimitResponse();
+  // Persistent rate limit: 5/hour, 10/day per user
+  const rl = await checkRateLimit(user.id, 'compare', 5, 10);
+  if (!rl.allowed) {
+    console.warn('[rateLimit] compare blocked, reason:', rl.reason, 'user:', user.id);
+    return new Response(
+      JSON.stringify({ error: 'ai_unavailable', retryAfterSeconds: rl.retryAfterSeconds }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(rl.retryAfterSeconds),
+        },
+      }
+    );
+  }
 
   // Parse and validate request body
   let body: unknown;
@@ -85,23 +97,28 @@ export async function POST(request: Request) {
   }
 
   try {
-    const comparisonResult = await compareContracts({
-      contract1: {
-        text_th: result1.data.raw_text_th ?? '',
-        text_en: result1.data.translated_text_en ?? '',
-        clauses: Array.isArray(result1.data.structured_clauses)
-          ? result1.data.structured_clauses
-          : [],
+    const comparisonResult = await compareContracts(
+      {
+        contract1: {
+          text_th: result1.data.raw_text_th ?? '',
+          text_en: result1.data.translated_text_en ?? '',
+          clauses: Array.isArray(result1.data.structured_clauses)
+            ? result1.data.structured_clauses
+            : [],
+        },
+        contract2: {
+          text_th: result2.data.raw_text_th ?? '',
+          text_en: result2.data.translated_text_en ?? '',
+          clauses: Array.isArray(result2.data.structured_clauses)
+            ? result2.data.structured_clauses
+            : [],
+        },
+        language,
       },
-      contract2: {
-        text_th: result2.data.raw_text_th ?? '',
-        text_en: result2.data.translated_text_en ?? '',
-        clauses: Array.isArray(result2.data.structured_clauses)
-          ? result2.data.structured_clauses
-          : [],
-      },
-      language,
-    });
+      (usage) => {
+        void logAISpend(user.id, 'compare', usage.input_tokens, usage.output_tokens);
+      }
+    );
 
     return NextResponse.json(comparisonResult);
   } catch (err) {

@@ -19,7 +19,7 @@ interface ContractTemplate {
 }
 
 const CATEGORY_LABELS: Record<string, { en: string; th: string; color: string }> = {
-  residential: { en: 'Residential', th: 'ที่พักอาศัย', color: 'bg-blue-100 text-blue-800' },
+  residential: { en: 'Residential', th: 'ที่พักอาศัย', color: 'bg-saffron-100 text-saffron-800' },
   condo: { en: 'Condo', th: 'คอนโดมิเนียม', color: 'bg-purple-100 text-purple-800' },
   furnished: { en: 'Furnished', th: 'พร้อมเฟอร์นิเจอร์', color: 'bg-amber-100 text-amber-800' },
   short_term: { en: 'Short-Term', th: 'ระยะสั้น', color: 'bg-pink-100 text-pink-800' },
@@ -153,7 +153,7 @@ export default function ContractTemplatesPage() {
                         >
                           {locale === 'th' ? cat?.th : cat?.en}
                         </span>
-                        <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                        <span className="rounded-full bg-saffron-50 px-2 py-0.5 text-xs font-medium text-saffron-700">
                           {t('contract_templates.built_in_badge')}
                         </span>
                       </div>
@@ -164,7 +164,7 @@ export default function ContractTemplatesPage() {
                     <button
                       type="button"
                       onClick={() => handleUseTemplate(tmpl)}
-                      className="min-h-[44px] w-full rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                      className="min-h-[44px] w-full rounded-lg bg-saffron-500 py-2 text-sm font-medium text-white hover:bg-saffron-600"
                     >
                       {t('contract_templates.use_template')}
                     </button>
@@ -218,7 +218,7 @@ export default function ContractTemplatesPage() {
                         <button
                           type="button"
                           onClick={() => handleUseTemplate(tmpl)}
-                          className="min-h-[44px] flex-1 rounded-lg bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                          className="min-h-[44px] flex-1 rounded-lg bg-saffron-500 py-2 text-sm font-medium text-white hover:bg-saffron-600"
                         >
                           {t('contract_templates.use_template')}
                         </button>

@@ -68,10 +68,13 @@ function timeAgo(dateStr: string, t: (key: string) => string): string {
 /** Resolve the destination URL for a notification, adding role prefix if needed */
 function resolveUrl(notification: Notification): string {
   const url = notification.url;
-  if (url) {
+  // Security: only allow relative same-origin paths to prevent open-redirect.
+  // Blocks absolute URLs (no leading /) and protocol-relative URLs (//evil.com).
+  if (url && typeof url === 'string' && url.startsWith('/') && !url.startsWith('//')) {
     if (url.startsWith('/contracts/')) return '/tenant' + url;
     return url;
   }
+  // Fallback to type-based routing when url is absent or fails the safety check
   return TYPE_ROUTES_TENANT[notification.type] ?? DASHBOARD;
 }
 
@@ -124,12 +127,12 @@ export default function TenantNotificationsPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">{t('notifications.inbox_title')}</h2>
+        <h2 className="text-xl font-bold text-charcoal-900">{t('notifications.inbox_title')}</h2>
         {notifications.length > 0 && (
           <button
             type="button"
             onClick={dismissAll}
-            className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            className="min-h-[44px] rounded-lg border border-warm-200 px-4 py-2 text-sm font-medium text-charcoal-700 hover:bg-warm-100"
           >
             {t('notifications.clear_all')}
           </button>
@@ -138,15 +141,15 @@ export default function TenantNotificationsPage() {
 
       {notifications.length === 0 ? (
         <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-          <p className="text-sm text-gray-500">{t('notifications.no_notifications')}</p>
+          <p className="text-sm text-charcoal-500">{t('notifications.no_notifications')}</p>
         </div>
       ) : (
         <div className="space-y-3">
           {notifications.map((notification) => (
             <div
               key={notification.id}
-              className={`flex items-center gap-0 rounded-lg bg-white shadow-sm transition-colors hover:bg-gray-50 ${
-                !notification.read_at ? 'border-l-4 border-blue-500' : ''
+              className={`flex items-center gap-0 rounded-lg bg-white shadow-sm transition-colors hover:bg-warm-50 ${
+                !notification.read_at ? 'border-l-4 border-saffron-500' : ''
               }`}
             >
               <button
@@ -161,28 +164,30 @@ export default function TenantNotificationsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p
-                        className={`text-sm ${!notification.read_at ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}
+                        className={`text-sm ${!notification.read_at ? 'font-semibold text-charcoal-900' : 'font-medium text-charcoal-700'}`}
                       >
                         {locale === 'en'
                           ? (notification.title_en ?? notification.title)
                           : (notification.title_th ?? notification.title)}
                       </p>
                       {!notification.read_at && (
-                        <span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
+                        <span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-saffron-500" />
                       )}
                     </div>
-                    <p className="mt-0.5 text-sm text-gray-500 line-clamp-2">
+                    <p className="mt-0.5 text-sm text-charcoal-500 line-clamp-2">
                       {locale === 'en'
                         ? (notification.body_en ?? notification.body)
                         : (notification.body_th ?? notification.body)}
                     </p>
-                    <p className="mt-1 text-xs text-gray-400">{timeAgo(notification.sent_at, t)}</p>
+                    <p className="mt-1 text-xs text-charcoal-400">
+                      {timeAgo(notification.sent_at, t)}
+                    </p>
                   </div>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 20 20"
                     fill="currentColor"
-                    className="h-4 w-4 shrink-0 text-gray-300"
+                    className="h-4 w-4 shrink-0 text-charcoal-300"
                   >
                     <path
                       fillRule="evenodd"
@@ -196,7 +201,7 @@ export default function TenantNotificationsPage() {
               <button
                 type="button"
                 onClick={() => dismiss(notification.id)}
-                className="mr-2 shrink-0 rounded-lg p-2 text-gray-300 hover:bg-gray-100 hover:text-gray-500"
+                className="mr-2 shrink-0 rounded-lg p-2 text-charcoal-300 hover:bg-warm-100 hover:text-charcoal-500"
                 title={t('notifications.dismiss')}
               >
                 <svg
@@ -216,7 +221,7 @@ export default function TenantNotificationsPage() {
       <div className="mt-6 text-center">
         <Link
           href="/tenant/notifications/settings"
-          className="text-sm font-medium text-blue-600 hover:text-blue-800"
+          className="text-sm font-medium text-saffron-600 hover:text-saffron-700"
         >
           {t('notifications.go_to_settings')}
         </Link>

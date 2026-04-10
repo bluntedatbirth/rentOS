@@ -1,18 +1,15 @@
 import type { Metadata } from 'next';
-import localFont from 'next/font/local';
+import { DM_Sans } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { PWAProvider } from '@/components/pwa/PWAProvider';
 
-const geistSans = localFont({
-  src: './fonts/GeistVF.woff',
-  variable: '--font-geist-sans',
-  weight: '100 900',
-});
-const geistMono = localFont({
-  src: './fonts/GeistMonoVF.woff',
-  variable: '--font-geist-mono',
-  weight: '100 900',
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-dm-sans',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -47,7 +44,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${dmSans.variable} antialiased`}>
         <Providers>{children}</Providers>
         <PWAProvider />
       </body>

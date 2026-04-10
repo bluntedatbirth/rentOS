@@ -5,6 +5,7 @@ import { sendPushNotification } from './fcm';
 export type NotificationType =
   | 'payment_due'
   | 'payment_overdue'
+  | 'payment_claimed'
   | 'lease_expiry'
   | 'penalty_raised'
   | 'penalty_appeal'
@@ -16,6 +17,7 @@ export type NotificationType =
   | 'lease_renewal_offer'
   | 'lease_renewal_response'
   | 'renewal_signing_reminder'
+  | 'slot_unlock_succeeded'
   | 'custom';
 
 export interface SendNotificationParams {

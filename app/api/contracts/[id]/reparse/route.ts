@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorized, notFound, serverError } from '@/lib/supabase/api';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { reparseContractText } from '@/lib/claude/extractContract';
+import { checkRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
 import type { StructuredClause } from '@/lib/supabase/types';
 
 /**
@@ -12,6 +13,22 @@ import type { StructuredClause } from '@/lib/supabase/types';
 export async function POST(_request: Request, { params }: { params: { id: string } }) {
   const { user } = await getAuthenticatedUser();
   if (!user) return unauthorized();
+
+  // Persistent rate limit: 5/hour, 10/day per user
+  const rl = await checkRateLimit(user.id, 'reparse', 5, 10);
+  if (!rl.allowed) {
+    console.warn('[rateLimit] reparse blocked, reason:', rl.reason, 'user:', user.id);
+    return new Response(
+      JSON.stringify({ error: 'ai_unavailable', retryAfterSeconds: rl.retryAfterSeconds }),
+      {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(rl.retryAfterSeconds),
+        },
+      }
+    );
+  }
 
   const admin = createServiceRoleClient();
 
@@ -36,7 +53,9 @@ export async function POST(_request: Request, { params }: { params: { id: string
   }
 
   try {
-    const clauses = await reparseContractText(contract.raw_text_th);
+    const clauses = await reparseContractText(contract.raw_text_th, (usage) => {
+      void logAISpend(user.id, 'reparse', usage.input_tokens, usage.output_tokens);
+    });
 
     if (!Array.isArray(clauses) || clauses.length === 0) {
       return serverError('AI returned no clauses');

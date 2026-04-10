@@ -8,21 +8,27 @@ import { useI18n } from '@/lib/i18n/context';
 export default function TenantPairPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { t } = useI18n();
   const [code, setCode] = useState(searchParams.get('code') ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  // Auto-redeem if code is in URL (from QR scan)
+  // Auto-redeem if code is in URL (from QR scan) when the user is signed in.
+  // If the user is NOT signed in, forward them to /signup?pair=CODE so they can
+  // create an account and auto-pair in one smooth flow.
   useEffect(() => {
     const urlCode = searchParams.get('code');
-    if (urlCode && user) {
-      setCode(urlCode);
-      handleRedeem(urlCode);
+    if (!urlCode) return;
+    if (authLoading) return;
+    if (!user) {
+      router.replace(`/signup?pair=${urlCode}`);
+      return;
     }
-  }, [searchParams, user]); // eslint-disable-line react-hooks/exhaustive-deps
+    setCode(urlCode);
+    handleRedeem(urlCode);
+  }, [searchParams, user, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRedeem = async (redeemCode?: string) => {
     const finalCode = redeemCode ?? code;
@@ -51,8 +57,8 @@ export default function TenantPairPage() {
 
   return (
     <div className="mx-auto max-w-sm">
-      <h2 className="mb-2 text-xl font-bold text-gray-900">{t('pairing.tenant_title')}</h2>
-      <p className="mb-6 text-sm text-gray-500">{t('pairing.tenant_description')}</p>
+      <h2 className="mb-2 text-xl font-bold text-charcoal-900">{t('pairing.tenant_title')}</h2>
+      <p className="mb-6 text-sm text-charcoal-500">{t('pairing.tenant_description')}</p>
 
       {success ? (
         <div className="rounded-lg border border-green-200 bg-green-50 p-6 text-center">
@@ -61,7 +67,10 @@ export default function TenantPairPage() {
         </div>
       ) : (
         <div className="rounded-lg bg-white p-6 shadow-sm">
-          <label htmlFor="pairing-code" className="mb-2 block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="pairing-code"
+            className="mb-2 block text-sm font-medium text-charcoal-700"
+          >
             {t('pairing.enter_code')}
           </label>
           <input
@@ -71,7 +80,7 @@ export default function TenantPairPage() {
             onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))}
             maxLength={6}
             placeholder="ABC123"
-            className="mb-4 block w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-mono text-2xl font-bold tracking-widest text-gray-900 placeholder:text-gray-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="mb-4 block w-full rounded-lg border border-warm-200 px-4 py-3 text-center font-mono text-2xl font-bold tracking-widest text-charcoal-900 placeholder:text-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
           />
 
           {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
@@ -80,7 +89,7 @@ export default function TenantPairPage() {
             type="button"
             onClick={() => handleRedeem()}
             disabled={loading || code.length !== 6}
-            className="min-h-[44px] w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
           >
             {loading ? t('common.loading') : t('pairing.pair_button')}
           </button>

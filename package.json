@@ -25,10 +25,16 @@
     "next": "14.2.35",
     "nodemailer": "^8.0.5",
     "pdf-lib": "^1.17.1",
+    "qrcode.react": "^4.2.0",
     "react": "^18",
     "react-dom": "^18",
+    "react-markdown": "^10.1.0",
+    "rehype-slug": "^6.0.0",
     "resend": "^6.10.0",
     "zod": "^4.3.6"
+  },
+  "engines": {
+    "node": ">=18.18.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
