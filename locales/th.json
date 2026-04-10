@@ -1426,5 +1426,16 @@
   "notfound.body": "หน้าที่คุณกำลังมองหาไม่มีอยู่ หรืออาจถูกย้ายไปแล้ว",
   "notfound.home_cta": "กลับสู่หน้าหลัก",
   "notfound.login_cta": "เข้าสู่ระบบ",
-  "properties.slots_full_toast": "ใช้ห้องครบทุกห้องแล้ว ปลดล็อคเพิ่มเพื่อเพิ่มห้องใหม่"
+  "properties.slots_full_toast": "ใช้ห้องครบทุกห้องแล้ว ปลดล็อคเพิ่มเพื่อเพิ่มห้องใหม่",
+  "tenant.documents_upload_button": "อัปโหลดเอกสาร",
+  "tenant.documents_upload_category": "หมวดหมู่",
+  "tenant.documents_upload_category_tenant_id": "บัตรประชาชน / หนังสือเดินทาง",
+  "tenant.documents_upload_category_receipt": "ใบเสร็จ",
+  "tenant.documents_upload_category_other": "อื่นๆ",
+  "tenant.documents_upload_file": "ไฟล์",
+  "tenant.documents_upload_notes": "บันทึก (ไม่บังคับ)",
+  "tenant.documents_upload_submit": "อัปโหลด",
+  "tenant.documents_upload_success": "อัปโหลดเอกสารแล้ว",
+  "tenant.documents_upload_too_large": "ไฟล์เกินขีดจำกัด 25 MB",
+  "tenant.documents_upload_no_contract": "คุณสามารถอัปโหลดเอกสารได้เมื่อสัญญาของคุณใช้งาน"
 }

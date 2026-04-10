@@ -1426,5 +1426,16 @@
   "notfound.body": "您要查找的页面不存在，或可能已被移动。",
   "notfound.home_cta": "返回首页",
   "notfound.login_cta": "登录",
-  "properties.slots_full_toast": "所有名额已满。解锁更多以添加新房源。"
+  "properties.slots_full_toast": "所有名额已满。解锁更多以添加新房源。",
+  "tenant.documents_upload_button": "上传文档",
+  "tenant.documents_upload_category": "类别",
+  "tenant.documents_upload_category_tenant_id": "身份证 / 护照",
+  "tenant.documents_upload_category_receipt": "收据",
+  "tenant.documents_upload_category_other": "其他",
+  "tenant.documents_upload_file": "文件",
+  "tenant.documents_upload_notes": "备注（选填）",
+  "tenant.documents_upload_submit": "上传",
+  "tenant.documents_upload_success": "文档已上传",
+  "tenant.documents_upload_too_large": "文件超过 25MB 限制",
+  "tenant.documents_upload_no_contract": "合同激活后即可上传文档"
 }
