@@ -144,9 +144,14 @@ export async function activateContract(
   const firstOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const anchorDate = leaseStart > firstOfCurrentMonth ? leaseStart : firstOfCurrentMonth;
 
+  // T-BUG-07: bound seeding loop by lease_end so short leases don't get rows past expiry
+  const leaseEndDate = contract.lease_end ? new Date(contract.lease_end) : null;
+
   const paymentRows: Database['public']['Tables']['payments']['Insert'][] = [];
   for (let i = 0; i < 12; i++) {
     const dueDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + i, 1);
+    // T-BUG-07: stop seeding when due date exceeds lease end
+    if (leaseEndDate && dueDate > leaseEndDate) break;
     const dueDateStr = dueDate.toISOString().split('T')[0]!;
     paymentRows.push({
       contract_id: contractId,
