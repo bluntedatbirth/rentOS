@@ -89,23 +89,32 @@ function SignupPageInner() {
     );
 
     if (authError) {
-      setError(authError.message);
+      // User-friendly messages for common cases
+      if (authError.message === 'account_exists') {
+        setError(t('auth.account_exists'));
+      } else {
+        setError(authError.message);
+      }
       setLoading(false);
       return;
     }
 
     // If email confirmation is disabled in Supabase, the user already has a
     // session after signUp — redirect straight to the app.
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (sessionData.session) {
-      if (isPairFlow) {
-        router.replace(`/tenant/pair?code=${pairCode}`);
-      } else {
-        // Go to dashboard — middleware will auto-create profile if needed
-        const dest = role === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
-        router.replace(dest);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        if (isPairFlow) {
+          router.replace(`/tenant/pair?code=${pairCode}`);
+        } else {
+          // Go to dashboard — middleware will auto-create profile if needed
+          const dest = role === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
+          router.replace(dest);
+        }
+        return;
       }
-      return;
+    } catch {
+      // Session check failed — fall through to "Check Your Email"
     }
 
     // Email confirmation required — show "Check Your Email" screen

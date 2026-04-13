@@ -25,6 +25,7 @@
   "auth.password_min_length": "Password must be at least 8 characters.",
   "auth.invalid_credentials": "Invalid email or password. Please try again.",
   "auth.email_not_confirmed": "Please check your email and click the confirmation link before signing in.",
+  "auth.account_exists": "An account with this email already exists. Please log in instead.",
   "auth.sign_in": "Sign In",
   "auth.use_magic_link": "Sign in with magic link instead",
   "auth.use_password": "Sign in with password instead",

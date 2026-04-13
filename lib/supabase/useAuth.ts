@@ -147,7 +147,7 @@ export function useAuth() {
       password?: string
     ) => {
       if (password) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -155,8 +155,13 @@ export function useAuth() {
             data: metadata,
           },
         });
-        // Supabase already sends its own confirmation email for password signups —
-        // do NOT fire a magic-link here or the user receives two emails.
+        // Detect "user already exists": Supabase returns a fake user with empty
+        // identities array (to prevent email enumeration). Surface a clear error.
+        if (!error && data.user && (!data.user.identities || data.user.identities.length === 0)) {
+          return {
+            error: new Error('account_exists'),
+          };
+        }
         return { error };
       }
       // Passwordless: POST to our own magic-link endpoint
