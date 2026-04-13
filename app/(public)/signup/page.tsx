@@ -95,15 +95,20 @@ function SignupPageInner() {
     }
 
     // If email confirmation is disabled in Supabase, the user already has a
-    // session after signUp — redeem the code immediately to skip the round-trip.
-    if (isPairFlow) {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData.session) {
+    // session after signUp — redirect straight to the app.
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (sessionData.session) {
+      if (isPairFlow) {
         router.replace(`/tenant/pair?code=${pairCode}`);
-        return;
+      } else {
+        // Go to dashboard — middleware will auto-create profile if needed
+        const dest = role === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
+        router.replace(dest);
       }
+      return;
     }
 
+    // Email confirmation required — show "Check Your Email" screen
     setSent(true);
     setLoading(false);
   };
