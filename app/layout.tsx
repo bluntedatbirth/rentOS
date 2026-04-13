@@ -15,11 +15,11 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL('https://rentos.homes'),
   title: {
-    default: 'RentOS — Free rental management for Thai landlords',
+    default: 'RentOS — Rental management for Thailand',
     template: '%s | RentOS',
   },
   description:
-    'The easiest way for Thai landlords to manage properties, contracts, and tenants. Free for up to 2 properties — no card required.',
+    'The easiest way to manage rental properties, contracts, and tenants in Thailand. Thai and English, built for both sides of the lease.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -34,9 +34,9 @@ export const metadata: Metadata = {
     'mobile-web-app-capable': 'yes',
   },
   openGraph: {
-    title: 'RentOS — Free rental management for Thai landlords',
+    title: 'RentOS — Rental management for Thailand',
     description:
-      'The easiest way for Thai landlords to manage properties, contracts, and tenants. Free for up to 2 properties — no card required.',
+      'The easiest way to manage rental properties, contracts, and tenants in Thailand. Thai and English, built for both sides of the lease.',
     url: 'https://rentos.homes',
     siteName: 'RentOS',
     images: [
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
         url: '/og-image.svg',
         width: 1200,
         height: 630,
-        alt: 'RentOS — rental management for Thai landlords',
+        alt: 'RentOS — rental management for Thailand',
       },
     ],
     locale: 'en_US',
@@ -52,9 +52,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'RentOS — Free rental management for Thai landlords',
+    title: 'RentOS — Rental management for Thailand',
     description:
-      'The easiest way for Thai landlords to manage properties, contracts, and tenants. Free for up to 2 properties — no card required.',
+      'The easiest way to manage rental properties, contracts, and tenants in Thailand. Thai and English, built for both sides of the lease.',
     images: ['/og-image.svg'],
   },
   robots: {

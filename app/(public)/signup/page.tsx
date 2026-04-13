@@ -32,6 +32,10 @@ function SignupPageInner() {
   const pairCode = (searchParams.get('pair') || '').toUpperCase();
   const isPairFlow = pairCode.length === 6;
 
+  // OAuth completion flow: user authenticated via Google but has no profile yet.
+  // They need to pick a role before we can create their profile.
+  const isCompleteFlow = searchParams.get('complete') === '1';
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -42,6 +46,21 @@ function SignupPageInner() {
   const [loading, setLoading] = useState(false);
   const [consented, setConsented] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Pre-fill from OAuth session when completing profile
+  useEffect(() => {
+    if (!isCompleteFlow) return;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        const meta = data.session.user.user_metadata;
+        setEmail(data.session.user.email ?? '');
+        setFullName(meta?.full_name ?? meta?.name ?? '');
+        setConsented(true); // OAuth implies consent to platform
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCompleteFlow]);
 
   // If user is already authenticated and arrives with a pair code, skip signup entirely
   useEffect(() => {
@@ -74,6 +93,30 @@ function SignupPageInner() {
     }
 
     setLoading(true);
+
+    // OAuth completion flow: user already authenticated, just create profile
+    if (isCompleteFlow) {
+      try {
+        const res = await fetch('/api/account/complete-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role, full_name: fullName, phone: stripPhone(phone) }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setError(data.error || 'Failed to create profile');
+          setLoading(false);
+          return;
+        }
+        const dest = role === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
+        router.replace(dest);
+        return;
+      } catch {
+        setError('Something went wrong. Please try again.');
+        setLoading(false);
+        return;
+      }
+    }
 
     const { error: authError } = await signUp(
       email,
@@ -216,10 +259,12 @@ function SignupPageInner() {
         ) : (
           <div className="rounded-xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800/60 p-6 shadow-sm dark:shadow-2xl dark:backdrop-blur-xl">
             <h2 className="mb-1 text-lg font-semibold text-charcoal-900 dark:text-white">
-              {t('auth.get_started')}
+              {isCompleteFlow ? t('auth.complete_profile_heading') : t('auth.get_started')}
             </h2>
             <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
-              {t('auth.get_started_description')}
+              {isCompleteFlow
+                ? t('auth.complete_profile_description')
+                : t('auth.get_started_description')}
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -279,8 +324,8 @@ function SignupPageInner() {
                 />
               </div>
 
-              {/* Phone hidden in pair flow — tenant can add it later in their profile */}
-              {!isPairFlow && (
+              {/* Phone hidden in pair and complete flows */}
+              {!isPairFlow && !isCompleteFlow && (
                 <div>
                   <label
                     htmlFor="phone"
@@ -299,112 +344,119 @@ function SignupPageInner() {
                 </div>
               )}
 
-              <div>
-                <label
-                  htmlFor="email"
-                  className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
-                >
-                  {t('auth.email')} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t('auth.email_placeholder')}
-                  className="block w-full rounded-lg border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-white/5 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/30 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="password"
-                  className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
-                >
-                  {t('auth.password')}
-                </label>
-                <div className="relative">
+              {/* Email & password hidden in OAuth complete flow — user already authenticated */}
+              {!isCompleteFlow && (
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
+                  >
+                    {t('auth.email')} <span className="text-red-500">*</span>
+                  </label>
                   <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={t('auth.password_placeholder')}
-                    className="block w-full rounded-lg border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-white/5 px-3 py-2.5 pr-10 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/30 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                    id="email"
+                    type="email"
+                    required={!isCompleteFlow}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t('auth.email_placeholder')}
+                    className="block w-full rounded-lg border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-white/5 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/30 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-400 dark:text-white/40 hover:text-charcoal-600 dark:hover:text-white/60 transition-colors"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="w-4.5 h-4.5"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M3.28 2.22a.75.75 0 00-1.06 1.06l14.5 14.5a.75.75 0 101.06-1.06l-1.745-1.745a10.029 10.029 0 003.3-4.38 1.651 1.651 0 000-1.185A10.004 10.004 0 009.999 3a9.956 9.956 0 00-4.744 1.194L3.28 2.22zM7.752 6.69l1.092 1.092a2.5 2.5 0 013.374 3.373l1.092 1.092a4 4 0 00-5.558-5.558z"
-                          clipRule="evenodd"
-                        />
-                        <path d="M10.748 13.93l2.523 2.523A9.987 9.987 0 0110 17c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 012.838-4.826L6.29 8.17a4 4 0 005.458 5.758z" />
-                      </svg>
-                    ) : (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        className="w-4.5 h-4.5"
-                      >
-                        <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
-                        <path
-                          fillRule="evenodd"
-                          d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    )}
-                  </button>
                 </div>
-                <p className="mt-1 text-xs text-charcoal-400 dark:text-white/40">
-                  {t('auth.password_hint')}
-                </p>
-              </div>
+              )}
 
-              {/* Consent checkbox */}
-              <label className="flex items-start gap-2 text-sm text-charcoal-700 dark:text-white/70">
-                <input
-                  type="checkbox"
-                  checked={consented}
-                  onChange={(e) => setConsented(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-warm-300 accent-saffron-500"
-                />
-                <span>
-                  {t('auth.consent_prefix')}{' '}
-                  <a
-                    href="/legal#terms"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-saffron-600 dark:text-saffron-400 underline hover:text-saffron-700 dark:hover:text-saffron-300"
+              {!isCompleteFlow && (
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                   >
-                    {t('auth.consent_tos_link')}
-                  </a>{' '}
-                  {t('auth.consent_and')}{' '}
-                  <a
-                    href="/legal#privacy"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-saffron-600 dark:text-saffron-400 underline hover:text-saffron-700 dark:hover:text-saffron-300"
-                  >
-                    {t('auth.consent_privacy_link')}
-                  </a>{' '}
-                  <span className="text-red-500">*</span>
-                </span>
-              </label>
+                    {t('auth.password')}
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={t('auth.password_placeholder')}
+                      className="block w-full rounded-lg border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-white/5 px-3 py-2.5 pr-10 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/30 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal-400 dark:text-white/40 hover:text-charcoal-600 dark:hover:text-white/60 transition-colors"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="w-4.5 h-4.5"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M3.28 2.22a.75.75 0 00-1.06 1.06l14.5 14.5a.75.75 0 101.06-1.06l-1.745-1.745a10.029 10.029 0 003.3-4.38 1.651 1.651 0 000-1.185A10.004 10.004 0 009.999 3a9.956 9.956 0 00-4.744 1.194L3.28 2.22zM7.752 6.69l1.092 1.092a2.5 2.5 0 013.374 3.373l1.092 1.092a4 4 0 00-5.558-5.558z"
+                            clipRule="evenodd"
+                          />
+                          <path d="M10.748 13.93l2.523 2.523A9.987 9.987 0 0110 17c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 012.838-4.826L6.29 8.17a4 4 0 005.458 5.758z" />
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="w-4.5 h-4.5"
+                        >
+                          <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
+                          <path
+                            fillRule="evenodd"
+                            d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-charcoal-400 dark:text-white/40">
+                    {t('auth.password_hint')}
+                  </p>
+                </div>
+              )}
+
+              {/* Consent checkbox — hidden in OAuth complete flow (consent implied) */}
+              {!isCompleteFlow && (
+                <label className="flex items-start gap-2 text-sm text-charcoal-700 dark:text-white/70">
+                  <input
+                    type="checkbox"
+                    checked={consented}
+                    onChange={(e) => setConsented(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-warm-300 accent-saffron-500"
+                  />
+                  <span>
+                    {t('auth.consent_prefix')}{' '}
+                    <a
+                      href="/legal#terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-saffron-600 dark:text-saffron-400 underline hover:text-saffron-700 dark:hover:text-saffron-300"
+                    >
+                      {t('auth.consent_tos_link')}
+                    </a>{' '}
+                    {t('auth.consent_and')}{' '}
+                    <a
+                      href="/legal#privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-saffron-600 dark:text-saffron-400 underline hover:text-saffron-700 dark:hover:text-saffron-300"
+                    >
+                      {t('auth.consent_privacy_link')}
+                    </a>{' '}
+                    <span className="text-red-500">*</span>
+                  </span>
+                </label>
+              )}
 
               {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
@@ -437,28 +489,35 @@ function SignupPageInner() {
                     </svg>
                     {t('auth.signing_in')}
                   </span>
+                ) : isCompleteFlow ? (
+                  t('auth.complete_setup')
                 ) : (
                   t('auth.create_account')
                 )}
               </button>
             </form>
 
-            <SocialLoginButtons
-              mode="signup"
-              role={role}
-              pairCode={isPairFlow ? pairCode : undefined}
-              disabled={loading}
-            />
+            {/* Social login & "have account" hidden in complete flow — user already authed */}
+            {!isCompleteFlow && (
+              <>
+                <SocialLoginButtons
+                  mode="signup"
+                  role={role}
+                  pairCode={isPairFlow ? pairCode : undefined}
+                  disabled={loading}
+                />
 
-            <p className="mt-4 text-center text-sm text-charcoal-500 dark:text-white/50">
-              {t('auth.have_account')}{' '}
-              <Link
-                href="/login"
-                className="font-medium text-saffron-600 dark:text-saffron-400 hover:text-saffron-700 dark:hover:text-saffron-300"
-              >
-                {t('app.login')}
-              </Link>
-            </p>
+                <p className="mt-4 text-center text-sm text-charcoal-500 dark:text-white/50">
+                  {t('auth.have_account')}{' '}
+                  <Link
+                    href="/login"
+                    className="font-medium text-saffron-600 dark:text-saffron-400 hover:text-saffron-700 dark:hover:text-saffron-300"
+                  >
+                    {t('app.login')}
+                  </Link>
+                </p>
+              </>
+            )}
           </div>
         )}
       </div>

@@ -77,29 +77,37 @@ export async function GET(request: NextRequest) {
         : null;
 
       if (!existingProfile) {
-        // Auto-create profile from user metadata (set during signup)
         const metadata = session.user.user_metadata;
 
-        // Role resolution: query param → cookie → metadata → default 'landlord'
-        // The cookie branch handles OAuth flows where we can't put query params
-        // on the redirectTo (Supabase allowlist falls back to Site URL when
-        // redirectTo carries a query string, even though docs say otherwise).
+        // Check if the role was explicitly chosen (from signup page → OAuth).
+        // Cookie is set by the signup page before redirecting to Google.
+        // If no role source exists, the user came directly to Google login
+        // without going through signup — redirect them to signup to choose.
         const queryRole = requestUrl.searchParams.get('role');
         const cookieRoleRaw = cookieStore.get('oauth_role')?.value ?? null;
         const cookieRole =
           cookieRoleRaw === 'landlord' || cookieRoleRaw === 'tenant' ? cookieRoleRaw : null;
-        const resolvedRole: 'landlord' | 'tenant' =
+        const metadataRole = metadata?.role;
+
+        const resolvedRole: 'landlord' | 'tenant' | null =
           queryRole === 'landlord' || queryRole === 'tenant'
             ? queryRole
             : cookieRole
               ? cookieRole
-              : metadata.role === 'tenant'
-                ? 'tenant'
-                : 'landlord';
+              : metadataRole === 'landlord' || metadataRole === 'tenant'
+                ? metadataRole
+                : null;
+
+        // No role chosen → send to signup so user can pick
+        if (!resolvedRole) {
+          diag.final_redirect = '/signup?complete=1';
+          console.log('[callback] no role found, redirecting to signup', diag);
+          return NextResponse.redirect(new URL('/signup?complete=1', requestUrl.origin));
+        }
 
         diag.resolved_role = resolvedRole;
 
-        // Defensive full_name mapping: Google may return `full_name`, Facebook/Apple return `name`
+        // Defensive full_name mapping: Google → `full_name` or `name`
         const fullName =
           typeof metadata.full_name === 'string' && metadata.full_name
             ? metadata.full_name
@@ -124,7 +132,7 @@ export async function GET(request: NextRequest) {
             tier_expires_at: oneYearFromNow.toISOString(),
             founding_member: true,
           },
-          { onConflict: 'id', ignoreDuplicates: true }
+          { onConflict: 'id' }
         );
         diag.upsert_error = upsertError ? String(upsertError) : null;
         if (upsertError) {
@@ -134,13 +142,11 @@ export async function GET(request: NextRequest) {
         // Fresh OAuth signup → fire welcome email (non-blocking)
         const provider = session.user.app_metadata.provider;
         if (provider && provider !== 'email') {
-          const dashboard =
-            resolvedRole === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
-          const dashboardUrl = `${requestUrl.origin}${dashboard}`;
+          const loginUrl = `${requestUrl.origin}/login`;
           void sendEmail({
             to: session.user.email!,
             kind: 'welcome_oauth',
-            ...welcomeOauthTemplate({ fullName, role: resolvedRole, dashboardUrl }),
+            ...welcomeOauthTemplate({ fullName, role: resolvedRole, dashboardUrl: loginUrl }),
           });
         }
 
@@ -157,8 +163,6 @@ export async function GET(request: NextRequest) {
                 ? metadata.pair_code
                 : null;
 
-        // If the new tenant signed up via a QR pair link, drop them directly into
-        // the pair page so the code is auto-redeemed before they hit the dashboard.
         if (resolvedRole === 'tenant' && pairCode && /^[A-Z0-9]{6}$/.test(pairCode)) {
           const target = `/tenant/pair?code=${pairCode}`;
           diag.final_redirect = target;
