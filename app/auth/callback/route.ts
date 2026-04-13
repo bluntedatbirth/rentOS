@@ -116,6 +116,7 @@ export async function GET(request: NextRequest) {
           {
             id: session.user.id,
             role: resolvedRole,
+            active_mode: resolvedRole,
             full_name: fullName,
             phone: (metadata.phone as string) || null,
             language: 'th' as const,

@@ -208,6 +208,7 @@ export async function middleware(request: NextRequest) {
           {
             id: user.id,
             role: resolvedRole,
+            active_mode: resolvedRole,
             full_name: fullName,
             phone: (metadata.phone as string) || null,
             language: 'th',
