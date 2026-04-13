@@ -23,6 +23,9 @@ export function welcomeOauthTemplate(params: WelcomeOauthTemplateParams): Render
   const subject = 'Welcome to RentOS';
   const greeting = params.fullName ? `Hi ${params.fullName},` : 'Hi there,';
   const bullets = params.role === 'landlord' ? LANDLORD_BULLETS : TENANT_BULLETS;
+  // Link to /login instead of direct dashboard — login auto-redirects to dashboard
+  // if user already has a session, otherwise prompts them to sign in first.
+  const loginUrl = params.dashboardUrl.replace(/\/(landlord|tenant)\/dashboard$/, '/login');
 
   const bulletsHtml = bullets
     .map(
@@ -44,7 +47,7 @@ export function welcomeOauthTemplate(params: WelcomeOauthTemplateParams): Render
       ${bulletsHtml}
     </ul>
     <p style="margin:0 0 32px;">
-      ${button('Go to your dashboard', params.dashboardUrl)}
+      ${button('Go to your dashboard', loginUrl)}
     </p>
     <p style="margin:0;font-size:13px;line-height:1.6;color:#6B6B6B;">
       If you have any questions, reply to this email — we're happy to help.
@@ -59,7 +62,7 @@ Getting started:
 ${bulletsText}
 
 Go to your dashboard:
-${params.dashboardUrl}
+${loginUrl}
 
 If you have any questions, reply to this email — we're happy to help.`;
 
