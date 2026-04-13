@@ -331,6 +331,7 @@ export default function PropertiesPage() {
   const { PromptModal } = useProGate('slot_limit', { showSlotUnlock: true });
   const [properties, setProperties] = useState<PropertyRow[]>([]);
   const [overduePropertyIds, setOverduePropertyIds] = useState<Set<string>>(new Set());
+  const [unpaidRentTotal, setUnpaidRentTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showSlotModal, setShowSlotModal] = useState(false);
 
@@ -379,21 +380,26 @@ export default function PropertiesPage() {
     }
 
     const overdueSet = new Set<string>();
+    let unpaidTotal = 0;
     if (contractIds.length > 0) {
       const { data: overdueData } = (await supabase
         .from('payments')
-        .select('contract_id')
+        .select('contract_id, amount')
         .in('contract_id', contractIds)
-        .eq('status', 'overdue')) as { data: Array<{ contract_id: string }> | null };
+        .eq('status', 'overdue')) as {
+        data: Array<{ contract_id: string; amount: number | null }> | null;
+      };
 
       for (const r of overdueData ?? []) {
         const propId = contractToProperty[r.contract_id];
         if (propId) overdueSet.add(propId);
+        unpaidTotal += r.amount ?? 0;
       }
     }
 
     setProperties(props);
     setOverduePropertyIds(overdueSet);
+    setUnpaidRentTotal(unpaidTotal);
     setLoading(false);
   }, [user]);
 
@@ -441,6 +447,97 @@ export default function PropertiesPage() {
           showSlotUnlock={true}
           onDismiss={() => setShowSlotModal(false)}
         />
+      )}
+
+      {/* Dashboard stat cards */}
+      {properties.length > 0 && (
+        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {/* Active Properties */}
+          <div className="rounded-2xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 p-5 shadow-sm">
+            <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-saffron-500/10">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="h-4 w-4 text-saffron-500"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <p className="text-2xl font-bold text-charcoal-900 dark:text-white">
+              {properties.length}
+            </p>
+            <p className="text-xs text-charcoal-500 dark:text-white/50">
+              {t('dashboard.card_active_properties')}
+            </p>
+          </div>
+
+          {/* Unpaid Rent */}
+          <div className="rounded-2xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 p-5 shadow-sm">
+            <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-saffron-500/10">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="h-4 w-4 text-saffron-500"
+              >
+                <path d="M1 4.25a3.733 3.733 0 012.25-.75h13.5c.844 0 1.623.279 2.25.75A2.25 2.25 0 0016.75 2H3.25A2.25 2.25 0 001 4.25zM1 7.25a3.733 3.733 0 012.25-.75h13.5c.844 0 1.623.279 2.25.75A2.25 2.25 0 0016.75 5H3.25A2.25 2.25 0 001 7.25zM7 8a1 1 0 000 2h.01a1 1 0 000-2H7zm-2 3a2.25 2.25 0 00-2.25 2.25v1.5A2.25 2.25 0 005 17h10a2.25 2.25 0 002.25-2.25v-1.5A2.25 2.25 0 0015 11H5z" />
+              </svg>
+            </div>
+            <p className="text-2xl font-bold text-saffron-600">
+              {unpaidRentTotal > 0
+                ? `฿${unpaidRentTotal.toLocaleString()}`
+                : overdueCount > 0
+                  ? overdueCount
+                  : '0'}
+            </p>
+            <p className="text-xs text-charcoal-500 dark:text-white/50">
+              {t('dashboard.card_unpaid_rent')}
+            </p>
+            {overdueCount > 0 && (
+              <Link
+                href="/landlord/payments"
+                className="mt-2 inline-block text-xs font-semibold text-saffron-600 hover:text-saffron-700"
+              >
+                {t('dashboard.card_unpaid_rent_action')} →
+              </Link>
+            )}
+          </div>
+
+          {/* Expiring Soon */}
+          <div className="rounded-2xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 p-5 shadow-sm">
+            <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-sage-500/10">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="h-4 w-4 text-sage-500"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <p className="text-2xl font-bold text-sage-500">{expiringCount}</p>
+            <p className="text-xs text-charcoal-500 dark:text-white/50">
+              {t('dashboard.card_contracts_expiring')}
+            </p>
+            {expiringCount > 0 && (
+              <Link
+                href="/landlord/contracts"
+                className="mt-2 inline-block text-xs font-semibold text-saffron-600 hover:text-saffron-700"
+              >
+                {t('dashboard.card_contracts_expiring_action')} →
+              </Link>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Header row */}

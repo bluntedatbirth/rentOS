@@ -170,7 +170,7 @@
   "dashboard.card_contracts_expiring": "Contracts Expiring",
   "dashboard.card_contracts_expiring_sub": "within next 60 days",
   "dashboard.card_contracts_expiring_action": "View contracts",
-  "nav.properties": "Properties",
+  "nav.properties": "Dashboard",
   "nav.contracts": "Contracts",
   "nav.upload_contract": "Upload Contract",
   "nav.dashboard": "Dashboard",
