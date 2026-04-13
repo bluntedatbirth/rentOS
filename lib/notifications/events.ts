@@ -35,25 +35,7 @@ export async function onPenaltyConfirmed(penaltyId: string, contractId: string):
     bodyEn: 'A penalty on your contract has been confirmed by the landlord.',
     bodyTh: 'ค่าปรับในสัญญาของคุณถูกยืนยันโดยเจ้าของที่พัก',
     url: '/tenant/penalties',
-  });
-}
-
-/**
- * Fired when a tenant appeals a penalty.
- * Notifies the landlord.
- */
-export async function onPenaltyAppealed(penaltyId: string, contractId: string): Promise<void> {
-  const parties = await getContractParties(contractId);
-  if (!parties?.landlord_id) return;
-
-  await sendNotification({
-    recipientId: parties.landlord_id,
-    type: 'penalty_appeal',
-    titleEn: 'Penalty Appealed',
-    titleTh: 'มีการอุทธรณ์ค่าปรับ',
-    bodyEn: 'A tenant has appealed a penalty. Please review.',
-    bodyTh: 'ผู้เช่าได้อุทธรณ์ค่าปรับ กรุณาตรวจสอบ',
-    url: '/landlord/penalties',
+    payload: { target_route: 'penalties.list' },
   });
 }
 
@@ -87,6 +69,7 @@ export async function onMaintenanceStatusChanged(
     bodyEn: `Your maintenance request has been updated to: ${statusLabelEn}.`,
     bodyTh: `คำขอซ่อมบำรุงของคุณถูกอัปเดตเป็น: ${statusLabelTh}`,
     url: '/tenant/maintenance',
+    payload: { target_route: 'maintenance.list' },
   });
 }
 
@@ -102,25 +85,20 @@ export async function onTenantPaired(contractId: string): Promise<void> {
   if (parties.tenant_id) {
     await sendNotification({
       recipientId: parties.tenant_id,
-      type: 'maintenance_raised', // closest existing type for general contract events
+      type: 'pairing_confirmed',
       titleEn: 'Contract Paired Successfully',
       titleTh: 'จับคู่สัญญาเรียบร้อยแล้ว',
       bodyEn: 'You have been linked to your rental contract.',
       bodyTh: 'คุณถูกเชื่อมต่อกับสัญญาเช่าของคุณแล้ว',
-      url: '/tenant/contracts',
-    });
-  }
-
-  // Notify the landlord
-  if (parties.landlord_id) {
-    await sendNotification({
-      recipientId: parties.landlord_id,
-      type: 'maintenance_raised', // closest existing type for general contract events
-      titleEn: 'Tenant Paired to Contract',
-      titleTh: 'ผู้เช่าจับคู่สัญญาแล้ว',
-      bodyEn: 'A tenant has been paired to one of your contracts.',
-      bodyTh: 'ผู้เช่าถูกจับคู่กับสัญญาเช่าหนึ่งของคุณ',
-      url: '/landlord/contracts',
+      url: '/tenant/contract/view',
+      payload: { target_route: 'contract.view', fallback_route: 'dashboard' },
     });
   }
 }
+
+/**
+ * Lease-ended notifications are handled entirely by lib/properties/endTenancy.ts,
+ * which notifies both the landlord and the former tenant with structured payloads.
+ * Callers that need to send lease-ended notifications should call endTenancy() directly.
+ */
+// onLeaseEnded — see lib/properties/endTenancy.ts

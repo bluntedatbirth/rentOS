@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useI18n } from '@/lib/i18n/context';
+import { formatDisplayDate } from '@/lib/format/date';
 
 interface RenewalNoticeProps {
   contract: {
@@ -19,6 +20,9 @@ interface RenewalNoticeProps {
 
 function formatValue(key: string, value: unknown): string {
   if (value === null || value === undefined) return '—';
+  if (key === 'lease_start' || key === 'lease_end') {
+    return formatDisplayDate(value as string);
+  }
   if ((key === 'monthly_rent' || key === 'security_deposit') && typeof value === 'number') {
     return `฿${value.toLocaleString()}`;
   }
@@ -112,7 +116,8 @@ export function RenewalNotice({ contract, onResponded }: RenewalNoticeProps) {
         <div>
           <p className="text-xs text-gray-500">{t('renewal.lease_period')}</p>
           <p className="text-sm font-medium text-gray-900">
-            {contract.lease_start ?? '—'} → {contract.lease_end ?? '—'}
+            {contract.lease_start ? formatDisplayDate(contract.lease_start) : '—'} →{' '}
+            {contract.lease_end ? formatDisplayDate(contract.lease_end) : '—'}
           </p>
         </div>
         <div>

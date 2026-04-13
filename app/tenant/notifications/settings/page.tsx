@@ -10,26 +10,19 @@ import type { Json } from '@/lib/supabase/types';
 
 const supabase = createClient();
 
+// Simplified per PO 2026-04-11: tenants only configure payment reminders.
+// Other prefs (penalty_*, maintenance_*, lease_expiry, tenant_paired) may still
+// exist in profiles.notification_preferences JSONB from prior builds — we just
+// ignore unknown keys on load and preserve them on save is not needed since we
+// overwrite with only the 2 known fields.
 interface NotificationPrefs {
   payment_due: boolean;
   payment_overdue: boolean;
-  lease_expiry: boolean;
-  penalty_raised: boolean;
-  penalty_appeal: boolean;
-  maintenance_raised: boolean;
-  maintenance_updated: boolean;
-  tenant_paired: boolean;
 }
 
 const DEFAULT_PREFS: NotificationPrefs = {
   payment_due: true,
   payment_overdue: true,
-  lease_expiry: true,
-  penalty_raised: true,
-  penalty_appeal: true,
-  maintenance_raised: true,
-  maintenance_updated: true,
-  tenant_paired: true,
 };
 
 interface NotificationGroup {
@@ -56,9 +49,17 @@ export default function TenantNotificationSettingsPage() {
         .single();
 
       if (data?.notification_preferences) {
+        const stored = data.notification_preferences as Record<string, unknown>;
+        // Only pull the 2 known keys; ignore legacy fields.
         setPrefs({
-          ...DEFAULT_PREFS,
-          ...(data.notification_preferences as Partial<NotificationPrefs>),
+          payment_due:
+            typeof stored.payment_due === 'boolean'
+              ? stored.payment_due
+              : DEFAULT_PREFS.payment_due,
+          payment_overdue:
+            typeof stored.payment_overdue === 'boolean'
+              ? stored.payment_overdue
+              : DEFAULT_PREFS.payment_overdue,
         });
       }
       setLoading(false);
@@ -97,51 +98,6 @@ export default function TenantNotificationSettingsPage() {
           key: 'payment_overdue',
           label: t('notifications.payment_overdue'),
           description: t('notifications.payment_overdue_desc'),
-        },
-      ],
-    },
-    {
-      label: t('notifications.group_contracts'),
-      items: [
-        {
-          key: 'lease_expiry',
-          label: t('notifications.lease_expiry'),
-          description: t('notifications.lease_expiry_desc'),
-        },
-        {
-          key: 'tenant_paired',
-          label: t('notifications.tenant_paired'),
-          description: t('notifications.tenant_paired_desc'),
-        },
-      ],
-    },
-    {
-      label: t('notifications.group_penalties'),
-      items: [
-        {
-          key: 'penalty_raised',
-          label: t('notifications.penalty_raised'),
-          description: t('notifications.penalty_raised_desc'),
-        },
-        {
-          key: 'penalty_appeal',
-          label: t('notifications.penalty_appeal'),
-          description: t('notifications.penalty_appeal_desc'),
-        },
-      ],
-    },
-    {
-      label: t('notifications.group_maintenance'),
-      items: [
-        {
-          key: 'maintenance_raised',
-          label: t('notifications.maintenance_raised'),
-          description: t('notifications.maintenance_raised_desc'),
-        },
-        {
-          key: 'maintenance_updated',
-          label: t('notifications.maintenance_updated'),
-          description: t('notifications.maintenance_updated_desc'),
         },
       ],
     },

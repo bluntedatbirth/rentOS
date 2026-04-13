@@ -79,6 +79,10 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     return notFound('Contract not found');
   }
 
+  if (!contract.property_id) {
+    return unauthorized();
+  }
+
   const { data: property, error: propertyError } = await supabase
     .from('properties')
     .select('id, landlord_id')

@@ -57,22 +57,24 @@ export async function DELETE(_request: Request, { params }: { params: { id: stri
     return NextResponse.json({ error: 'Failed to delete contract' }, { status: 500 });
   }
 
-  // Check if the property has any remaining contracts
-  const { count } = await admin
-    .from('contracts')
-    .select('id', { count: 'exact', head: true })
-    .eq('property_id', contract.property_id);
+  // Check if the property has any remaining contracts (only for landlord-linked properties)
+  if (contract.property_id) {
+    const { count } = await admin
+      .from('contracts')
+      .select('id', { count: 'exact', head: true })
+      .eq('property_id', contract.property_id);
 
-  // If no contracts left and property is a placeholder, delete it too
-  if (count === 0) {
-    const { data: prop } = await admin
-      .from('properties')
-      .select('name')
-      .eq('id', contract.property_id)
-      .single();
+    // If no contracts left and property is a placeholder, delete it too
+    if (count === 0) {
+      const { data: prop } = await admin
+        .from('properties')
+        .select('name')
+        .eq('id', contract.property_id)
+        .single();
 
-    if (prop?.name === 'Detecting from contract...') {
-      await admin.from('properties').delete().eq('id', contract.property_id);
+      if (prop?.name === 'Detecting from contract...') {
+        await admin.from('properties').delete().eq('id', contract.property_id);
+      }
     }
   }
 

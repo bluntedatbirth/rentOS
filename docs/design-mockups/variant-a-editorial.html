@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>People First | Variant A - Minimal/Editorial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'on-tertiary': '#ffffff',
+              tertiary: '#5f5e5e',
+              'on-tertiary-fixed': '#1b1c1c',
+              'primary-fixed-dim': '#ffba44',
+              'inverse-surface': '#30312e',
+              'on-primary': '#ffffff',
+              'surface-container-highest': '#e4e2de',
+              primary: '#805600',
+              'tertiary-fixed': '#e4e2e1',
+              'surface-container-low': '#f5f3ee',
+              'on-error': '#ffffff',
+              'secondary-fixed-dim': '#add0aa',
+              'primary-container': '#f0a500',
+              'on-tertiary-fixed-variant': '#474747',
+              outline: '#847561',
+              'secondary-container': '#c8ecc5',
+              'primary-fixed': '#ffddaf',
+              'on-error-container': '#93000a',
+              'on-tertiary-container': '#464545',
+              'inverse-primary': '#ffba44',
+              secondary: '#476647',
+              error: '#ba1a1a',
+              'inverse-on-surface': '#f2f1ec',
+              'surface-container-high': '#eae8e3',
+              'on-primary-fixed-variant': '#614000',
+              'error-container': '#ffdad6',
+              'secondary-fixed': '#c8ecc5',
+              'on-primary-container': '#5f3f00',
+              'on-surface-variant': '#514533',
+              'on-background': '#1b1c19',
+              'on-secondary-fixed': '#032109',
+              'surface-bright': '#fbf9f4',
+              background: '#fbf9f4',
+              'on-secondary': '#ffffff',
+              'surface-container': '#efeee9',
+              'on-secondary-fixed-variant': '#2f4e31',
+              'surface-tint': '#805600',
+              'outline-variant': '#d6c4ac',
+              'surface-container-lowest': '#ffffff',
+              'tertiary-fixed-dim': '#c8c6c5',
+              'on-primary-fixed': '#281800',
+              'surface-variant': '#e4e2de',
+              'on-surface': '#1b1c19',
+              'on-secondary-container': '#4d6c4d',
+              'surface-dim': '#dbdad5',
+              surface: '#fbf9f4',
+              'tertiary-container': '#b5b3b3',
+            },
+            borderRadius: {
+              DEFAULT: '0.125rem',
+              lg: '0.25rem',
+              xl: '0.5rem',
+              full: '0.75rem',
+            },
+            fontFamily: {
+              headline: ['Manrope'],
+              body: ['Plus Jakarta Sans'],
+              label: ['Plus Jakarta Sans'],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          'FILL' 0,
+          'wght' 300,
+          'GRAD' 0,
+          'opsz' 24;
+      }
+      .editorial-gradient {
+        background: linear-gradient(45deg, #805600 0%, #f0a500 100%);
+      }
+      body {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #fbf9f4;
+        color: #1b1c19;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: 'Manrope', sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-surface text-on-surface">
+    <!-- Sticky Nav -->
+    <nav
+      class="sticky top-0 z-50 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/15"
+    >
+      <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <a href="#" class="font-headline text-xl font-bold text-primary">People First</a>
+        <ul
+          class="hidden md:flex gap-8 font-label text-sm tracking-widest uppercase text-on-surface-variant"
+        >
+          <li><a href="#" class="hover:text-primary transition-colors">Platform</a></li>
+          <li><a href="#" class="hover:text-primary transition-colors">Landlords</a></li>
+          <li><a href="#" class="hover:text-primary transition-colors">Tenants</a></li>
+          <li><a href="#" class="hover:text-primary transition-colors">Pricing</a></li>
+        </ul>
+        <div class="flex gap-3">
+          <a href="#" class="text-sm text-on-surface-variant hover:text-primary transition-colors"
+            >Sign In</a
+          >
+          <a
+            href="#"
+            class="editorial-gradient text-on-primary text-sm px-5 py-2 rounded font-medium"
+            >Get Started</a
+          >
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="max-w-7xl mx-auto px-6 pt-24 pb-16 grid md:grid-cols-2 gap-16 items-center">
+      <div class="space-y-8">
+        <h1
+          class="font-headline text-5xl md:text-6xl font-light leading-tight tracking-tight"
+          style="letter-spacing: -0.02em"
+        >
+          Property care,<br /><span class="font-bold text-primary">people first.</span>
+        </h1>
+        <p class="text-on-surface-variant text-lg leading-relaxed max-w-md">
+          A mobile-first sanctuary for landlords and tenants. We've traded rigid automation for
+          human-centric management.
+        </p>
+        <ul class="flex flex-wrap gap-3">
+          <li
+            class="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded text-sm text-on-surface-variant"
+          >
+            <span class="material-symbols-outlined text-primary text-base">check_circle</span>
+            Delayed Payments
+          </li>
+          <li
+            class="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded text-sm text-on-surface-variant"
+          >
+            <span class="material-symbols-outlined text-primary text-base">check_circle</span>
+            Complex Contracts
+          </li>
+          <li
+            class="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded text-sm text-on-surface-variant"
+          >
+            <span class="material-symbols-outlined text-primary text-base">check_circle</span>
+            Communication Gaps
+          </li>
+        </ul>
+      </div>
+      <div class="relative">
+        <img
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZSigPlCACcBTwJHyhOWlPfrxkpKHVOzn5tJLo6gKt38slFKrcOQI2YXM-jJD08hFjY2pay9BOsCLXDxh5V8jRj9eXAgoDl6NcO_L4mXqfMAtcrulU7CRqvgGSyjdFT-xohahEVk-mAult5N1BNhpPLaSYocjFcJwLTpuZU080gmEhxAsosuNtB5QKXU4pSyrLKZ3QwdjimKR5BNlKQn3ZY03Ao6YSaAYTuP47l7j8j1XSsx9F7_hR5e8epagT1vNpkOm5eA3bUQ"
+          alt="Satisfaction"
+          class="rounded-xl w-full"
+        />
+        <div
+          class="absolute bottom-6 left-6 bg-surface-container-lowest/90 backdrop-blur p-4 rounded-lg shadow-sm"
+        >
+          <p class="font-headline text-2xl font-bold text-primary">98%</p>
+          <p class="text-sm text-on-surface-variant">Satisfaction</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Audience Cards -->
+    <section class="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-8">
+      <div class="bg-surface-container-low p-10 rounded-xl space-y-6">
+        <p class="text-sm tracking-widest uppercase text-secondary font-label">For Owners</p>
+        <h3 class="font-headline text-2xl font-bold">Effortless wealth, Zero friction.</h3>
+        <p class="text-on-surface-variant leading-relaxed">
+          Automate the noise, keep the nuance. Manage portfolios from your pocket with intelligent
+          screening and instant payouts.
+        </p>
+        <ul class="space-y-3 text-sm text-on-surface-variant">
+          <li class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-secondary text-lg">verified_user</span>
+            Guaranteed rent protection
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-secondary text-lg">edit_document</span>
+            One-click digital leases
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-secondary text-lg">analytics</span>
+            Real-time ROI dashboard
+          </li>
+        </ul>
+        <a
+          href="#"
+          class="inline-flex items-center gap-2 text-primary font-medium text-sm hover:underline"
+          >Explore Landlord Tools
+          <span class="material-symbols-outlined text-base">arrow_forward</span></a
+        >
+      </div>
+      <div class="bg-surface-container-low p-10 rounded-xl space-y-6">
+        <p class="text-sm tracking-widest uppercase text-secondary font-label">For Residents</p>
+        <h3 class="font-headline text-2xl font-bold">A home that feels like one.</h3>
+        <p class="text-on-surface-variant leading-relaxed">
+          Transparent communication and responsive maintenance. Your residency history, finally in
+          your control.
+        </p>
+        <ul class="space-y-3 text-sm text-on-surface-variant">
+          <li class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-secondary text-lg">bolt</span> 24/7 Rapid
+            Response support
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-secondary text-lg">payments</span> Flexible
+            payment schedules
+          </li>
+          <li class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-secondary text-lg">stars</span> Resident
+            loyalty rewards
+          </li>
+        </ul>
+        <a
+          href="#"
+          class="inline-flex items-center gap-2 text-primary font-medium text-sm hover:underline"
+          >View Tenant Features
+          <span class="material-symbols-outlined text-base">arrow_forward</span></a
+        >
+      </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section class="max-w-7xl mx-auto px-6 py-16">
+      <div class="text-center mb-12">
+        <h2 class="font-headline text-3xl font-bold">Intuitive by nature.</h2>
+        <p class="text-on-surface-variant mt-3">
+          Every feature is designed to eliminate a friction point, not to add more complexity.
+        </p>
+      </div>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="bg-surface-container-low p-8 rounded-xl space-y-3">
+          <span class="material-symbols-outlined text-primary text-3xl"
+            >account_balance_wallet</span
+          >
+          <h4 class="font-headline font-bold">Instant Payouts</h4>
+          <p class="text-sm text-on-surface-variant leading-relaxed">
+            No more waiting. Rent hits your account the moment the tenant pays.
+          </p>
+        </div>
+        <div class="bg-surface-container-low p-8 rounded-xl space-y-3">
+          <span class="material-symbols-outlined text-primary text-3xl">shield_person</span>
+          <h4 class="font-headline font-bold">Smart Screening</h4>
+          <p class="text-sm text-on-surface-variant leading-relaxed">
+            Identity and financial verification that respects privacy and ensures trust.
+          </p>
+        </div>
+        <div class="bg-surface-container-low p-8 rounded-xl space-y-3">
+          <span class="material-symbols-outlined text-primary text-3xl">handyman</span>
+          <h4 class="font-headline font-bold">Priority Repair</h4>
+          <p class="text-sm text-on-surface-variant leading-relaxed">
+            Direct vendor communication and status tracking for every ticket.
+          </p>
+        </div>
+        <div class="bg-surface-container-low p-8 rounded-xl space-y-3">
+          <span class="material-symbols-outlined text-primary text-3xl">contract</span>
+          <h4 class="font-headline font-bold">Smart Contracts</h4>
+          <p class="text-sm text-on-surface-variant leading-relaxed">
+            Legally binding, human-readable agreements signed on any device.
+          </p>
+        </div>
+        <div class="bg-surface-container-low p-8 rounded-xl space-y-3">
+          <span class="material-symbols-outlined text-primary text-3xl">forum</span>
+          <h4 class="font-headline font-bold">Unified Chat</h4>
+          <p class="text-sm text-on-surface-variant leading-relaxed">
+            Centralized threads for landlords and tenants. No more lost emails.
+          </p>
+        </div>
+        <div class="bg-surface-container-low p-8 rounded-xl space-y-3">
+          <span class="material-symbols-outlined text-primary text-3xl">insights</span>
+          <h4 class="font-headline font-bold">Portfolio Insights</h4>
+          <p class="text-sm text-on-surface-variant leading-relaxed">
+            Beautifully visualized data on vacancy rates, costs, and tax readiness.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="bg-surface-container-low py-16">
+      <div class="max-w-7xl mx-auto px-6">
+        <h2 class="font-headline text-3xl font-bold text-center mb-12">
+          Stories from the community.
+        </h2>
+        <div class="grid md:grid-cols-3 gap-8">
+          <blockquote class="bg-surface-container-lowest p-8 rounded-xl space-y-4">
+            <div class="w-0.5 h-8 bg-primary-container"></div>
+            <p class="text-on-surface leading-relaxed italic">
+              "People First changed how I manage my properties. It's no longer a second job, it's
+              just a notification on my phone."
+            </p>
+            <footer>
+              <strong class="block text-sm">Julianne Vora</strong>
+              <span class="text-xs text-on-surface-variant">Landlord since 2018</span>
+            </footer>
+          </blockquote>
+          <blockquote class="bg-surface-container-lowest p-8 rounded-xl space-y-4">
+            <div class="w-0.5 h-8 bg-primary-container"></div>
+            <p class="text-on-surface leading-relaxed italic">
+              "The transparency is what did it for me. I know exactly where my deposit is and when
+              my rent is due."
+            </p>
+            <footer>
+              <strong class="block text-sm">Marcus Thorne</strong>
+              <span class="text-xs text-on-surface-variant">Resident, SkyView Lofts</span>
+            </footer>
+          </blockquote>
+          <blockquote class="bg-surface-container-lowest p-8 rounded-xl space-y-4">
+            <div class="w-0.5 h-8 bg-primary-container"></div>
+            <p class="text-on-surface leading-relaxed italic">
+              "A platform that actually cares about both sides. The maintenance response time is
+              incredible."
+            </p>
+            <footer>
+              <strong class="block text-sm">Sarah Chen</strong>
+              <span class="text-xs text-on-surface-variant">Property Manager</span>
+            </footer>
+          </blockquote>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section class="max-w-7xl mx-auto px-6 py-16">
+      <h2 class="font-headline text-3xl font-bold text-center mb-12">Pricing</h2>
+      <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+        <div class="bg-surface-container-low p-10 rounded-xl space-y-6">
+          <h3 class="font-headline text-xl font-bold">Community</h3>
+          <p class="text-sm text-on-surface-variant">Perfect for single-property owners.</p>
+          <p class="font-headline text-4xl font-bold">
+            &#3647;0 <span class="text-base font-normal text-on-surface-variant">/mo</span>
+          </p>
+          <ul class="space-y-3 text-sm">
+            <li class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-base">check</span> Manage 1
+              Property
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-base">check</span> Digital
+              Leasing
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-base">check</span>
+              Automated Rent Collection
+            </li>
+            <li class="flex items-center gap-2 text-on-surface-variant/50">
+              <span class="material-symbols-outlined text-base">close</span> Portfolio Analytics
+            </li>
+          </ul>
+          <a
+            href="#"
+            class="block text-center border border-outline-variant/30 py-3 rounded text-sm font-medium hover:bg-surface-container transition-colors"
+            >Start Free</a
+          >
+        </div>
+        <div
+          class="bg-surface-container-lowest p-10 rounded-xl space-y-6 ring-2 ring-primary-container relative"
+        >
+          <span
+            class="absolute -top-3 left-6 bg-primary-container text-on-primary-container text-xs font-bold px-3 py-1 rounded"
+            >Popular</span
+          >
+          <h3 class="font-headline text-xl font-bold">Professional</h3>
+          <p class="text-sm text-on-surface-variant">For growing portfolios and pros.</p>
+          <p class="font-headline text-4xl font-bold">
+            &#3647;199 <span class="text-base font-normal text-on-surface-variant">/mo</span>
+          </p>
+          <ul class="space-y-3 text-sm">
+            <li class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-base">check</span>
+              Unlimited Properties
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-base">check</span> Smart
+              Screening Reports
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-base">check</span> Advanced
+              Portfolio Insights
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-base">check</span>
+              Multi-user Access
+            </li>
+          </ul>
+          <a
+            href="#"
+            class="block text-center editorial-gradient text-on-primary py-3 rounded text-sm font-medium"
+            >Get Professional</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="max-w-3xl mx-auto px-6 py-16">
+      <h2 class="font-headline text-3xl font-bold text-center mb-12">Frequently Asked</h2>
+      <div class="space-y-4">
+        <details class="bg-surface-container-low p-6 rounded-xl group" open>
+          <summary
+            class="font-headline font-medium cursor-pointer list-none flex justify-between items-center"
+          >
+            How secure is my data?
+            <span class="material-symbols-outlined transition-transform group-open:rotate-180"
+              >expand_more</span
+            >
+          </summary>
+          <p class="mt-4 text-sm text-on-surface-variant leading-relaxed">
+            We use bank-level 256-bit encryption for all data storage. Your financial details and
+            personal documentation are stored in siloed environments that meet international
+            compliance standards.
+          </p>
+        </details>
+        <details class="bg-surface-container-low p-6 rounded-xl group">
+          <summary
+            class="font-headline font-medium cursor-pointer list-none flex justify-between items-center"
+          >
+            Can I manage multiple properties?
+            <span class="material-symbols-outlined transition-transform group-open:rotate-180"
+              >expand_more</span
+            >
+          </summary>
+          <p class="mt-4 text-sm text-on-surface-variant leading-relaxed">
+            Yes. Our Professional plan allows for an unlimited number of units, properties, and
+            portfolios with specific sub-accounts for different management teams.
+          </p>
+        </details>
+        <details class="bg-surface-container-low p-6 rounded-xl group">
+          <summary
+            class="font-headline font-medium cursor-pointer list-none flex justify-between items-center"
+          >
+            Is there a contract or commitment?
+            <span class="material-symbols-outlined transition-transform group-open:rotate-180"
+              >expand_more</span
+            >
+          </summary>
+          <p class="mt-4 text-sm text-on-surface-variant leading-relaxed">
+            People First operates on a monthly subscription basis. You can cancel, upgrade, or
+            downgrade at any time without hidden fees.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <!-- CTA Band -->
+    <section class="bg-surface-container-low py-16">
+      <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+        <img
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuDD0IkvGOr2Z1_uiacXLjDj21OCzHrYB5X25SX_QN06y7un0sIxQlb_v0cF6ZQ49zdpD9DsXFrfXGEr0J2YUZ3rZZLxIKccKUaQ90tqER6KpU79LaQPXW1lW-85Jx1VXfn9MvNC87I93FIT1ZfzZDzLlVTa5doPuk4iG66WRq_xkgP4_2Itj9ocwq_lnjT435YTtI-FN4oqCYt2B87139zydth_fqHDZeVh5XHQ-ZZaxmsCKOleWU4poxpeyiwyIdldFV1cfch3iA"
+          alt="CTA"
+          class="rounded-xl"
+        />
+        <div class="space-y-6">
+          <h2 class="font-headline text-3xl font-bold">Ready to put people first?</h2>
+          <p class="text-on-surface-variant leading-relaxed">
+            Join over 5,000+ landlords and residents building better rental relationships.
+          </p>
+          <div class="flex gap-4">
+            <a
+              href="#"
+              class="editorial-gradient text-on-primary px-6 py-3 rounded text-sm font-medium"
+              >Start for Free</a
+            >
+            <a
+              href="#"
+              class="border border-outline-variant/30 px-6 py-3 rounded text-sm font-medium hover:bg-surface-container transition-colors"
+              >Book a Demo</a
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer
+      class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-4"
+    >
+      <div>
+        <a href="#" class="font-headline text-lg font-bold text-primary">People First</a>
+        <p class="text-xs text-on-surface-variant mt-1">
+          &copy; 2024 People First. Editorial Humanism in Property Management.
+        </p>
+      </div>
+      <ul class="flex gap-6 text-xs text-on-surface-variant">
+        <li><a href="#" class="hover:text-primary">Privacy Policy</a></li>
+        <li><a href="#" class="hover:text-primary">Terms of Service</a></li>
+        <li><a href="#" class="hover:text-primary">Contact Us</a></li>
+        <li><a href="#" class="hover:text-primary">Press Kit</a></li>
+      </ul>
+    </footer>
+  </body>
+</html>

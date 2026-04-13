@@ -3,6 +3,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { sendNotification } from '@/lib/notifications/send';
 import { unauthorized } from '@/lib/apiErrors';
 import { activateContract } from '@/lib/contracts/activate';
+import { endTenancy } from '@/lib/properties/endTenancy';
 
 /**
  * GET /api/cron/daily
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
   const threeDaysFromNow = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split('T')[0]!;
-  const thirtyDaysFromNow = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  const sixtyDaysFromNow = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split('T')[0]!;
 
@@ -40,6 +41,7 @@ export async function GET(request: Request) {
     customRuleNotifications: 0,
     scheduledContractsActivated: 0,
     paymentsSeeded: 0,
+    leaseEndTransitions: 0,
     errors: [] as string[],
   };
 
@@ -91,6 +93,7 @@ export async function GET(request: Request) {
         bodyEn: `Payment of ${payment.amount} THB is due on ${payment.due_date}.`,
         bodyTh: `ยอดชำระ ${payment.amount} บาท ครบกำหนดวันที่ ${payment.due_date}`,
         url: '/tenant/payments',
+        payload: { target_route: 'payments.list' },
       });
       summary.paymentDueReminders++;
     }
@@ -135,6 +138,7 @@ export async function GET(request: Request) {
         bodyEn: `Payment of ${payment.amount} THB was due on ${payment.due_date} and is now overdue.`,
         bodyTh: `ยอดชำระ ${payment.amount} บาท ครบกำหนดวันที่ ${payment.due_date} เลยกำหนดชำระแล้ว`,
         url: '/tenant/payments',
+        payload: { target_route: 'payments.list' },
       });
       summary.overdueUpdates++;
     }
@@ -145,7 +149,85 @@ export async function GET(request: Request) {
   }
 
   // ----------------------------------------------------------------
-  // 3. Lease expiry warnings: active contracts ending within 30 days
+  // 2b. Payment penalty notifications: overdue payments past grace period
+  //     Fires to the LANDLORD (not the tenant).
+  //     Tenant continues to receive 'payment_overdue' from block 2 above.
+  //
+  // TODO: penalty_grace_days configurability — follow-up sprint.
+  //       Currently hardcoded to 7 days (INTERVAL '7 days' equivalent).
+  // ----------------------------------------------------------------
+  let penaltyNotifications = 0;
+  try {
+    const graceDays = 7; // hardcoded; see TODO above
+    const graceCutoff = new Date(Date.now() - graceDays * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0]!;
+
+    // Fetch overdue payments where due_date + 7 days < now AND penalty_notified_at IS NULL.
+    // DD's migration adds penalty_notified_at; this column is expected to exist.
+    const { data: penaltyPayments, error: penaltyError } = await supabase
+      .from('payments')
+      .select(
+        'id, amount, due_date, contract_id, contracts!inner(landlord_id, tenant_id, properties(name))'
+      )
+      .eq('status', 'overdue')
+      .lt('due_date', graceCutoff)
+      .is('penalty_notified_at', null);
+
+    if (penaltyError) throw penaltyError;
+
+    for (const payment of penaltyPayments ?? []) {
+      const contract = payment.contracts as unknown as {
+        landlord_id: string | null;
+        tenant_id: string | null;
+        properties: { name: string } | null;
+      };
+
+      if (!contract?.landlord_id) continue;
+
+      const propertyName = contract.properties?.name ?? 'your property';
+
+      // Fetch tenant name for the notification body
+      let tenantName = 'Tenant';
+      if (contract.tenant_id) {
+        const { data: tenantProfile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', contract.tenant_id)
+          .single();
+        if (tenantProfile?.full_name) tenantName = tenantProfile.full_name;
+      }
+
+      await sendNotification({
+        recipientId: contract.landlord_id,
+        // DB CHECK constraint accepts 'penalty_raised', not 'payment_penalty'.
+        // Previously fired 'payment_penalty' and all inserts silently failed.
+        type: 'penalty_raised',
+        titleEn: 'Rent payment overdue (penalty)',
+        titleTh: 'ค่าเช่าเกินกำหนด (ปรับ)',
+        bodyEn: `${tenantName}'s rent for ${propertyName} is past the grace period.`,
+        bodyTh: `ค่าเช่าของ ${tenantName} สำหรับ ${propertyName} เกินระยะเวลาผ่อนผัน`,
+        url: '/landlord/payments',
+        payload: { target_route: 'payments.list' },
+      });
+
+      // Mark as notified so cron is idempotent
+      await supabase
+        .from('payments')
+        .update({ penalty_notified_at: new Date().toISOString() } as Record<string, unknown>)
+        .eq('id', payment.id);
+
+      penaltyNotifications++;
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    summary.errors.push(`payment_penalty: ${msg}`);
+    console.error('[Cron] Payment penalty notification error:', msg);
+  }
+
+  // ----------------------------------------------------------------
+  // 3. Lease expiry warnings: active contracts ending within 60 days
+  // lease_expiry: 60-day warning window (sprint: Landlord Shell Cleanup)
   // ----------------------------------------------------------------
   try {
     const { data: expiringContracts, error } = await supabase
@@ -153,7 +235,7 @@ export async function GET(request: Request) {
       .select('id, tenant_id, landlord_id, lease_end')
       .eq('status', 'active')
       .gte('lease_end', today)
-      .lte('lease_end', thirtyDaysFromNow);
+      .lte('lease_end', sixtyDaysFromNow);
 
     if (error) throw error;
 
@@ -172,6 +254,7 @@ export async function GET(request: Request) {
           bodyEn: `Your lease expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`,
           bodyTh: `สัญญาเช่าของคุณจะหมดอายุในอีก ${daysLeft} วัน`,
           url: '/tenant/contract/view',
+          payload: { target_route: 'contract.view', fallback_route: 'dashboard' },
         });
       }
 
@@ -185,6 +268,7 @@ export async function GET(request: Request) {
           bodyEn: `A tenant lease expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`,
           bodyTh: `สัญญาเช่าผู้เช่าจะหมดอายุในอีก ${daysLeft} วัน`,
           url: '/landlord/contracts',
+          payload: { target_route: 'contract.list' },
         });
       }
 
@@ -257,6 +341,7 @@ export async function GET(request: Request) {
               bodyEn: body,
               bodyTh: body,
               url: '/tenant/payments',
+              payload: { target_route: 'payments.list' },
             });
             summary.customRuleNotifications++;
           }
@@ -298,6 +383,7 @@ export async function GET(request: Request) {
               bodyEn: body,
               bodyTh: body,
               url: '/tenant/payments',
+              payload: { target_route: 'payments.list' },
             });
             summary.customRuleNotifications++;
           }
@@ -333,6 +419,7 @@ export async function GET(request: Request) {
               bodyEn: body,
               bodyTh: body,
               url: '/tenant/contracts',
+              payload: { target_route: 'contract.view', fallback_route: 'dashboard' },
             });
             summary.customRuleNotifications++;
           }
@@ -435,130 +522,47 @@ export async function GET(request: Request) {
   }
 
   // ----------------------------------------------------------------
-  // 6. Pro tier expiry warnings
+  // 6. Auto lease-end transitions: properties past lease_end with an active tenant
+  //    Fires the morning AFTER the lease ends (lease_end < today, strictly less).
+  //    Guard: current_tenant_id IS NOT NULL ensures idempotency.
   // ----------------------------------------------------------------
-  let tierExpiryWarnings = 0;
   try {
-    const now = new Date();
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-    const { data: expiringProfiles, error: expiryError } = await supabase
-      .from('profiles')
-      .select('id, tier_expires_at')
-      .eq('tier', 'pro')
-      .gte('tier_expires_at', now.toISOString())
-      .lte('tier_expires_at', sevenDaysFromNow);
-
-    if (expiryError) throw expiryError;
-
-    for (const p of expiringProfiles ?? []) {
-      if (!p.tier_expires_at) continue;
-      const expiry = new Date(p.tier_expires_at);
-      const daysLeft = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-      // Only notify at 7-day and 3-day marks
-      if (daysLeft !== 7 && daysLeft !== 3) continue;
-
-      await sendNotification({
-        recipientId: p.id,
-        type: 'tier_expiry_warning',
-        titleEn: 'Pro Plan Expiring',
-        titleTh: 'แพลน Pro กำลังจะหมดอายุ',
-        bodyEn: `Your Pro plan expires in ${daysLeft} days. Renew to keep your features.`,
-        bodyTh: `แพลน Pro ของคุณจะหมดอายุในอีก ${daysLeft} วัน กรุณาต่ออายุเพื่อใช้งานฟีเจอร์ต่อ`,
-        url: '/landlord/billing',
-      });
-      tierExpiryWarnings++;
+    interface ExpiredPropertyRow {
+      id: string;
+      name: string;
     }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    summary.errors.push(`tier_expiry_warnings: ${msg}`);
-    console.error('[Cron] Tier expiry warning error:', msg);
-  }
-
-  // ----------------------------------------------------------------
-  // 7. Pro tier expired — downgrade after grace period
-  // ----------------------------------------------------------------
-  let tierDowngrades = 0;
-  try {
-    const now = new Date();
-    const gracePeriodCutoff = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString();
-
-    const { data: expiredProfiles, error: expiredError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('tier', 'pro')
-      .lt('tier_expires_at', gracePeriodCutoff);
+    const { data: expiredProperties, error: expiredError } = (await supabase
+      .from('properties' as never)
+      .select('id, name')
+      .lt('lease_end', today)
+      .not('current_tenant_id', 'is', null)
+      .eq('is_active', true)
+      .eq('is_shell', false)) as unknown as {
+      data: ExpiredPropertyRow[] | null;
+      error: Error | null;
+    };
 
     if (expiredError) throw expiredError;
 
-    for (const p of expiredProfiles ?? []) {
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          tier: 'free',
-          billing_cycle: 'monthly',
-          tier_expires_at: null,
-          omise_schedule_id: null,
-        })
-        .eq('id', p.id);
-
-      if (updateError) {
-        summary.errors.push(`tier_downgrade ${p.id}: ${updateError.message}`);
-        continue;
+    for (const property of expiredProperties ?? []) {
+      try {
+        const result = await endTenancy(supabase, property.id);
+        if (result.success) {
+          summary.leaseEndTransitions++;
+          console.log(
+            `[Cron] Lease-end auto-transition: property ${property.id} (${property.name}) — former tenant ${result.formerTenantId ?? 'n/a'}`
+          );
+        }
+      } catch (propErr) {
+        const msg = propErr instanceof Error ? propErr.message : String(propErr);
+        summary.errors.push(`lease_end_transition ${property.id}: ${msg}`);
+        console.error(`[Cron] Lease-end transition failed for property ${property.id}:`, msg);
       }
-
-      await sendNotification({
-        recipientId: p.id,
-        type: 'tier_downgraded',
-        titleEn: 'Pro Plan Expired',
-        titleTh: 'แพลน Pro หมดอายุแล้ว',
-        bodyEn: 'Your Pro plan has expired and been downgraded to Free.',
-        bodyTh: 'แพลน Pro ของคุณหมดอายุแล้วและถูกปรับลดเป็นแพลนฟรี',
-        url: '/landlord/billing/upgrade',
-      });
-      tierDowngrades++;
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    summary.errors.push(`tier_downgrades: ${msg}`);
-    console.error('[Cron] Tier downgrade error:', msg);
-  }
-
-  // ── 7. Daily signing reminders for awaiting_signature contracts ────────────
-  let signingReminders = 0;
-  try {
-    const { data: awaitingContracts } = await supabase
-      .from('contracts')
-      .select('id, landlord_id, tenant_id, properties(name)')
-      .eq('status', 'awaiting_signature');
-
-    for (const c of awaitingContracts ?? []) {
-      const contract = c as unknown as {
-        id: string;
-        landlord_id: string;
-        tenant_id: string | null;
-        properties: { name: string } | null;
-      };
-      if (!contract.landlord_id) continue;
-
-      const propertyName = contract.properties?.name ?? 'your property';
-
-      await sendNotification({
-        recipientId: contract.landlord_id,
-        type: 'renewal_signing_reminder',
-        titleEn: 'Renewal Awaiting Signature',
-        titleTh: 'สัญญาต่อรอลงนาม',
-        bodyEn: `The tenant for ${propertyName} has accepted the renewal. Please sign the physical contract.`,
-        bodyTh: `ผู้เช่า ${propertyName} ยอมรับการต่อสัญญาแล้ว กรุณานัดลงนามสัญญา`,
-        url: `/contracts/${contract.id}`,
-      });
-      signingReminders++;
-    }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    summary.errors.push(`signing_reminders: ${msg}`);
-    console.error('[Cron] Signing reminder error:', msg);
+    summary.errors.push(`lease_end_transitions: ${msg}`);
+    console.error('[Cron] Lease-end transitions error:', msg);
   }
 
   // ----------------------------------------------------------------
@@ -634,9 +638,7 @@ export async function GET(request: Request) {
   const fullSummary = {
     ...summary,
     autoPenaltiesApplied,
-    tierExpiryWarnings,
-    tierDowngrades,
-    signingReminders,
+    penaltyNotifications,
     spendAlertUsd,
   };
 

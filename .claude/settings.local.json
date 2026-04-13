@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude mcp:*)",
+      "mcp__stitch__list_projects",
+      "mcp__stitch__get_screen",
+      "WebFetch(domain:contribution.usercontent.google.com)",
+      "Bash(npm install:*)",
+      "mcp__21st-dev-magic__21st_magic_component_inspiration",
+      "Bash(npx next:*)",
+      "Bash(npm run:*)",
+      "Bash(node -e ':*)",
+      "mcp__21st-dev-magic__21st_magic_component_builder",
+      "Bash(python3 .claude/skills/ui-ux-pro-max/scripts/search.py \"rental management SaaS Thai landlord tenant editorial minimal\" --design-system -p \"RentOS\")",
+      "Bash(py --version)",
+      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"rental management SaaS Thai landlord tenant editorial minimal\" --design-system -p \"RentOS\")",
+      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"accessibility contrast animation\" --domain ux -n 10)",
+      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"editorial landing hero CTA social-proof\" --domain landing -n 5)",
+      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"layout responsive form CTA\" --stack nextjs -n 8)"
+    ]
+  }
+}

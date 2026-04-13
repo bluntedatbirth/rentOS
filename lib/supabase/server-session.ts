@@ -7,7 +7,7 @@ type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 // Only the columns the UI actually needs — avoids select('*') on every request.
 export type SessionProfile = Pick<
   ProfileRow,
-  'id' | 'role' | 'full_name' | 'phone' | 'tier' | 'created_at'
+  'id' | 'role' | 'active_mode' | 'full_name' | 'phone' | 'tier' | 'created_at'
 >;
 
 export interface ServerSession {
@@ -37,7 +37,7 @@ export async function getServerSession(): Promise<ServerSession> {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('id, role, full_name, phone, tier, created_at')
+      .select('id, role, active_mode, full_name, phone, tier, created_at')
       .eq('id', user.id)
       .single();
 

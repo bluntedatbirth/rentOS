@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -9,30 +9,51 @@ const QRCodeSVG = dynamic(() => import('qrcode.react').then((mod) => mod.QRCodeS
 });
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
+import { createClient } from '@/lib/supabase/client';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+
+const supabase = createClient();
 
 export default function PairTenantPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { t } = useI18n();
+  const [propertyId, setPropertyId] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Fetch contract to get property_id
+  useEffect(() => {
+    if (!user || !id) return;
+    void supabase
+      .from('contracts')
+      .select('property_id')
+      .eq('id', id)
+      .single()
+      .then(({ data }) => {
+        if (data) setPropertyId(data.property_id as string);
+      });
+  }, [user, id]);
+
   const generateCode = async () => {
+    if (!propertyId) {
+      setError('Property not found for this contract');
+      return;
+    }
     setLoading(true);
     setError('');
     try {
       const res = await fetch('/api/pairing/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contract_id: id }),
+        body: JSON.stringify({ propertyId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to generate code');
       setCode(data.code);
-      setExpiresAt(data.expires_at);
+      setExpiresAt(data.expires_at ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed');
     }

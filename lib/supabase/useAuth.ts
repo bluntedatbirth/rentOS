@@ -7,7 +7,15 @@ import type { Database } from './types';
 
 type Profile = Pick<
   Database['public']['Tables']['profiles']['Row'],
-  'id' | 'role' | 'full_name' | 'phone' | 'tier' | 'language' | 'created_at' | 'purchased_slots'
+  | 'id'
+  | 'role'
+  | 'active_mode'
+  | 'full_name'
+  | 'phone'
+  | 'tier'
+  | 'language'
+  | 'created_at'
+  | 'purchased_slots'
 >;
 
 interface AuthState {
@@ -34,11 +42,35 @@ export function useAuth() {
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('id, role, full_name, phone, tier, language, created_at, purchased_slots')
+          .select(
+            'id, role, active_mode, full_name, phone, tier, language, created_at, purchased_slots'
+          )
           .eq('id', session.user.id)
           .single();
 
-        setState({ user: session.user, profile, loading: false });
+        // Mode-switch cache-bust: if a mode switch just happened, verify the
+        // profile reflects the expected mode. If not, refetch once after a
+        // short delay to let the DB write propagate.
+        if (typeof window !== 'undefined') {
+          const expectedMode = sessionStorage.getItem('rentos_mode_switch');
+          if (expectedMode && profile && profile.active_mode !== expectedMode) {
+            await new Promise((r) => setTimeout(r, 150));
+            const { data: freshProfile } = await supabase
+              .from('profiles')
+              .select(
+                'id, role, active_mode, full_name, phone, tier, language, created_at, purchased_slots'
+              )
+              .eq('id', session.user.id)
+              .single();
+            sessionStorage.removeItem('rentos_mode_switch');
+            setState({ user: session.user, profile: freshProfile, loading: false });
+          } else {
+            if (expectedMode) sessionStorage.removeItem('rentos_mode_switch');
+            setState({ user: session.user, profile, loading: false });
+          }
+        } else {
+          setState({ user: session.user, profile, loading: false });
+        }
       } else {
         setState({ user: null, profile: null, loading: false });
       }
@@ -52,11 +84,35 @@ export function useAuth() {
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('id, role, full_name, phone, tier, language, created_at, purchased_slots')
+          .select(
+            'id, role, active_mode, full_name, phone, tier, language, created_at, purchased_slots'
+          )
           .eq('id', session.user.id)
           .single();
 
-        setState({ user: session.user, profile, loading: false });
+        // Mode-switch cache-bust: if a mode switch just happened, verify the
+        // profile reflects the expected mode. If not, refetch once after a
+        // short delay to let the DB write propagate.
+        if (typeof window !== 'undefined') {
+          const expectedMode = sessionStorage.getItem('rentos_mode_switch');
+          if (expectedMode && profile && profile.active_mode !== expectedMode) {
+            await new Promise((r) => setTimeout(r, 150));
+            const { data: freshProfile } = await supabase
+              .from('profiles')
+              .select(
+                'id, role, active_mode, full_name, phone, tier, language, created_at, purchased_slots'
+              )
+              .eq('id', session.user.id)
+              .single();
+            sessionStorage.removeItem('rentos_mode_switch');
+            setState({ user: session.user, profile: freshProfile, loading: false });
+          } else {
+            if (expectedMode) sessionStorage.removeItem('rentos_mode_switch');
+            setState({ user: session.user, profile, loading: false });
+          }
+        } else {
+          setState({ user: session.user, profile, loading: false });
+        }
       } else {
         setState({ user: null, profile: null, loading: false });
       }

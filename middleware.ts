@@ -7,12 +7,18 @@ import type { NextRequest } from 'next/server';
 // a logged-in user's profile (most likely due to RLS policy missing on the live DB).
 // Adds one extra DB round-trip ONLY in the failure case — no perf regression for
 // the happy path.
-async function getProfileViaServiceRole(userId: string): Promise<{ role: string } | null> {
+async function getProfileViaServiceRole(
+  userId: string
+): Promise<{ role: string; active_mode: string } | null> {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!serviceKey || !supabaseUrl) return null;
   const admin = createClient(supabaseUrl, serviceKey);
-  const { data } = await admin.from('profiles').select('role').eq('id', userId).single();
+  const { data } = await admin
+    .from('profiles')
+    .select('role, active_mode')
+    .eq('id', userId)
+    .single();
   return data ?? null;
 }
 
@@ -74,7 +80,7 @@ export async function middleware(request: NextRequest) {
     if (user) {
       let { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, active_mode')
         .eq('id', user.id)
         .single();
 
@@ -90,7 +96,9 @@ export async function middleware(request: NextRequest) {
 
       if (profile) {
         const dashboardUrl =
-          profile.role === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
+          (profile.active_mode ?? profile.role) === 'landlord'
+            ? '/landlord/dashboard'
+            : '/tenant/dashboard';
         if (process.env.NODE_ENV === 'development') {
           console.log('[middleware]', {
             pathname,
@@ -157,7 +165,11 @@ export async function middleware(request: NextRequest) {
   }
 
   // Role-based routing
-  let { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  let { data: profile } = await supabase
+    .from('profiles')
+    .select('role, active_mode')
+    .eq('id', user.id)
+    .single();
 
   const profileViaSession = profile?.role ?? null;
 
@@ -188,7 +200,7 @@ export async function middleware(request: NextRequest) {
 
   // Block wrong-role access
   // Landlord-only routes: /landlord/*, including /landlord/dashboard, /landlord/billing/*, /landlord/onboarding
-  if (pathname.startsWith('/landlord') && profile.role !== 'landlord') {
+  if (pathname.startsWith('/landlord') && (profile.active_mode ?? profile.role) !== 'landlord') {
     if (process.env.NODE_ENV === 'development') {
       console.log('[middleware]', {
         pathname,
@@ -201,7 +213,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/tenant/dashboard', request.url));
   }
   // Tenant-only routes: /tenant/*, including /tenant/dashboard, /tenant/onboarding
-  if (pathname.startsWith('/tenant') && profile.role !== 'tenant') {
+  if (pathname.startsWith('/tenant') && (profile.active_mode ?? profile.role) !== 'tenant') {
     if (process.env.NODE_ENV === 'development') {
       console.log('[middleware]', {
         pathname,

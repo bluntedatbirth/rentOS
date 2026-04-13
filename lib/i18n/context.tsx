@@ -13,7 +13,7 @@ import {
 import { formatPhone as _formatPhone } from '@/lib/format/phone';
 
 export type Locale = 'th' | 'en' | 'zh';
-type LocaleStrings = Record<string, string>;
+type LocaleStrings = Record<string, string>; // force HMR reload
 
 const locales: Record<Locale, LocaleStrings> = {
   th: thLocale,

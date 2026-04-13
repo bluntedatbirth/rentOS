@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>rentOS — Three Things scope cut mockups</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['DM Sans', 'system-ui', 'sans-serif'],
+            },
+            colors: {
+              warm: {
+                50: '#fefcf7',
+                100: '#fdf7ec',
+                200: '#faf0d7',
+                300: '#f5e6bc',
+                400: '#eed89a',
+                500: '#e4c570',
+                600: '#d4a84b',
+                700: '#b8893a',
+                800: '#8f6828',
+                900: '#5c4118',
+              },
+              charcoal: {
+                50: '#f5f5f5',
+                100: '#e8e8e8',
+                200: '#d1d1d1',
+                300: '#b4b4b4',
+                400: '#8f8f8f',
+                500: '#6b6b6b',
+                600: '#4e4e4e',
+                700: '#3d3d3d',
+                800: '#2c2c2c',
+                900: '#1a1a1a',
+              },
+              saffron: {
+                50: '#fffbeb',
+                100: '#fff3c4',
+                200: '#ffe480',
+                300: '#ffd03d',
+                400: '#f8bc0f',
+                500: '#f0a500',
+                600: '#d48800',
+                700: '#a96700',
+                800: '#7a4a00',
+                900: '#4d2e00',
+              },
+              sage: {
+                50: '#f2f7f2',
+                100: '#e0eee0',
+                200: '#bfdbbf',
+                300: '#95c195',
+                400: '#6f9e6f',
+                500: '#5a7a5a',
+                600: '#47654a',
+                700: '#374f3a',
+                800: '#283829',
+                900: '#182119',
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <script>
+      // Hash-based filter: when URL has #only=foo, hide all mockup sections except that one
+      // Also hides the header so screenshots are clean.
+      function applyOnlyFilter() {
+        const m = location.hash.match(/^#only=(.+)$/);
+        const header = document.querySelector('header');
+        const sections = document.querySelectorAll('main > section');
+        if (m) {
+          if (header) header.style.display = 'none';
+          sections.forEach((s) => {
+            s.style.display = s.id === m[1] ? '' : 'none';
+          });
+          document.querySelector('main').style.paddingTop = '1rem';
+        } else {
+          if (header) header.style.display = '';
+          sections.forEach((s) => (s.style.display = ''));
+        }
+      }
+      window.addEventListener('DOMContentLoaded', applyOnlyFilter);
+      window.addEventListener('hashchange', applyOnlyFilter);
+    </script>
+    <style>
+      html,
+      body {
+        font-family: 'DM Sans', system-ui, sans-serif;
+        background: #e8e8e8;
+      }
+      .mockup-label {
+        font-family: 'DM Sans', system-ui, sans-serif;
+        font-size: 13px;
+        color: #4e4e4e;
+        background: #ffffff;
+        border: 1px solid #d1d1d1;
+        border-radius: 999px;
+        padding: 6px 14px;
+        display: inline-block;
+      }
+      .mockup-frame {
+        background: #ffffff;
+        border: 1px solid #d1d1d1;
+        border-radius: 28px;
+        box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen">
+    <!-- ============================================================ -->
+    <!-- INDEX JUMP BAR                                                 -->
+    <!-- ============================================================ -->
+    <header
+      class="sticky top-0 z-50 border-b border-charcoal-200 bg-white/95 px-4 py-3 backdrop-blur"
+    >
+      <div class="mx-auto flex max-w-5xl flex-wrap items-center gap-2 text-xs">
+        <span class="font-bold text-charcoal-900">rentOS mockups</span>
+        <a
+          href="#hero-v1"
+          class="rounded-full border border-charcoal-200 px-3 py-1 text-charcoal-700 hover:bg-warm-100"
+          >Hero V1</a
+        >
+        <a
+          href="#hero-v2"
+          class="rounded-full border border-charcoal-200 px-3 py-1 text-charcoal-700 hover:bg-warm-100"
+          >Hero V2</a
+        >
+        <a
+          href="#hero-v3"
+          class="rounded-full border border-saffron-400 px-3 py-1 font-semibold text-saffron-700 hover:bg-saffron-50"
+          >Hero V3 ★</a
+        >
+        <a
+          href="#dash-a"
+          class="rounded-full border border-charcoal-200 px-3 py-1 text-charcoal-700 hover:bg-warm-100"
+          >Dash A</a
+        >
+        <a
+          href="#dash-b"
+          class="rounded-full border border-charcoal-200 px-3 py-1 text-charcoal-700 hover:bg-warm-100"
+          >Dash B</a
+        >
+        <a
+          href="#dash-c"
+          class="rounded-full border border-saffron-400 px-3 py-1 font-semibold text-saffron-700 hover:bg-saffron-50"
+          >Dash C ★</a
+        >
+        <a
+          href="#tenant"
+          class="rounded-full border border-charcoal-200 px-3 py-1 text-charcoal-700 hover:bg-warm-100"
+          >Tenant</a
+        >
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-md px-4 py-8">
+      <!-- ============================================================ -->
+      <!-- HERO V1 — MINIMAL UTILITY                                     -->
+      <!-- ============================================================ -->
+      <section id="hero-v1" class="mb-16 scroll-mt-20">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="mockup-label">Hero V1 — Minimal utility</span>
+          <span class="text-xs text-charcoal-500">Safe choice</span>
+        </div>
+        <div class="mockup-frame">
+          <div
+            class="relative flex min-h-[720px] flex-col items-center justify-center bg-warm-50 px-6 py-16 text-center"
+          >
+            <nav class="absolute left-0 right-0 top-0 flex items-center justify-between px-5 py-4">
+              <span class="text-lg font-bold text-charcoal-900">rentOS</span>
+              <div class="flex items-center gap-2">
+                <button
+                  class="inline-flex items-center gap-1.5 rounded-full border border-warm-200 bg-transparent px-3 py-1.5 text-xs font-medium text-charcoal-700 hover:bg-warm-100"
+                >
+                  EN ▾
+                </button>
+                <a
+                  href="#"
+                  class="rounded-lg border border-warm-200 bg-warm-100 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:border-saffron-400 hover:text-saffron-600"
+                  >Sign in</a
+                >
+              </div>
+            </nav>
+
+            <svg
+              viewBox="0 0 200 120"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              class="mx-auto h-28 w-auto"
+              aria-hidden="true"
+            >
+              <polyline
+                points="20,70 20,110 80,110 80,70"
+                stroke="#f0a500"
+                stroke-width="2.5"
+                stroke-linejoin="round"
+              />
+              <polyline
+                points="10,70 50,30 90,70"
+                stroke="#f0a500"
+                stroke-width="2.5"
+                stroke-linejoin="round"
+              />
+              <rect x="38" y="85" width="24" height="25" rx="2" stroke="#5a7a5a" stroke-width="2" />
+              <rect
+                x="110"
+                y="40"
+                width="70"
+                height="70"
+                rx="4"
+                stroke="#f0a500"
+                stroke-width="2.5"
+              />
+              <line x1="122" y1="60" x2="168" y2="60" stroke="#d1d1d1" stroke-width="2" />
+              <line x1="122" y1="72" x2="168" y2="72" stroke="#d1d1d1" stroke-width="2" />
+              <line x1="122" y1="84" x2="150" y2="84" stroke="#d1d1d1" stroke-width="2" />
+              <line
+                x1="90"
+                y1="85"
+                x2="110"
+                y2="75"
+                stroke="#bfdbbf"
+                stroke-width="1.5"
+                stroke-dasharray="4 3"
+              />
+            </svg>
+
+            <h1 class="mt-8 max-w-xs text-3xl font-bold leading-tight text-charcoal-900">
+              Track rent. Manage contracts. Nothing else.
+            </h1>
+
+            <p class="mt-4 max-w-sm text-base text-charcoal-500">
+              A simple tool for Thai landlords. Know who paid, and when leases end.
+            </p>
+
+            <a
+              href="#"
+              class="mt-8 inline-flex min-h-[48px] items-center rounded-lg bg-saffron-500 px-8 py-3 text-base font-semibold text-white shadow-sm hover:bg-saffron-600"
+            >
+              Start free
+            </a>
+
+            <p class="mt-3 text-xs text-charcoal-400">No credit card. No limit on properties.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- HERO V2 — SPLIT SCREEN (emotional copy)                        -->
+      <!-- ============================================================ -->
+      <section id="hero-v2" class="mb-16 scroll-mt-20">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="mockup-label">Hero V2 — Split screen</span>
+          <span class="text-xs text-charcoal-500">Shows product</span>
+        </div>
+        <div class="mockup-frame">
+          <div class="min-h-[720px] bg-warm-50">
+            <nav class="flex items-center justify-between px-5 py-4">
+              <span class="text-lg font-bold text-charcoal-900">rentOS</span>
+              <div class="flex items-center gap-2">
+                <button
+                  class="inline-flex items-center gap-1.5 rounded-full border border-warm-200 bg-transparent px-3 py-1.5 text-xs font-medium text-charcoal-700 hover:bg-warm-100"
+                >
+                  EN ▾
+                </button>
+                <a
+                  href="#"
+                  class="rounded-lg border border-warm-200 bg-warm-100 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:border-saffron-400 hover:text-saffron-600"
+                  >Sign in</a
+                >
+              </div>
+            </nav>
+
+            <section class="mx-auto flex flex-col items-center gap-8 px-6 py-8 text-center">
+              <div class="flex-1">
+                <span
+                  class="mb-3 inline-block rounded-full bg-saffron-100 px-3 py-1 text-xs font-semibold text-saffron-700"
+                  >FREE FOR LANDLORDS</span
+                >
+                <h1 class="text-3xl font-bold leading-tight text-charcoal-900">
+                  Stop guessing when leases expire.
+                </h1>
+                <p class="mt-4 text-base leading-relaxed text-charcoal-500">
+                  rentOS reminds you before it's too late. Properties, payments, contracts — all in
+                  one place.
+                </p>
+
+                <div class="mt-6 flex flex-col items-center gap-3">
+                  <a
+                    href="#"
+                    class="inline-flex min-h-[48px] items-center rounded-lg bg-saffron-500 px-8 py-3 text-base font-semibold text-white shadow-sm hover:bg-saffron-600"
+                  >
+                    Start free
+                  </a>
+                  <a
+                    href="#"
+                    class="inline-flex min-h-[48px] items-center rounded-lg border border-warm-200 bg-warm-100 px-6 py-3 text-sm font-medium text-charcoal-600 hover:border-saffron-400 hover:text-saffron-600"
+                  >
+                    See how it works
+                  </a>
+                </div>
+
+                <p class="mt-3 text-xs text-charcoal-400">No credit card required.</p>
+              </div>
+
+              <!-- Simulated phone dashboard screenshot -->
+              <div class="w-full flex-1">
+                <div
+                  class="relative mx-auto w-full max-w-xs overflow-hidden rounded-2xl border border-warm-200 bg-warm-100 shadow-lg"
+                >
+                  <div
+                    class="flex items-center justify-between border-b border-warm-200 bg-warm-50 px-4 py-3"
+                  >
+                    <span class="text-xs font-semibold text-charcoal-700">rentOS</span>
+                    <div class="flex gap-1.5">
+                      <span class="h-2.5 w-2.5 rounded-full bg-warm-200"></span>
+                      <span class="h-2.5 w-2.5 rounded-full bg-warm-200"></span>
+                      <span class="h-2.5 w-2.5 rounded-full bg-saffron-300"></span>
+                    </div>
+                  </div>
+                  <div class="p-4 space-y-3">
+                    <div
+                      class="rounded-lg border border-warm-200 bg-warm-50 p-3 text-left shadow-sm"
+                    >
+                      <p class="mb-1 text-[10px] uppercase tracking-wide text-charcoal-400">
+                        Properties
+                      </p>
+                      <p class="text-xl font-bold text-charcoal-900">12</p>
+                    </div>
+                    <div
+                      class="rounded-lg border-2 border-saffron-400 bg-saffron-50 p-3 text-left shadow-sm"
+                    >
+                      <p class="mb-1 text-[10px] uppercase tracking-wide text-saffron-700">
+                        Unpaid rent
+                      </p>
+                      <p class="text-xl font-bold text-saffron-600">฿47,500</p>
+                    </div>
+                    <div
+                      class="rounded-lg border border-sage-200 bg-sage-50 p-3 text-left shadow-sm"
+                    >
+                      <p class="mb-1 text-[10px] uppercase tracking-wide text-sage-600">
+                        Expiring soon
+                      </p>
+                      <p class="text-xl font-bold text-sage-500">2</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- HERO V3 — THAI-FIRST / CULTURALLY WARM (recommended)           -->
+      <!-- ============================================================ -->
+      <section id="hero-v3" class="mb-16 scroll-mt-20">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="mockup-label">Hero V3 — Thai-first ★ recommended</span>
+          <span class="text-xs font-semibold text-saffron-700">Needs TH review</span>
+        </div>
+        <div class="mockup-frame">
+          <div class="min-h-[720px] bg-warm-50">
+            <nav class="flex items-center justify-between px-5 py-4">
+              <span class="text-lg font-bold text-charcoal-900">rentOS</span>
+              <div class="flex items-center gap-2">
+                <button
+                  class="inline-flex items-center gap-1.5 rounded-full border border-saffron-300 bg-saffron-50 px-3 py-1.5 text-xs font-medium text-saffron-700"
+                >
+                  TH ▾
+                </button>
+                <a
+                  href="#"
+                  class="rounded-lg border border-warm-200 bg-warm-100 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:border-saffron-400 hover:text-saffron-600"
+                  >เข้าสู่ระบบ</a
+                >
+              </div>
+            </nav>
+
+            <section class="flex flex-col items-center px-6 pb-10 pt-4 text-center">
+              <h1 class="max-w-xs text-4xl font-bold leading-tight text-charcoal-900">
+                เครื่องมือฟรีสำหรับเจ้าของที่พักในไทย
+              </h1>
+
+              <p class="mt-3 text-base font-medium text-charcoal-500">
+                Free tools for Thai landlords.
+              </p>
+
+              <span
+                class="mt-4 inline-block rounded-full bg-saffron-100 px-4 py-1.5 text-sm font-semibold text-saffron-700"
+              >
+                ฟรี · ไม่มีค่าบริการรายเดือน
+              </span>
+
+              <!-- Thai gate illustration -->
+              <div class="my-6">
+                <svg
+                  viewBox="0 0 220 130"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="mx-auto h-32 w-auto"
+                  aria-hidden="true"
+                >
+                  <rect
+                    x="30"
+                    y="50"
+                    width="18"
+                    height="75"
+                    rx="2"
+                    stroke="#f0a500"
+                    stroke-width="2.5"
+                  />
+                  <rect
+                    x="172"
+                    y="50"
+                    width="18"
+                    height="75"
+                    rx="2"
+                    stroke="#f0a500"
+                    stroke-width="2.5"
+                  />
+                  <path
+                    d="M30 50 Q110 -10 190 50"
+                    stroke="#f0a500"
+                    stroke-width="2.5"
+                    fill="none"
+                  />
+                  <circle cx="110" cy="18" r="7" stroke="#f0a500" stroke-width="2" />
+                  <line x1="110" y1="11" x2="110" y2="5" stroke="#f0a500" stroke-width="2" />
+                  <circle cx="68" cy="35" r="4" stroke="#f0a500" stroke-width="1.5" />
+                  <circle cx="152" cy="35" r="4" stroke="#f0a500" stroke-width="1.5" />
+                  <line x1="48" y1="125" x2="172" y2="125" stroke="#bfdbbf" stroke-width="2" />
+                  <circle
+                    cx="20"
+                    cy="118"
+                    r="8"
+                    fill="#e0eee0"
+                    stroke="#5a7a5a"
+                    stroke-width="1.5"
+                  />
+                  <circle
+                    cx="200"
+                    cy="118"
+                    r="8"
+                    fill="#e0eee0"
+                    stroke="#5a7a5a"
+                    stroke-width="1.5"
+                  />
+                </svg>
+              </div>
+
+              <a
+                href="#"
+                class="inline-flex min-h-[52px] items-center rounded-lg bg-saffron-500 px-10 py-3.5 text-base font-bold text-white shadow-sm hover:bg-saffron-600"
+              >
+                เริ่มใช้งานฟรี
+              </a>
+              <p class="mt-2 text-xs text-charcoal-400">ไม่ต้องใช้บัตรเครดิต</p>
+
+              <div
+                class="mt-8 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-widest text-charcoal-400"
+              >
+                <span class="h-px w-12 bg-warm-300"></span>
+                <span>ที่พัก · ชำระเงิน · สัญญา</span>
+                <span class="h-px w-12 bg-warm-300"></span>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- DASHBOARD A — VERTICAL STACK                                   -->
+      <!-- ============================================================ -->
+      <section id="dash-a" class="mb-16 scroll-mt-20">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="mockup-label">Dashboard A — Vertical stack</span>
+          <span class="text-xs text-charcoal-500">Safest, most predictable</span>
+        </div>
+        <div class="mockup-frame">
+          <div class="min-h-[720px] bg-warm-50 px-4 py-6">
+            <div class="mb-6 flex items-start justify-between">
+              <div>
+                <h1 class="text-xl font-bold text-charcoal-900">Dashboard</h1>
+                <p class="text-sm text-charcoal-500">Welcome, Khun Somchai</p>
+              </div>
+              <button
+                class="rounded-md border border-warm-200 bg-warm-50 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:bg-warm-100"
+              >
+                ภาษาไทย
+              </button>
+            </div>
+
+            <div class="flex flex-col gap-4">
+              <!-- Active Properties -->
+              <div class="rounded-xl border border-warm-200 bg-white px-5 py-4 shadow-sm">
+                <p class="mb-1 text-xs font-medium uppercase tracking-wide text-charcoal-500">
+                  Active Properties
+                </p>
+                <p class="text-3xl font-bold text-charcoal-900">12</p>
+                <p class="mt-1 text-sm text-charcoal-500">
+                  Ekkamai Flat #199 · Thonglor Studio #402 · +10 more
+                </p>
+                <div class="mt-3 text-right">
+                  <a href="#" class="text-sm font-semibold text-saffron-600 hover:text-saffron-700"
+                    >View all →</a
+                  >
+                </div>
+              </div>
+              <!-- Unpaid Rent -->
+              <div class="rounded-xl border border-warm-200 bg-white px-5 py-4 shadow-sm">
+                <p class="mb-1 text-xs font-medium uppercase tracking-wide text-charcoal-500">
+                  Unpaid Rent
+                </p>
+                <p class="text-3xl font-bold text-saffron-600">3 tenants</p>
+                <p class="mt-1 text-sm text-charcoal-500">฿47,500 outstanding</p>
+                <div class="mt-3 text-right">
+                  <a href="#" class="text-sm font-semibold text-saffron-600 hover:text-saffron-700"
+                    >Review →</a
+                  >
+                </div>
+              </div>
+              <!-- Contracts Expiring Soon -->
+              <div class="rounded-xl border border-warm-200 bg-white px-5 py-4 shadow-sm">
+                <p class="mb-1 text-xs font-medium uppercase tracking-wide text-charcoal-500">
+                  Contracts Expiring Soon
+                </p>
+                <p class="text-3xl font-bold text-sage-500">2</p>
+                <p class="mt-1 text-sm text-charcoal-500">Within the next 30 days</p>
+                <div class="mt-3 text-right">
+                  <a href="#" class="text-sm font-semibold text-saffron-600 hover:text-saffron-700"
+                    >Review →</a
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- DASHBOARD B — 2x2 GRID WITH UNPAID RENT EMPHASIS               -->
+      <!-- ============================================================ -->
+      <section id="dash-b" class="mb-16 scroll-mt-20">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="mockup-label">Dashboard B — Grid with emphasis</span>
+          <span class="text-xs text-charcoal-500">Urgency on unpaid rent</span>
+        </div>
+        <div class="mockup-frame">
+          <div class="min-h-[720px] bg-warm-50 px-4 py-6">
+            <div class="mb-6 flex items-start justify-between">
+              <div>
+                <h1 class="text-xl font-bold text-charcoal-900">Dashboard</h1>
+                <p class="text-sm text-charcoal-500">Welcome, Khun Somchai</p>
+              </div>
+              <button
+                class="rounded-md border border-warm-200 bg-warm-50 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:bg-warm-100"
+              >
+                ภาษาไทย
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4">
+              <!-- Unpaid Rent — emphasized -->
+              <a
+                href="#"
+                class="block rounded-xl border-2 border-saffron-400 bg-saffron-50 px-5 py-5 shadow-md"
+              >
+                <p class="mb-2 text-xs font-medium uppercase tracking-wide text-saffron-700">
+                  Unpaid Rent
+                </p>
+                <p class="text-5xl font-bold leading-none text-saffron-600">3</p>
+                <p class="mt-1 text-sm font-semibold text-saffron-700">tenants</p>
+                <p class="mt-3 text-2xl font-bold text-charcoal-900">฿47,500</p>
+                <p class="mt-1 text-sm text-charcoal-500">outstanding balance</p>
+                <div class="mt-4">
+                  <span
+                    class="inline-block rounded-md bg-saffron-500 px-4 py-2 text-sm font-semibold text-white"
+                    >Review →</span
+                  >
+                </div>
+              </a>
+
+              <div class="grid grid-cols-2 gap-3">
+                <!-- Active Properties -->
+                <a
+                  href="#"
+                  class="block rounded-xl border border-warm-200 bg-white px-4 py-4 shadow-sm"
+                >
+                  <p class="mb-1 text-[10px] font-medium uppercase tracking-wide text-charcoal-500">
+                    Active Properties
+                  </p>
+                  <p class="text-3xl font-bold text-charcoal-900">12</p>
+                  <p class="mt-1 text-xs text-charcoal-500">Ekkamai · Thonglor · +10</p>
+                  <p class="mt-3 text-xs font-semibold text-saffron-600">View all →</p>
+                </a>
+                <!-- Expiring -->
+                <a
+                  href="#"
+                  class="block rounded-xl border border-sage-200 bg-sage-50 px-4 py-4 shadow-sm"
+                >
+                  <p class="mb-1 text-[10px] font-medium uppercase tracking-wide text-sage-600">
+                    Expiring Soon
+                  </p>
+                  <p class="text-3xl font-bold text-sage-500">2</p>
+                  <p class="mt-1 text-xs text-charcoal-500">Within 30 days</p>
+                  <p class="mt-3 text-xs font-semibold text-saffron-600">Review →</p>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- DASHBOARD C — ASYMMETRIC HERO (recommended)                    -->
+      <!-- ============================================================ -->
+      <section id="dash-c" class="mb-16 scroll-mt-20">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="mockup-label">Dashboard C — Asymmetric hero ★ recommended</span>
+          <span class="text-xs font-semibold text-saffron-700">Clearest signal</span>
+        </div>
+        <div class="mockup-frame">
+          <div class="min-h-[720px] bg-warm-50 px-4 py-6">
+            <div class="mb-6 flex items-start justify-between">
+              <div>
+                <h1 class="text-xl font-bold text-charcoal-900">Dashboard</h1>
+                <p class="text-sm text-charcoal-500">Welcome, Khun Somchai</p>
+              </div>
+              <button
+                class="rounded-md border border-warm-200 bg-warm-50 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:bg-warm-100"
+              >
+                ภาษาไทย
+              </button>
+            </div>
+
+            <!-- Hero: Unpaid Rent -->
+            <a
+              href="#"
+              class="mb-4 block rounded-2xl border border-saffron-300 bg-white px-6 py-7 shadow-md"
+            >
+              <p
+                class="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-charcoal-500"
+              >
+                Unpaid Rent
+              </p>
+              <p class="text-6xl font-extrabold leading-none text-saffron-600">฿47,500</p>
+              <p class="mt-3 text-lg font-semibold text-charcoal-700">3 tenants</p>
+              <div class="mt-3 space-y-1">
+                <p class="text-sm text-charcoal-500">· Ekkamai Flat #199 — ฿22,000</p>
+                <p class="text-sm text-charcoal-500">· Thonglor Studio #402 — ฿15,500</p>
+                <p class="text-sm text-charcoal-400">· +1 more</p>
+              </div>
+              <div class="mt-5">
+                <span
+                  class="inline-block rounded-lg bg-saffron-500 px-5 py-2.5 text-sm font-bold text-white"
+                  >Review now →</span
+                >
+              </div>
+            </a>
+
+            <div class="grid grid-cols-2 gap-3">
+              <a
+                href="#"
+                class="block rounded-xl border border-warm-200 bg-white px-4 py-4 shadow-sm"
+              >
+                <p class="mb-1 text-[10px] font-medium uppercase tracking-wide text-charcoal-500">
+                  Active Properties
+                </p>
+                <p class="text-3xl font-bold text-charcoal-900">12</p>
+                <p class="mt-1 text-xs text-charcoal-500">properties</p>
+                <p class="mt-3 text-xs font-semibold text-saffron-600">View all →</p>
+              </a>
+              <a
+                href="#"
+                class="block rounded-xl border border-sage-200 bg-sage-50 px-4 py-4 shadow-sm"
+              >
+                <p class="mb-1 text-[10px] font-medium uppercase tracking-wide text-sage-600">
+                  Expiring Soon
+                </p>
+                <p class="text-3xl font-bold text-sage-500">2</p>
+                <p class="mt-1 text-xs text-charcoal-500">within 30 days</p>
+                <p class="mt-3 text-xs font-semibold text-saffron-600">Review →</p>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- TENANT DASHBOARD                                               -->
+      <!-- ============================================================ -->
+      <section id="tenant" class="mb-16 scroll-mt-20">
+        <div class="mb-3 flex items-center justify-between">
+          <span class="mockup-label">Tenant dashboard</span>
+          <span class="text-xs text-charcoal-500">Companion to Dash C</span>
+        </div>
+        <div class="mockup-frame">
+          <div class="min-h-[720px] bg-warm-50 px-4 py-6">
+            <div class="mb-6">
+              <h1 class="text-xl font-bold text-charcoal-900">My Rental</h1>
+              <p class="text-sm text-charcoal-500">Welcome, Khun Malee</p>
+            </div>
+
+            <div class="flex flex-col gap-4">
+              <!-- My Contract -->
+              <a
+                href="#"
+                class="block rounded-xl border border-warm-200 bg-white px-5 py-4 shadow-sm"
+              >
+                <p class="mb-1 text-xs font-medium uppercase tracking-wide text-charcoal-500">
+                  Your Property
+                </p>
+                <p class="text-lg font-bold text-charcoal-900">Ekkamai Flat #199</p>
+                <div class="mt-2 flex items-center gap-3 text-sm text-charcoal-500">
+                  <span>2025-05-01</span>
+                  <span class="text-charcoal-300">→</span>
+                  <span>2026-04-30</span>
+                </div>
+                <p class="mt-3 text-sm font-semibold text-saffron-600">View contract →</p>
+              </a>
+
+              <!-- Next Payment -->
+              <div class="rounded-xl border border-warm-200 bg-white px-5 py-4 shadow-sm">
+                <p class="mb-1 text-xs font-medium uppercase tracking-wide text-charcoal-500">
+                  Next Payment
+                </p>
+                <p class="text-4xl font-bold text-saffron-600">฿22,000</p>
+                <p class="mt-1 text-sm text-charcoal-500">Due on May 1, 2026</p>
+                <div class="mt-4">
+                  <button
+                    class="rounded-lg bg-saffron-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-saffron-600"
+                  >
+                    Mark as paid
+                  </button>
+                </div>
+              </div>
+
+              <!-- Days Until Expiry -->
+              <a
+                href="#"
+                class="block rounded-xl border border-sage-300 bg-sage-50 px-5 py-4 shadow-sm"
+              >
+                <p class="mb-1 text-xs font-medium uppercase tracking-wide text-sage-600">
+                  Days Until Lease Expires
+                </p>
+                <p class="text-5xl font-bold text-sage-500">28</p>
+                <p class="mt-1 text-sm text-charcoal-500">days remaining</p>
+                <p class="mt-3 text-sm font-semibold text-saffron-600">View contract →</p>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="pb-12 pt-4 text-center text-xs text-charcoal-400">
+        Static mockup preview — no data wired. Generated for PO review.
+      </footer>
+    </main>
+  </body>
+</html>

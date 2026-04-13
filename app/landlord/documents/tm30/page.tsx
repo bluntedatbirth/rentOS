@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { useToast } from '@/components/ui/ToastProvider';
+import { formatDisplayDate } from '@/lib/format/date';
 
 interface TM30FormData {
   // Owner
@@ -91,7 +92,7 @@ export default function TM30GeneratorPage() {
     }
   };
 
-  const today = new Date().toLocaleDateString('en-GB');
+  const today = formatDisplayDate(new Date());
 
   return (
     <div className="mx-auto max-w-3xl">

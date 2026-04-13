@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+import { FEATURE_MAINTENANCE } from '@/lib/features';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getServerSession } from '@/lib/supabase/server-session';
 import { redirect } from 'next/navigation';
@@ -18,6 +20,8 @@ interface MaintenanceRequest {
 }
 
 export default async function TenantMaintenancePage() {
+  if (!FEATURE_MAINTENANCE) notFound();
+
   const { user } = await getServerSession();
 
   if (!user) {

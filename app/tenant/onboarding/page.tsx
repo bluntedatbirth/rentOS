@@ -7,6 +7,8 @@ import { useI18n } from '@/lib/i18n/context';
 import { useToast } from '@/components/ui/ToastProvider';
 import { createClient } from '@/lib/supabase/client';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+import { formatDisplayDate } from '@/lib/format/date';
+import { FEATURE_MAINTENANCE } from '@/lib/features';
 
 const supabase = createClient();
 
@@ -163,7 +165,7 @@ export default function TenantOnboardingPage() {
             {[
               t('tenant_onboarding.feature_view_contract'),
               t('tenant_onboarding.feature_track_payments'),
-              t('tenant_onboarding.feature_submit_maintenance'),
+              ...(FEATURE_MAINTENANCE ? [t('tenant_onboarding.feature_submit_maintenance')] : []),
             ].map((feature) => (
               <li key={feature} className="flex items-start gap-3 text-sm text-charcoal-700">
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-saffron-100 text-xs text-saffron-600">
@@ -262,7 +264,8 @@ export default function TenantOnboardingPage() {
                   <div>
                     <p className="text-xs text-charcoal-500">{t('contract.lease_period')}</p>
                     <p className="text-sm text-charcoal-900">
-                      {contract.lease_start ?? '-'} &rarr; {contract.lease_end ?? '-'}
+                      {contract.lease_start ? formatDisplayDate(contract.lease_start) : '-'} &rarr;{' '}
+                      {contract.lease_end ? formatDisplayDate(contract.lease_end) : '-'}
                     </p>
                   </div>
                   <div>

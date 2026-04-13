@@ -25,7 +25,10 @@ export function requirePro(
   tierExpiresAt?: string | null
 ): TierCheckResult {
   // During Alpha: always allow (DEFER_TIER_ENFORCEMENT)
-  if (process.env.DEFER_TIER_ENFORCEMENT === 'true') {
+  if (
+    process.env.DEFER_TIER_ENFORCEMENT === 'true' ||
+    process.env.NEXT_PUBLIC_DEFER_TIER_ENFORCEMENT === 'true'
+  ) {
     return { allowed: true };
   }
   if (userTier === 'pro') {
@@ -47,9 +50,11 @@ export function requirePro(
   };
 }
 
-export function getPropertyLimit(tier: string, purchasedSlots: number = 0): number {
-  if (process.env.DEFER_TIER_ENFORCEMENT === 'true') return Infinity;
-  return 2 + purchasedSlots;
+export function getPropertyLimit(tier: string, _purchasedSlots: number = 0): number {
+  // Pre-beta: no enforcement. Re-enable when launching paid tiers.
+  return Infinity;
+  // if (process.env.DEFER_TIER_ENFORCEMENT === 'true' || process.env.NEXT_PUBLIC_DEFER_TIER_ENFORCEMENT === 'true') return Infinity;
+  // return 2 + purchasedSlots;
 }
 
 export const SLOT_UNLOCK_PACKS = [

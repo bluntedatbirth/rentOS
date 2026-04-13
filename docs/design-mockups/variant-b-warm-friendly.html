@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>People First | Variant B - Warm/Friendly</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'secondary-fixed-dim': '#add0aa',
+              outline: '#847561',
+              'on-error-container': '#93000a',
+              'tertiary-fixed-dim': '#c8c6c5',
+              'surface-container': '#efeee9',
+              'on-secondary-container': '#4d6c4d',
+              primary: '#805600',
+              surface: '#fbf9f4',
+              'on-primary-container': '#5f3f00',
+              'error-container': '#ffdad6',
+              'surface-container-highest': '#e4e2de',
+              'on-background': '#1b1c19',
+              'on-surface-variant': '#514533',
+              'surface-container-lowest': '#ffffff',
+              'on-secondary-fixed-variant': '#2f4e31',
+              'on-secondary': '#ffffff',
+              'on-secondary-fixed': '#032109',
+              'tertiary-fixed': '#e4e2e1',
+              'on-surface': '#1b1c19',
+              'tertiary-container': '#b5b3b3',
+              'surface-container-high': '#eae8e3',
+              'secondary-container': '#c8ecc5',
+              secondary: '#476647',
+              'on-primary-fixed': '#281800',
+              error: '#ba1a1a',
+              'secondary-fixed': '#c8ecc5',
+              'surface-tint': '#805600',
+              'surface-container-low': '#f5f3ee',
+              'inverse-on-surface': '#f2f1ec',
+              'surface-bright': '#fbf9f4',
+              background: '#fbf9f4',
+              'primary-container': '#f0a500',
+              'on-primary': '#ffffff',
+              'primary-fixed': '#ffddaf',
+              'on-tertiary-fixed': '#1b1c1c',
+              'inverse-surface': '#30312e',
+              'surface-variant': '#e4e2de',
+              'on-primary-fixed-variant': '#614000',
+              tertiary: '#5f5e5e',
+              'on-tertiary-container': '#464545',
+              'primary-fixed-dim': '#ffba44',
+              'surface-dim': '#dbdad5',
+              'on-error': '#ffffff',
+              'on-tertiary-fixed-variant': '#474747',
+              'inverse-primary': '#ffba44',
+              'outline-variant': '#d6c4ac',
+              'on-tertiary': '#ffffff',
+            },
+            borderRadius: {
+              DEFAULT: '1rem',
+              lg: '2rem',
+              xl: '3rem',
+              full: '9999px',
+            },
+            fontFamily: {
+              headline: ['Plus Jakarta Sans'],
+              body: ['Be Vietnam Pro'],
+              label: ['Plus Jakarta Sans'],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24;
+      }
+      body {
+        font-family: 'Be Vietnam Pro', sans-serif;
+        background-color: #fbf9f4;
+        color: #1b1c19;
+      }
+      h1,
+      h2,
+      h3,
+      .brand-logo {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-surface text-on-surface">
+    <!-- Sticky Nav -->
+    <header class="sticky top-0 z-50 bg-surface/80 backdrop-blur-xl">
+      <nav class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <h1 class="brand-logo text-xl font-bold text-primary">People First</h1>
+        <ul class="hidden md:flex gap-8 text-sm text-on-surface-variant">
+          <li><a href="#features" class="hover:text-primary transition-colors">Features</a></li>
+          <li><a href="#pricing" class="hover:text-primary transition-colors">Pricing</a></li>
+          <li><a href="#about" class="hover:text-primary transition-colors">About</a></li>
+        </ul>
+        <button
+          class="bg-primary-container text-on-primary-container px-6 py-2.5 rounded-full text-sm font-semibold hover:brightness-105 transition"
+        >
+          Get Started
+        </button>
+      </nav>
+    </header>
+
+    <!-- Hero -->
+    <section class="max-w-7xl mx-auto px-6 pt-20 pb-16 grid md:grid-cols-2 gap-16 items-center">
+      <div class="space-y-8">
+        <h1 class="text-5xl md:text-6xl font-bold leading-tight">
+          Rental management built for <span class="text-primary">people.</span>
+        </h1>
+        <p class="text-on-surface-variant text-lg leading-relaxed max-w-lg">
+          Experience tactile hospitality in property management. We swap cold ledgers for warm
+          connections, making renting joyful for everyone involved.
+        </p>
+        <div class="flex gap-4 text-sm">
+          <span
+            class="bg-secondary-container text-on-secondary-container px-4 py-2 rounded-full font-medium"
+            >&#10003; No Hidden Fees</span
+          >
+          <span
+            class="bg-secondary-container text-on-secondary-container px-4 py-2 rounded-full font-medium"
+            >&#10003; Verified Profiles</span
+          >
+        </div>
+      </div>
+      <div>
+        <img
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVWRZ-u6qVN6sD-kk0UQ4tr4c3yLGOSM07fTIWg6xISlX6S1RNJG_lWjMbamoz7bpeyWIa_W-1hHK7PqpcwKnuEM0WDFJA1iUSmS7o-EtlV-w8vsneK-P2SXdrQKFO4qgSs3OGyTxAJuQ1r9mdlkw17jZXDxI_WIN0Pqr6PjFCmgjLM58VNBoIDLOGeuKAf5l0jW9wsy7zCCNtd0ftC4VoKpyyFeL70VhqdDF0_2PZCGTFc-ibuH8e5bNNw-WTLxCeazJGpsiKjA"
+          alt="Happy Community Home"
+          class="rounded-3xl w-full shadow-lg"
+        />
+      </div>
+    </section>
+
+    <!-- Pain Points -->
+    <section class="max-w-7xl mx-auto px-6 py-12">
+      <h2 class="text-center text-2xl font-bold mb-8">Say goodbye to:</h2>
+      <div class="flex flex-wrap justify-center gap-4">
+        <div
+          class="bg-error-container/30 text-on-surface px-6 py-4 rounded-2xl flex items-center gap-3 text-sm font-medium"
+        >
+          <span class="text-xl">&#128176;</span> Delayed Payments
+        </div>
+        <div
+          class="bg-error-container/30 text-on-surface px-6 py-4 rounded-2xl flex items-center gap-3 text-sm font-medium"
+        >
+          <span class="text-xl">&#128203;</span> Complex Contracts
+        </div>
+        <div
+          class="bg-error-container/30 text-on-surface px-6 py-4 rounded-2xl flex items-center gap-3 text-sm font-medium"
+        >
+          <span class="text-xl">&#128172;</span> Communication Gaps
+        </div>
+      </div>
+    </section>
+
+    <!-- Audience Panels -->
+    <section class="max-w-7xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-8">
+      <article class="bg-surface-container-low rounded-3xl overflow-hidden">
+        <img
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuAD2eNWfa2b85YHkyjNW3gJd2fJyvcCjH-xRFrH1IvoKViMl--wyB8vlGe9ZWfOt-9xLN0OSd2UfYMlqz-5gBpqVRIz1nucEBZSKMqIMJitfZmmDVkmMOFXir7hcN3K2lPpoTRo1Fd1Gg9knEj7ubuoiIxQlj-8c7U72KLkRdQR42z9JiFqVl7Dxb9WFX_q_V3TXvdUGMqLiLtM0KZIVKage9eFtMg6X_vktUFjIQfVXrO1kMjVXyKhbUHI5Q7bYKm93XmGg2cAQg"
+          alt="For Landlords"
+          class="w-full h-48 object-cover"
+        />
+        <div class="p-8 space-y-4">
+          <h3 class="text-2xl font-bold">For Landlords</h3>
+          <p class="text-on-surface-variant leading-relaxed">
+            Automate your portfolio with empathy. From screening to maintenance, we handle the
+            details while you enjoy the returns.
+          </p>
+          <a href="#" class="text-primary font-semibold text-sm hover:underline"
+            >Explore Landlord Features &rarr;</a
+          >
+        </div>
+      </article>
+      <article class="bg-surface-container-low rounded-3xl overflow-hidden">
+        <img
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuCz019pVE7PupTaEnnOS0KCY_lXTtD_0C2rApXB8yRLUR3I1u58HUhtJe01NBf8fD1Q8kAHxg6KvWJnHC9fbTeBAWPvTUBzFe3HRKt3-P0_gdB2x3cLoVu6wH6fBB74EYoZH6nVCLp9tC_nx_ObJ0C3bob5Fq5EIGb34Erh4iN2ZD7YwzM7FrKcnHwZTIb3ItIa5-3cdfsgKXTBFbvhiG4Y73Y6tpsiBNAQqe73uepv9H9uGothw5ovLuIzchqyN3B9xGW7WGMitw"
+          alt="For Tenants"
+          class="w-full h-48 object-cover"
+        />
+        <div class="p-8 space-y-4">
+          <h3 class="text-2xl font-bold">For Tenants</h3>
+          <p class="text-on-surface-variant leading-relaxed">
+            Find a home that loves you back. Transparent payments, instant repairs, and a community
+            that puts your well-being first.
+          </p>
+          <a href="#" class="text-primary font-semibold text-sm hover:underline"
+            >Find Your Next Home &rarr;</a
+          >
+        </div>
+      </article>
+    </section>
+
+    <!-- Feature Grid -->
+    <section id="features" class="max-w-7xl mx-auto px-6 py-16">
+      <h2 class="text-3xl font-bold text-center mb-4">Everything you need, none of the stress.</h2>
+      <div class="grid md:grid-cols-3 gap-6 mt-12">
+        <div class="bg-surface-container-low p-8 rounded-3xl space-y-3">
+          <span class="text-3xl">&#128179;</span>
+          <h4 class="font-bold text-lg">Instant Payouts</h4>
+          <p class="text-sm text-on-surface-variant leading-relaxed">
+            No more waiting. Rent hits your account the moment it's paid, verified instantly.
+          </p>
+        </div>
+        <div class="bg-surface-container-low p-8 rounded-3xl space-y-3">
+          <span class="text-3xl">&#10003;</span>
+          <h4 class="font-bold text-lg">Smart Screening</h4>
+          <p class="text-sm text-on-surface-variant leading-relaxed">
+            AI-driven profiles that go beyond credit scores to find the perfect community match.
+          </p>
+        </div>
+        <div class="bg-surface-container-low p-8 rounded-3xl space-y-3">
+          <span class="text-3xl">&#128296;</span>
+          <h4 class="font-bold text-lg">Priority Repair</h4>
+          <p class="text-sm text-on-surface-variant leading-relaxed">
+            Direct connection to trusted contractors with 24/7 emergency response times.
+          </p>
+        </div>
+        <div class="bg-surface-container-low p-8 rounded-3xl space-y-3">
+          <span class="text-3xl">&#128196;</span>
+          <h4 class="font-bold text-lg">Smart Contracts</h4>
+          <p class="text-sm text-on-surface-variant leading-relaxed">
+            Legal jargon translated into human-readable digital agreements for both parties.
+          </p>
+        </div>
+        <div class="bg-surface-container-low p-8 rounded-3xl space-y-3">
+          <span class="text-3xl">&#128172;</span>
+          <h4 class="font-bold text-lg">Unified Chat</h4>
+          <p class="text-sm text-on-surface-variant leading-relaxed">
+            Keep all rental communication in one polite, organized, and recordable space.
+          </p>
+        </div>
+        <div class="bg-surface-container-low p-8 rounded-3xl space-y-3">
+          <span class="text-3xl">&#128202;</span>
+          <h4 class="font-bold text-lg">Portfolio Insights</h4>
+          <p class="text-sm text-on-surface-variant leading-relaxed">
+            Deep-dive data presented through elegant, easy-to-understand visual dashboards.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="bg-surface-container-low py-16">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="grid md:grid-cols-3 gap-8">
+          <blockquote class="bg-surface-container-lowest p-8 rounded-3xl space-y-4">
+            <p class="text-on-surface leading-relaxed">
+              "Finally, a management tool that doesn't feel like an interrogation. Our tenants are
+              happier, and so are we."
+            </p>
+            <footer class="flex items-center gap-3">
+              <img
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuADOBd4upGGexSAgbQ5TlmPCLWDWXy6b9Dm4Xh6zLMu1jIV17XIIOuCBuIIFQ4MqUVzxmugHxVVe6koXXyO0EFHdfB2yglCRAePOfoLlISsI9h-5XkThc_ULVKI185W95T1qst6pJXmcl4zafuaf2AAwvgEmNC0Kv86V4Hg7kY5A2odD1e3K-MxblOQ61I0Me9VG-43BbcF1Gjcd6RqtZj1iPlp1uOzStM03sp5JVgWHl0Y-zgYAjvZbFmrHie9d2leeYRQdbSllQ"
+                alt="User"
+                class="w-10 h-10 rounded-full object-cover"
+              />
+              <div>
+                <strong class="block text-sm">Marcus Chen</strong>
+                <span class="text-xs text-on-surface-variant">Landlord, 12 Units</span>
+              </div>
+            </footer>
+          </blockquote>
+          <blockquote class="bg-surface-container-lowest p-8 rounded-3xl space-y-4">
+            <p class="text-on-surface leading-relaxed">
+              "The instant payouts changed my life. I no longer have to chase rent every month. It
+              just works."
+            </p>
+            <footer class="flex items-center gap-3">
+              <img
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOUTrJioxhYyeOFedQkIspXEhqcHTn0DkuSXhrrfXOhjxZkGduE9n2btU07g75TvC1vsDky4aZ635KGn0qzM4w5K14i5-4guxACfb3mDzWYhREJUuNhxuwtVW-bOCQp3P99Nv_wZX5vlIsao403_rximNK26YF9yLgW2SHoQ5du1C8xQ7DvkvLWtTH7VkhSq4xiMOwLgjSC7reZpN2oYgErolMOCsqqgC1HAHZ-XusdzGLPS6mMT9vOqzWRICA-IZJYERrUfZotw"
+                alt="User"
+                class="w-10 h-10 rounded-full object-cover"
+              />
+              <div>
+                <strong class="block text-sm">Sarah Jenkins</strong>
+                <span class="text-xs text-on-surface-variant">Property Manager</span>
+              </div>
+            </footer>
+          </blockquote>
+          <blockquote class="bg-surface-container-lowest p-8 rounded-3xl space-y-4">
+            <p class="text-on-surface leading-relaxed">
+              "As a tenant, being able to request repairs through a chat app and getting an answer
+              in minutes is incredible."
+            </p>
+            <footer class="flex items-center gap-3">
+              <img
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSWwvzHbwjAc9q2QvfBp9bwhe26Rcspgqow82vDRc7tqwZQ73ag8AA5sbb1MKv_yqv6lkLh0tf5CRUSFbJJ18uYbEH22xr8yxICqGubuvmHzfG_M2ayv_JtkJe_QekC5I1NP-D3_SNCdVtcXYTom7EffjY5ql9Mfyzl6lhJCfl13aqKz2Vm4s9OdrDCuRGXLUcXx7omZkMLY9siZBM7aZHNISeTzE_sMRpiU58pqNlp8T7jbgOR6Kp8WFUvho3PIQJ-pT36eKHUg"
+                alt="User"
+                class="w-10 h-10 rounded-full object-cover"
+              />
+              <div>
+                <strong class="block text-sm">David Okafor</strong>
+                <span class="text-xs text-on-surface-variant">Tenant, London</span>
+              </div>
+            </footer>
+          </blockquote>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing" class="max-w-7xl mx-auto px-6 py-16">
+      <h2 class="text-3xl font-bold text-center mb-2">Simple, honest pricing.</h2>
+      <p class="text-center text-on-surface-variant mb-12">
+        Choose the path that fits your community best.
+      </p>
+      <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+        <div class="bg-surface-container-low p-10 rounded-3xl space-y-6">
+          <h3 class="text-xl font-bold">Community</h3>
+          <p class="text-4xl font-bold">Free</p>
+          <ul class="space-y-3 text-sm text-on-surface-variant">
+            <li class="flex items-center gap-2">&#10003; Up to 2 Properties</li>
+            <li class="flex items-center gap-2">&#10003; Unified Chat</li>
+            <li class="flex items-center gap-2">&#10003; Standard Screening</li>
+          </ul>
+          <button
+            class="w-full border-2 border-outline-variant/30 py-3 rounded-full text-sm font-semibold hover:bg-surface-container transition-colors"
+          >
+            Start for Free
+          </button>
+        </div>
+        <div
+          class="bg-surface-container-lowest p-10 rounded-3xl space-y-6 ring-2 ring-primary-container relative"
+        >
+          <span
+            class="absolute -top-3 left-6 bg-primary-container text-on-primary-container text-xs font-bold px-4 py-1 rounded-full"
+            >Most Popular</span
+          >
+          <h3 class="text-xl font-bold">Professional</h3>
+          <p class="text-4xl font-bold">
+            &#3647;199<span class="text-base font-normal text-on-surface-variant">/mo</span>
+          </p>
+          <ul class="space-y-3 text-sm text-on-surface-variant">
+            <li class="flex items-center gap-2">&#10003; Unlimited Properties</li>
+            <li class="flex items-center gap-2">&#10003; Instant Payouts</li>
+            <li class="flex items-center gap-2">&#10003; Priority Maintenance</li>
+            <li class="flex items-center gap-2">&#10003; Smart Contracts</li>
+          </ul>
+          <button
+            class="w-full bg-primary-container text-on-primary-container py-3 rounded-full text-sm font-semibold hover:brightness-105 transition"
+          >
+            Get Started
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="max-w-3xl mx-auto px-6 py-16">
+      <h2 class="text-3xl font-bold text-center mb-12">Common Questions</h2>
+      <div class="space-y-4">
+        <details class="bg-surface-container-low p-6 rounded-2xl group">
+          <summary class="font-semibold cursor-pointer list-none flex justify-between items-center">
+            How secure are my rental payments?
+            <span class="material-symbols-outlined group-open:rotate-180 transition-transform"
+              >expand_more</span
+            >
+          </summary>
+          <p class="mt-4 text-sm text-on-surface-variant leading-relaxed">
+            We use bank-grade 256-bit encryption and partner with industry-leading payment
+            processors to ensure funds are always safe and compliant.
+          </p>
+        </details>
+        <details class="bg-surface-container-low p-6 rounded-2xl group">
+          <summary class="font-semibold cursor-pointer list-none flex justify-between items-center">
+            Can I manage properties across different countries?
+            <span class="material-symbols-outlined group-open:rotate-180 transition-transform"
+              >expand_more</span
+            >
+          </summary>
+          <p class="mt-4 text-sm text-on-surface-variant leading-relaxed">
+            Yes, People First supports multi-currency and multi-locale property management across
+            Thailand and Southeast Asia.
+          </p>
+        </details>
+        <details class="bg-surface-container-low p-6 rounded-2xl group">
+          <summary class="font-semibold cursor-pointer list-none flex justify-between items-center">
+            What makes "Smart Screening" different?
+            <span class="material-symbols-outlined group-open:rotate-180 transition-transform"
+              >expand_more</span
+            >
+          </summary>
+          <p class="mt-4 text-sm text-on-surface-variant leading-relaxed">
+            Our AI-driven screening goes beyond credit scores to find community-compatible tenants
+            based on lifestyle fit and rental history.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <!-- CTA Band -->
+    <section class="bg-primary-container/10 py-16">
+      <div class="max-w-3xl mx-auto px-6 text-center space-y-6">
+        <h2 class="text-3xl font-bold">Ready to prioritize people?</h2>
+        <p class="text-on-surface-variant">
+          Join 5,000+ happy landlords and tenants today. No credit card required to start.
+        </p>
+        <button
+          class="bg-primary-container text-on-primary-container px-8 py-3 rounded-full text-sm font-semibold hover:brightness-105 transition"
+        >
+          Start for Free
+        </button>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer
+      class="max-w-7xl mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-4"
+    >
+      <div>
+        <h3 class="brand-logo text-lg font-bold text-primary">People First</h3>
+        <p class="text-xs text-on-surface-variant mt-1">
+          &copy; 2024 People First. Tactile Hospitality in Management.
+        </p>
+      </div>
+      <nav class="flex gap-6 text-xs text-on-surface-variant">
+        <a href="#" class="hover:text-primary">Privacy Policy</a>
+        <a href="#" class="hover:text-primary">Terms of Service</a>
+        <a href="#" class="hover:text-primary">Contact Us</a>
+        <a href="#" class="hover:text-primary">Resources</a>
+      </nav>
+    </footer>
+  </body>
+</html>

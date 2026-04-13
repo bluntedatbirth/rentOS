@@ -1,11 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { notFound } from 'next/navigation';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { useToast } from '@/components/ui/ToastProvider';
 import { createClient } from '@/lib/supabase/client';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { FEATURE_PENALTIES } from '@/lib/features';
 
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 
@@ -26,6 +28,7 @@ interface Penalty {
 }
 
 export default function TenantPenaltiesPage() {
+  if (!FEATURE_PENALTIES) notFound();
   const { user } = useAuth();
   const { t, locale, formatDate } = useI18n();
   const { toast } = useToast();

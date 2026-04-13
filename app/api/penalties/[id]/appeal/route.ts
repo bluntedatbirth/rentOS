@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getAuthenticatedUser, unauthorized, badRequest, serverError } from '@/lib/supabase/api';
-import { onPenaltyAppealed } from '@/lib/notifications/events';
 
 const appealSchema = z.object({
   tenant_appeal_note: z.string().min(1).max(2000),
@@ -29,11 +28,6 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   if (error) {
     return serverError(error.message);
-  }
-
-  // Fire-and-forget: notify landlord of appeal
-  if (data?.contract_id) {
-    void onPenaltyAppealed(params.id, data.contract_id);
   }
 
   return NextResponse.json(data);

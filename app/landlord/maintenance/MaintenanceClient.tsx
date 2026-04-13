@@ -119,7 +119,7 @@ export function MaintenanceClient({
         .in('id', contractIds);
 
       for (const c of contracts ?? []) {
-        contractPropertyMap.set(c.id, c.property_id);
+        if (c.property_id) contractPropertyMap.set(c.id, c.property_id);
       }
     }
 

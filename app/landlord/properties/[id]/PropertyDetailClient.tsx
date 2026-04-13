@@ -1,15 +1,28 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n/context';
 import { createClient } from '@/lib/supabase/client';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { PropertyImageGallery } from '@/components/landlord/PropertyImageGallery';
-import { ProRibbon } from '@/components/ui/ProRibbon';
+import { PairShareModal } from '@/components/landlord/PairShareModal';
+import { QRCodeSVG } from 'qrcode.react';
+import { FEATURE_MAINTENANCE } from '@/lib/features';
+import { formatDisplayDate } from '@/lib/format/date';
+import { computePropertyStatus } from '@/lib/properties/status';
+import {
+  PropertyPaymentsTab,
+  type PaymentRecord,
+  type ContractForPayments,
+} from '@/components/payments/PropertyPaymentsTab';
 
 const supabase = createClient();
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface PropertyDetail {
   id: string;
@@ -17,6 +30,14 @@ interface PropertyDetail {
   address: string | null;
   unit_number: string | null;
   created_at: string;
+  cover_image_url: string | null;
+  lease_start: string | null;
+  lease_end: string | null;
+  monthly_rent: number | null;
+  current_tenant_id: string | null;
+  pair_code: string | null;
+  pair_code_rotated_at: string | null;
+  previous_tenant_count: number;
 }
 
 interface LinkedContract {
@@ -43,32 +64,235 @@ interface TenantProfile {
   phone: string | null;
 }
 
-type Tab = 'contracts' | 'maintenance' | 'notify';
+type Tab = 'contracts' | 'payments' | 'maintenance' | 'notify';
 
 interface PropertyDetailClientProps {
   property: PropertyDetail;
   initialContracts: LinkedContract[];
   initialMaintenance: MaintenanceRequest[];
   initialTenants: Record<string, TenantProfile>;
+  initialPayments: PaymentRecord[];
 }
 
-export function PropertyDetailClient({
+// ---------------------------------------------------------------------------
+// Status badge colour mapping
+// ---------------------------------------------------------------------------
+
+function StatusPill({ status }: { status: ReturnType<typeof computePropertyStatus> }) {
+  const { t } = useI18n();
+  const labelKey = `property.status_${status}` as const;
+  const styles: Record<string, string> = {
+    active: 'bg-green-100 text-green-700',
+    expiring: 'bg-amber-100 text-amber-700',
+    vacant: 'bg-gray-100 text-gray-600',
+    upcoming: 'bg-blue-100 text-blue-700',
+  };
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${styles[status] ?? styles.vacant}`}
+    >
+      {t(labelKey)}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Permanent QR section
+// ---------------------------------------------------------------------------
+
+interface PropertyQRSectionProps {
+  property: PropertyDetail;
+  pairedTenantName: string | null;
+  onPropertyUpdate: (updates: Partial<PropertyDetail>) => void;
+}
+
+function PropertyQRSection({
+  property,
+  pairedTenantName,
+  onPropertyUpdate,
+}: PropertyQRSectionProps) {
+  const { t } = useI18n();
+  const [rotating, setRotating] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+
+  const pairCode = property.pair_code;
+  const qrUrl =
+    typeof window !== 'undefined' && pairCode
+      ? `${window.location.origin}/pair?code=${pairCode}&property=${property.id}`
+      : '';
+
+  async function handleRotate() {
+    setRotating(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/properties/${property.id}/rotate-code`, { method: 'POST' });
+      if (!res.ok) {
+        const json = (await res.json()) as { error?: string };
+        setError(json.error ?? t('pairing.rotate_error'));
+        return;
+      }
+      const json = (await res.json()) as { pair_code: string };
+      onPropertyUpdate({
+        pair_code: json.pair_code,
+        pair_code_rotated_at: new Date().toISOString(),
+      });
+    } catch {
+      setError(t('pairing.rotate_error'));
+    } finally {
+      setRotating(false);
+    }
+  }
+
+  async function handleGenerate() {
+    setGenerating(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/pairing/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ propertyId: property.id }),
+      });
+      if (!res.ok) {
+        const json = (await res.json()) as { error?: string };
+        setError(json.error ?? t('pairing.generate_error'));
+        return;
+      }
+      const json = (await res.json()) as { code: string };
+      onPropertyUpdate({ pair_code: json.code, pair_code_rotated_at: new Date().toISOString() });
+    } catch {
+      setError(t('pairing.generate_error'));
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  // If no pair_code yet — show generate button
+  if (!pairCode) {
+    return (
+      <div className="mt-4 rounded-xl border border-warm-200 bg-white p-5 shadow-sm">
+        <h3 className="mb-1 text-sm font-semibold text-charcoal-700">
+          {t('pairing.property_section_title')}
+        </h3>
+        <p className="mb-4 text-xs text-charcoal-500">
+          {t('pairing.property_section_description')}
+        </p>
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={generating}
+          className="min-h-[44px] rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
+        >
+          {generating ? t('common.loading') : t('pairing.generate_pair_code')}
+        </button>
+        {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="mt-4 rounded-xl border border-warm-200 bg-white p-5 shadow-sm">
+        {/* Header row */}
+        <div className="mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-charcoal-700">
+            {t('pairing.property_section_title')}
+          </h3>
+          {pairedTenantName && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-sage-50 px-2 py-0.5 text-xs font-medium text-sage-700">
+              {t('pairing.paired_with').replace('{name}', pairedTenantName)}
+            </span>
+          )}
+        </div>
+
+        {/* QR + code side by side on larger screens */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <div className="shrink-0 rounded-xl border border-warm-200 bg-white p-2 shadow-sm self-start">
+            <QRCodeSVG value={qrUrl} size={200} />
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {/* Pair code */}
+            <div>
+              <p className="mb-1 text-xs font-medium text-charcoal-500">
+                {t('pairing.code_label')}
+              </p>
+              <p className="font-mono text-2xl font-bold tracking-widest text-charcoal-900">
+                {pairCode}
+              </p>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setShowShareModal(true)}
+                className="min-h-[36px] rounded-lg bg-saffron-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-saffron-600"
+              >
+                {t('pairing.share_button')}
+              </button>
+              <button
+                type="button"
+                onClick={handleRotate}
+                disabled={rotating}
+                className="min-h-[36px] rounded-lg border border-warm-200 px-3 py-1.5 text-xs font-medium text-charcoal-700 hover:bg-warm-50 disabled:opacity-50"
+              >
+                {rotating ? t('common.loading') : t('pairing.rotate_code')}
+              </button>
+            </div>
+
+            {error && <p className="text-xs text-red-600">{error}</p>}
+          </div>
+        </div>
+
+        {/* Previous tenants count */}
+        {property.previous_tenant_count > 0 && (
+          <p className="mt-4 text-xs text-charcoal-400">
+            {t('pairing.previous_tenants').replace('{n}', String(property.previous_tenant_count))}
+          </p>
+        )}
+      </div>
+
+      {showShareModal && pairCode && (
+        <PairShareModal
+          pairCode={pairCode}
+          qrUrl={qrUrl}
+          propertyName={property.name}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main inner component
+// ---------------------------------------------------------------------------
+
+function PropertyDetailInner({
   property: initialProperty,
   initialContracts,
   initialMaintenance,
   initialTenants,
+  initialPayments,
 }: PropertyDetailClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t, formatDate, formatPhone } = useI18n();
 
   const [property, setProperty] = useState<PropertyDetail>(initialProperty);
   const [contracts, setContracts] = useState<LinkedContract[]>(initialContracts);
   const [maintenance] = useState<MaintenanceRequest[]>(initialMaintenance);
   const [tenants] = useState<Record<string, TenantProfile>>(initialTenants);
+  const [payments] = useState<PaymentRecord[]>(initialPayments);
 
   const [deleting, setDeleting] = useState(false);
   const [deletingContractId, setDeletingContractId] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab | null>(null);
+
+  // Initialise tab from ?tab= query param if present
+  const tabParam = searchParams.get('tab') as Tab | null;
+  const [tab, setTab] = useState<Tab | null>(tabParam);
 
   // Send notification state
   const [notifMessage, setNotifMessage] = useState('');
@@ -81,6 +305,71 @@ export function PropertyDetailClient({
   const [editAddress, setEditAddress] = useState(property.address ?? '');
   const [editUnit, setEditUnit] = useState(property.unit_number ?? '');
   const [saving, setSaving] = useState(false);
+
+  // Cover image state
+  const [coverUrl, setCoverUrl] = useState<string | null>(property.cover_image_url ?? null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [coverError, setCoverError] = useState<string | null>(null);
+
+  // Lease management state
+  const [renewalDismissed, setRenewalDismissed] = useState(false);
+  const [showRenewForm, setShowRenewForm] = useState(false);
+  const [renewLeaseEnd, setRenewLeaseEnd] = useState(property.lease_end ?? '');
+  const [renewSaving, setRenewSaving] = useState(false);
+  const [renewError, setRenewError] = useState<string | null>(null);
+  const [endingTenancy, setEndingTenancy] = useState(false);
+
+  // Computed status
+  const propertyStatus = computePropertyStatus(property.lease_start, property.lease_end);
+
+  const handlePropertyUpdate = useCallback((updates: Partial<PropertyDetail>) => {
+    setProperty((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverError(null);
+    setCoverUploading(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch(`/api/properties/${property.id}/cover`, {
+        method: 'POST',
+        body: form,
+      });
+      if (!res.ok) {
+        setCoverError(t('property.cover_image_error'));
+      } else {
+        const data = (await res.json()) as { url: string };
+        setCoverUrl(data.url);
+        setProperty((prev) => ({ ...prev, cover_image_url: data.url }));
+      }
+    } catch {
+      setCoverError(t('property.cover_image_error'));
+    } finally {
+      setCoverUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleCoverRemove = async () => {
+    setCoverError(null);
+    setCoverUploading(true);
+    try {
+      const res = await fetch(`/api/properties/${property.id}/cover`, { method: 'DELETE' });
+      if (res.ok) {
+        setCoverUrl(null);
+        setProperty((prev) => ({ ...prev, cover_image_url: null }));
+      } else {
+        setCoverError(t('property.cover_image_error'));
+      }
+    } catch {
+      setCoverError(t('property.cover_image_error'));
+    } finally {
+      setCoverUploading(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!editName.trim()) return;
@@ -128,6 +417,55 @@ export function PropertyDetailClient({
     setDeletingContractId(null);
   };
 
+  const handleRenewLease = async () => {
+    if (!renewLeaseEnd) return;
+    setRenewSaving(true);
+    setRenewError(null);
+    try {
+      const res = await fetch(`/api/properties/${property.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lease_end: renewLeaseEnd }),
+      });
+      if (!res.ok) {
+        const json = (await res.json()) as { error?: string };
+        setRenewError(json.error ?? t('property.renew_error'));
+        return;
+      }
+      setProperty((prev) => ({ ...prev, lease_end: renewLeaseEnd }));
+      setShowRenewForm(false);
+      setRenewalDismissed(false);
+    } catch {
+      setRenewError(t('property.renew_error'));
+    } finally {
+      setRenewSaving(false);
+    }
+  };
+
+  const handleEndTenancy = async () => {
+    if (!confirm(t('property.end_tenancy_confirm'))) return;
+    setEndingTenancy(true);
+    try {
+      const res = await fetch(`/api/properties/${property.id}/end-tenancy`, { method: 'POST' });
+      if (res.ok) {
+        const json = (await res.json()) as { newPairCode?: string };
+        setProperty((prev) => ({
+          ...prev,
+          current_tenant_id: null,
+          pair_code: json.newPairCode ?? prev.pair_code,
+          pair_code_rotated_at: json.newPairCode
+            ? new Date().toISOString()
+            : prev.pair_code_rotated_at,
+          previous_tenant_count: prev.previous_tenant_count + 1,
+        }));
+      }
+    } catch {
+      // Silently fail — user can retry
+    } finally {
+      setEndingTenancy(false);
+    }
+  };
+
   const tenantIds = contracts.map((c) => c.tenant_id).filter(Boolean) as string[];
   const uniqueTenantIds = Array.from(new Set(tenantIds));
 
@@ -157,216 +495,352 @@ export function PropertyDetailClient({
     }
   };
 
-  // Show maintenance first if there are open requests
-  const hasOpenMaintenance = maintenance.some(
-    (m) => m.status === 'open' || m.status === 'in_progress'
-  );
+  // Show maintenance first if there are open requests (only when feature is enabled)
+  const hasOpenMaintenance =
+    FEATURE_MAINTENANCE &&
+    maintenance.some((m) => m.status === 'open' || m.status === 'in_progress');
   const defaultTab: Tab = hasOpenMaintenance ? 'maintenance' : 'contracts';
 
   const tabs: { key: Tab; label: string; count?: number; alert?: boolean }[] = [
     { key: 'contracts', label: t('nav.contracts'), count: contracts.length },
     {
-      key: 'maintenance',
-      label: t('nav.maintenance'),
-      count: maintenance.length,
-      alert: hasOpenMaintenance,
+      key: 'payments',
+      label: t('property.tab_payments'),
+      count: payments.length > 0 ? payments.length : undefined,
     },
+    ...(FEATURE_MAINTENANCE
+      ? [
+          {
+            key: 'maintenance' as Tab,
+            label: t('nav.maintenance'),
+            count: maintenance.length,
+            alert: hasOpenMaintenance,
+          },
+        ]
+      : []),
     ...(uniqueTenantIds.length > 0
       ? [{ key: 'notify' as Tab, label: t('property.send_notification') }]
       : []),
   ];
 
-  // Computed stats
-  const activeContract = contracts.find((c) => c.status === 'active');
-  const totalRent = activeContract?.monthly_rent;
+  const pairedTenantName = property.current_tenant_id
+    ? (tenants[property.current_tenant_id]?.full_name ?? null)
+    : null;
+
+  // Format lease date range for display
+  const leaseDateRange =
+    property.lease_start || property.lease_end
+      ? `${formatDisplayDate(property.lease_start) || '—'} – ${formatDisplayDate(property.lease_end) || '—'}`
+      : null;
 
   return (
     <div className="mx-auto max-w-3xl">
-      {/* Back to Properties */}
-      <Link
-        href="/landlord/properties"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 16 16"
-          fill="currentColor"
-          className="h-3.5 w-3.5"
-        >
-          <path
-            fillRule="evenodd"
-            d="M9.78 4.22a.75.75 0 010 1.06L7.06 8l2.72 2.72a.75.75 0 11-1.06 1.06L5.22 8.53a.75.75 0 010-1.06l3.5-3.5a.75.75 0 011.06 0z"
-            clipRule="evenodd"
-          />
-        </svg>
-        {t('nav.properties')}
-      </Link>
+      {/* ----------------------------------------------------------------- */}
+      {/* Status header                                                       */}
+      {/* ----------------------------------------------------------------- */}
+      <div className="mb-5 rounded-xl bg-white p-5 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            {/* Property name */}
+            <h1 className="text-xl font-bold text-charcoal-900 truncate">{property.name}</h1>
 
-      {/* Property hero card */}
-      <div className="mb-5 rounded-xl bg-white shadow-sm overflow-hidden">
-        {editing ? (
-          <div className="p-5 space-y-3">
-            <div>
-              <label htmlFor="edit-name" className="mb-1 block text-xs font-medium text-gray-500">
-                {t('property.name')}
-              </label>
-              <input
-                id="edit-name"
-                type="text"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="edit-address"
-                className="mb-1 block text-xs font-medium text-gray-500"
-              >
-                {t('property.address')}
-              </label>
-              <input
-                id="edit-address"
-                type="text"
-                value={editAddress}
-                onChange={(e) => setEditAddress(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
-              />
-            </div>
-            <div>
-              <label htmlFor="edit-unit" className="mb-1 block text-xs font-medium text-gray-500">
-                {t('property.unit')}
-              </label>
-              <input
-                id="edit-unit"
-                type="text"
-                value={editUnit}
-                onChange={(e) => setEditUnit(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
-              />
-            </div>
-            <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving || !editName.trim()}
-                className="min-h-[44px] rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
-              >
-                {saving ? t('common.loading') : t('common.save')}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEditing(false);
-                  setEditName(property.name);
-                  setEditAddress(property.address ?? '');
-                  setEditUnit(property.unit_number ?? '');
-                }}
-                className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                {t('common.cancel')}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-saffron-50 text-saffron-600">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      className="h-5 w-5"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div className="min-w-0">
-                    <h2 className="text-lg font-bold text-gray-900 truncate">{property.name}</h2>
-                    {property.unit_number && (
-                      <p className="text-xs text-gray-500">
-                        {t('property.unit')}: {property.unit_number}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                {property.address && (
-                  <p className="mt-2 text-sm text-gray-500 pl-11">{property.address}</p>
-                )}
-              </div>
-              {/* Action menu */}
-              <div className="flex gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setEditing(true)}
-                  className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                  title={t('property.edit')}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    className="h-4 w-4"
-                  >
-                    <path d="M13.488 2.513a1.75 1.75 0 00-2.475 0L6.75 6.774a2.75 2.75 0 00-.596.892l-.848 2.047a.75.75 0 00.98.98l2.047-.848a2.75 2.75 0 00.892-.596l4.261-4.262a1.75 1.75 0 000-2.474z" />
-                    <path d="M4.75 3.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h6.5c.69 0 1.25-.56 1.25-1.25V9A.75.75 0 0114 9v2.25A2.75 2.75 0 0111.25 14h-6.5A2.75 2.75 0 012 11.25v-6.5A2.75 2.75 0 014.75 2H7a.75.75 0 010 1.5H4.75z" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-50"
-                  title={t('property.delete')}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    className="h-4 w-4"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5 3.25V4H2.75a.75.75 0 000 1.5h.3l.815 8.15A1.5 1.5 0 005.357 15h5.285a1.5 1.5 0 001.493-1.35l.815-8.15h.3a.75.75 0 000-1.5H11v-.75A2.25 2.25 0 008.75 1h-1.5A2.25 2.25 0 005 3.25zm2.25-.75a.75.75 0 00-.75.75V4h3v-.75a.75.75 0 00-.75-.75h-1.5zM6.05 6a.75.75 0 01.787.713l.275 5.5a.75.75 0 01-1.498.075l-.275-5.5A.75.75 0 016.05 6zm3.9 0a.75.75 0 01.712.787l-.275 5.5a.75.75 0 01-1.498-.075l.275-5.5a.75.75 0 01.786-.711z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Quick stats row */}
-            {totalRent && (
-              <div className="mt-3 ml-11 flex items-center gap-3">
-                <span className="inline-flex items-center rounded-full bg-green-50 px-2.5 py-0.5 text-xs font-semibold text-green-700">
-                  {totalRent.toLocaleString()} /
-                  {t('contract.monthly_rent').toLowerCase().includes('month')
-                    ? 'mo'
-                    : '\u0E40\u0E14\u0E37\u0E2D\u0E19'}
+            {/* Status pill + lease dates row */}
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              <StatusPill status={propertyStatus} />
+              {leaseDateRange ? (
+                <span className="text-xs text-charcoal-500">{leaseDateRange}</span>
+              ) : (
+                <span className="text-xs text-charcoal-400">{t('property.no_lease_dates')}</span>
+              )}
+              {property.monthly_rent && (
+                <span className="text-xs font-semibold text-charcoal-700">
+                  ฿{property.monthly_rent.toLocaleString()}
+                  {t('property.per_month')}
                 </span>
-                {activeContract && (
-                  <span className="text-xs text-gray-400">
-                    {activeContract.lease_start} &rarr; {activeContract.lease_end}
-                  </span>
-                )}
+              )}
+            </div>
+
+            {property.address && (
+              <p className="mt-2 text-sm text-charcoal-500">{property.address}</p>
+            )}
+            {property.unit_number && (
+              <p className="text-xs text-charcoal-400">
+                {t('property.unit')}: {property.unit_number}
+              </p>
+            )}
+          </div>
+
+          {/* Edit / Delete buttons */}
+          <div className="flex gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+              title={t('property.edit')}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                className="h-4 w-4"
+              >
+                <path d="M13.488 2.513a1.75 1.75 0 00-2.475 0L6.75 6.774a2.75 2.75 0 00-.596.892l-.848 2.047a.75.75 0 00.98.98l2.047-.848a2.75 2.75 0 00.892-.596l4.261-4.262a1.75 1.75 0 000-2.474z" />
+                <path d="M4.75 3.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h6.5c.69 0 1.25-.56 1.25-1.25V9A.75.75 0 0114 9v2.25A2.75 2.75 0 0111.25 14h-6.5A2.75 2.75 0 012 11.25v-6.5A2.75 2.75 0 014.75 2H7a.75.75 0 010 1.5H4.75z" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-50"
+              title={t('property.delete')}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+                className="h-4 w-4"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5 3.25V4H2.75a.75.75 0 000 1.5h.3l.815 8.15A1.5 1.5 0 005.357 15h5.285a1.5 1.5 0 001.493-1.35l.815-8.15h.3a.75.75 0 000-1.5H11v-.75A2.25 2.25 0 008.75 1h-1.5A2.25 2.25 0 005 3.25zm2.25-.75a.75.75 0 00-.75.75V4h3v-.75a.75.75 0 00-.75-.75h-1.5zM6.05 6a.75.75 0 01.787.713l.275 5.5a.75.75 0 01-1.498.075l-.275-5.5A.75.75 0 016.05 6zm3.9 0a.75.75 0 01.712.787l-.275 5.5a.75.75 0 01-1.498-.075l.275-5.5a.75.75 0 01.786-.711z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Lease management actions */}
+        {propertyStatus === 'expiring' && !renewalDismissed && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <p className="mb-3 text-sm font-medium text-amber-800">
+              {t('property.expiring_prompt')}
+            </p>
+            {showRenewForm ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-charcoal-700">
+                    {t('property.new_lease_end')}
+                  </label>
+                  <input
+                    type="date"
+                    value={renewLeaseEnd}
+                    onChange={(e) => setRenewLeaseEnd(e.target.value)}
+                    min={property.lease_end ?? undefined}
+                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                  />
+                </div>
+                {renewError && <p className="text-xs text-red-600">{renewError}</p>}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleRenewLease}
+                    disabled={renewSaving || !renewLeaseEnd}
+                    className="min-h-[36px] rounded-lg bg-saffron-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
+                  >
+                    {renewSaving ? t('common.loading') : t('property.renew_save')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowRenewForm(false)}
+                    className="min-h-[36px] rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    {t('common.cancel')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowRenewForm(true)}
+                  className="min-h-[36px] rounded-lg bg-saffron-500 px-4 py-1.5 text-sm font-medium text-white hover:bg-saffron-600"
+                >
+                  {t('property.renew_lease')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRenewalDismissed(true)}
+                  className="min-h-[36px] rounded-lg border border-amber-300 bg-white px-4 py-1.5 text-sm font-medium text-amber-700 hover:bg-amber-50"
+                >
+                  {t('property.no_renewal')}
+                </button>
               </div>
             )}
           </div>
         )}
+
+        {/* End Tenancy — visible when a tenant is paired */}
+        {property.current_tenant_id && (
+          <div className="mt-3 flex justify-end">
+            <button
+              type="button"
+              onClick={handleEndTenancy}
+              disabled={endingTenancy}
+              className="min-h-[36px] rounded-lg border border-red-200 bg-white px-4 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+            >
+              {endingTenancy ? t('common.loading') : t('property.end_tenancy')}
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Photo gallery */}
-      <div className="mb-5">
+      {/* ----------------------------------------------------------------- */}
+      {/* Edit form (replaces status header when editing)                    */}
+      {/* ----------------------------------------------------------------- */}
+      {editing && (
+        <div className="mb-5 rounded-xl bg-white p-5 shadow-sm space-y-3">
+          {/* Cover image picker */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">
+              {t('property.cover_image_label')}
+            </label>
+            <div className="flex items-start gap-3">
+              <div className="h-[120px] w-[120px] shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                {coverUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={coverUrl}
+                    alt={t('property.cover_image_label')}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-gray-300">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="h-10 w-10"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <label
+                  htmlFor="cover-image-input"
+                  className={`inline-flex min-h-[36px] cursor-pointer items-center rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 ${coverUploading ? 'pointer-events-none opacity-50' : ''}`}
+                >
+                  {coverUploading
+                    ? t('property.cover_image_uploading')
+                    : t('property.cover_image_upload')}
+                  <input
+                    id="cover-image-input"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    onChange={handleCoverUpload}
+                    disabled={coverUploading}
+                  />
+                </label>
+                {coverUrl && (
+                  <button
+                    type="button"
+                    onClick={handleCoverRemove}
+                    disabled={coverUploading}
+                    className="inline-flex min-h-[36px] items-center rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    {t('property.cover_image_remove')}
+                  </button>
+                )}
+                {coverError && <p className="text-xs text-red-600">{coverError}</p>}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="edit-name" className="mb-1 block text-xs font-medium text-gray-500">
+              {t('property.name')}
+            </label>
+            <input
+              id="edit-name"
+              type="text"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="edit-address" className="mb-1 block text-xs font-medium text-gray-500">
+              {t('property.address')}
+            </label>
+            <input
+              id="edit-address"
+              type="text"
+              value={editAddress}
+              onChange={(e) => setEditAddress(e.target.value)}
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="edit-unit" className="mb-1 block text-xs font-medium text-gray-500">
+              {t('property.unit')}
+            </label>
+            <input
+              id="edit-unit"
+              type="text"
+              value={editUnit}
+              onChange={(e) => setEditUnit(e.target.value)}
+              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+            />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving || !editName.trim()}
+              className="min-h-[44px] rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
+            >
+              {saving ? t('common.loading') : t('common.save')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEditing(false);
+                setEditName(property.name);
+                setEditAddress(property.address ?? '');
+                setEditUnit(property.unit_number ?? '');
+              }}
+              className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ----------------------------------------------------------------- */}
+      {/* QR section — always visible                                         */}
+      {/* ----------------------------------------------------------------- */}
+      <PropertyQRSection
+        property={property}
+        pairedTenantName={pairedTenantName}
+        onPropertyUpdate={handlePropertyUpdate}
+      />
+
+      {/* Previous tenants count (shown below QR section) */}
+      {property.previous_tenant_count > 0 && (
+        <p className="mt-2 px-1 text-xs text-charcoal-400">
+          {t('pairing.previous_tenants').replace('{n}', String(property.previous_tenant_count))}
+        </p>
+      )}
+
+      {/* ----------------------------------------------------------------- */}
+      {/* Photo gallery                                                       */}
+      {/* ----------------------------------------------------------------- */}
+      <div className="mb-5 mt-5">
         <PropertyImageGallery propertyId={property.id} />
       </div>
 
-      {/* Tab bar */}
+      {/* ----------------------------------------------------------------- */}
+      {/* Tab bar                                                             */}
+      {/* ----------------------------------------------------------------- */}
       <div className="mb-4 flex gap-2 flex-wrap">
         {tabs.map((tb) => {
           const active = (tab ?? defaultTab) === tb.key;
@@ -395,19 +869,20 @@ export function PropertyDetailClient({
         })}
       </div>
 
-      {/* Tab: Contracts */}
+      {/* ----------------------------------------------------------------- */}
+      {/* Tab: Contracts                                                      */}
+      {/* ----------------------------------------------------------------- */}
       {(tab ?? defaultTab) === 'contracts' && (
         <>
           <div className="mb-3 flex gap-2">
             <Link
-              href="/landlord/contracts/create"
-              className="relative overflow-hidden min-h-[36px] flex items-center rounded-lg bg-saffron-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-saffron-600"
+              href={`/landlord/contracts/create?property_id=${property.id}`}
+              className="min-h-[36px] flex items-center rounded-lg bg-saffron-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-saffron-600"
             >
               {t('nav.create_contract')}
-              <ProRibbon size="sm" />
             </Link>
             <Link
-              href="/landlord/contracts/upload"
+              href={`/landlord/contracts/upload?property_id=${property.id}`}
               className="min-h-[36px] flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
             >
               {t('contract.upload_new')}
@@ -500,7 +975,8 @@ export function PropertyDetailClient({
                       </div>
                       {(c.lease_start || c.lease_end) && (
                         <p className="mt-1.5 text-xs text-gray-500">
-                          {c.lease_start ?? '\u2014'} &rarr; {c.lease_end ?? '\u2014'}
+                          {formatDisplayDate(c.lease_start) || '\u2014'} &rarr;{' '}
+                          {formatDisplayDate(c.lease_end) || '\u2014'}
                         </p>
                       )}
                       {tenant && (
@@ -523,8 +999,21 @@ export function PropertyDetailClient({
         </>
       )}
 
-      {/* Tab: Maintenance */}
-      {(tab ?? defaultTab) === 'maintenance' && (
+      {/* ----------------------------------------------------------------- */}
+      {/* Tab: Payments                                                       */}
+      {/* ----------------------------------------------------------------- */}
+      {(tab ?? defaultTab) === 'payments' && (
+        <PropertyPaymentsTab
+          contracts={contracts as unknown as ContractForPayments[]}
+          payments={payments}
+          propertyName={property.name}
+        />
+      )}
+
+      {/* ----------------------------------------------------------------- */}
+      {/* Tab: Maintenance                                                    */}
+      {/* ----------------------------------------------------------------- */}
+      {FEATURE_MAINTENANCE && (tab ?? defaultTab) === 'maintenance' && (
         <>
           {maintenance.length === 0 ? (
             <div className="rounded-lg bg-white p-8 text-center shadow-sm">
@@ -548,7 +1037,9 @@ export function PropertyDetailClient({
         </>
       )}
 
-      {/* Tab: Send Notification */}
+      {/* ----------------------------------------------------------------- */}
+      {/* Tab: Send Notification                                              */}
+      {/* ----------------------------------------------------------------- */}
       {(tab ?? defaultTab) === 'notify' && uniqueTenantIds.length > 0 && (
         <div className="rounded-lg bg-white p-5 shadow-sm">
           <textarea
@@ -576,5 +1067,17 @@ export function PropertyDetailClient({
         </div>
       )}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Exported wrapper — wraps the inner component in Suspense so useSearchParams
+// doesn't break static generation (same pattern as /pair).
+// ---------------------------------------------------------------------------
+export function PropertyDetailClient(props: PropertyDetailClientProps) {
+  return (
+    <Suspense fallback={null}>
+      <PropertyDetailInner {...props} />
+    </Suspense>
   );
 }

@@ -56,8 +56,33 @@ function LoginPageInner() {
     <div className="flex min-h-screen items-center justify-center bg-warm-50 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-charcoal-900">{t('app.title')}</h1>
+          <Link
+            href="/"
+            className="text-2xl font-bold text-charcoal-900 hover:text-saffron-600 transition-colors"
+          >
+            {t('app.title')}
+          </Link>
           <LanguageToggle variant="inline" />
+        </div>
+        <div className="mb-4">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1 text-sm text-charcoal-500 hover:text-saffron-600 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+              className="h-3.5 w-3.5"
+            >
+              <path
+                fillRule="evenodd"
+                d="M9.78 4.22a.75.75 0 010 1.06L7.06 8l2.72 2.72a.75.75 0 11-1.06 1.06L5.22 8.53a.75.75 0 010-1.06l3.5-3.5a.75.75 0 011.06 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Back to home
+          </Link>
         </div>
 
         {/* Beta disclaimer */}

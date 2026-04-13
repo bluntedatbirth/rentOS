@@ -101,7 +101,7 @@ async function handleCallback(request: Request) {
   // Send notification (fire-and-forget — non-blocking)
   sendNotification({
     recipientId: user.id,
-    type: 'slot_unlock_succeeded',
+    type: 'custom',
     titleEn: 'Slots Unlocked!',
     titleTh: 'ปลดล็อกสล็อตสำเร็จ!',
     bodyEn: `${slotsAdded} extra property slot${slotsAdded > 1 ? 's' : ''} have been added to your account.`,

@@ -4,8 +4,22 @@
     {
       "name": "rental-manager",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "autoPort": true
+      "runtimeArgs": ["run", "dev", "--", "-p", "3000"],
+      "port": 3000
+    },
+    {
+      "name": "three-things-mockups",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "--yes",
+        "http-server",
+        "sprint-reports/three-things/preview",
+        "-p",
+        "4599",
+        "-c-1",
+        "--silent"
+      ],
+      "port": 4599
     }
   ]
 }

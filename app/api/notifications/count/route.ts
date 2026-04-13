@@ -11,9 +11,6 @@ export async function GET() {
     .eq('recipient_id', user.id)
     .is('read_at', null);
 
-  if (error) {
-    return serverError(error.message);
-  }
-
+  if (error) return serverError(error.message);
   return NextResponse.json({ count: count ?? 0 });
 }

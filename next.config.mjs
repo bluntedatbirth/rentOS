@@ -18,7 +18,13 @@ const scriptSrc = isDev
 
 const nextConfig = {
   experimental: {
-    optimizePackageImports: ['@supabase/supabase-js', '@supabase/ssr', 'zod'],
+    optimizePackageImports: [
+      '@supabase/supabase-js',
+      '@supabase/ssr',
+      'zod',
+      'framer-motion',
+      'lucide-react',
+    ],
   },
   images: {
     remotePatterns: [

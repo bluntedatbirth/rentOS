@@ -32,7 +32,7 @@ export default function TenantPairPage() {
 
   const handleRedeem = async (redeemCode?: string) => {
     const finalCode = redeemCode ?? code;
-    if (!finalCode || finalCode.length !== 6) {
+    if (!finalCode || finalCode.length !== 8) {
       setError(t('pairing.invalid_code'));
       return;
     }
@@ -77,15 +77,15 @@ export default function TenantPairPage() {
             id="pairing-code"
             type="text"
             value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 6))}
-            maxLength={6}
-            placeholder="ABC123"
+            onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 8))}
+            maxLength={8}
+            placeholder="ABC12345"
             className="mb-4 block w-full rounded-lg border border-warm-200 px-4 py-3 text-center font-mono text-2xl font-bold tracking-widest text-charcoal-900 placeholder:text-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
           />
 
-          {code.length > 0 && code.length < 6 && (
+          {code.length > 0 && code.length < 8 && (
             <p className="mb-2 text-xs text-charcoal-500">
-              {t('pairing.code_length_hint').replace('{n}', String(6 - code.length))}
+              {t('pairing.code_length_hint').replace('{n}', String(8 - code.length))}
             </p>
           )}
 
@@ -94,7 +94,7 @@ export default function TenantPairPage() {
           <button
             type="button"
             onClick={() => handleRedeem()}
-            disabled={loading || code.length !== 6}
+            disabled={loading || code.length !== 8}
             className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
           >
             {loading ? t('common.loading') : t('pairing.pair_button')}

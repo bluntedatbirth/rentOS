@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+import { resolveNotification } from '@/lib/notifications/resolve';
+import { NOTIFICATION_MODE } from '@/lib/notifications/mode';
 
 interface Notification {
   id: string;
@@ -22,25 +24,10 @@ interface Notification {
   read_at: string | null;
 }
 
-/** Fallback routes when a notification has no stored URL */
-const TYPE_ROUTES_TENANT: Record<string, string> = {
-  payment_due: '/tenant/payments',
-  payment_overdue: '/tenant/payments',
-  lease_expiry: '/tenant/contract/view',
-  penalty_raised: '/tenant/penalties/appeal',
-  penalty_appeal: '/tenant/penalties/appeal',
-  penalty_resolved: '/tenant/penalties/appeal',
-  maintenance_raised: '/tenant/maintenance',
-  maintenance_updated: '/tenant/maintenance',
-  lease_renewal_offer: '/tenant/contract/view',
-  lease_renewal_response: '/tenant/contract/view',
-};
-
-const DASHBOARD = '/tenant/dashboard';
-
 const TYPE_ICONS: Record<string, string> = {
   payment_due: '\u{1F4B3}',
   payment_overdue: '\u{1F6A8}',
+  payment_claimed: '\u{1F4B0}',
   lease_expiry: '\u{1F4C5}',
   penalty_raised: '\u{26A0}\uFE0F',
   penalty_appeal: '\u{1F4DD}',
@@ -49,6 +36,7 @@ const TYPE_ICONS: Record<string, string> = {
   maintenance_updated: '\u{1F504}',
   lease_renewal_offer: '\u{1F4E8}',
   lease_renewal_response: '\u{1F4E9}',
+  renewal_signing_reminder: '\u{270D}\uFE0F',
 };
 
 function timeAgo(dateStr: string, t: (key: string) => string): string {
@@ -63,19 +51,6 @@ function timeAgo(dateStr: string, t: (key: string) => string): string {
   if (diffMins < 60) return t('notifications.time_ago_minutes').replace('{}', String(diffMins));
   if (diffHours < 24) return t('notifications.time_ago_hours').replace('{}', String(diffHours));
   return t('notifications.time_ago_days').replace('{}', String(diffDays));
-}
-
-/** Resolve the destination URL for a notification, adding role prefix if needed */
-function resolveUrl(notification: Notification): string {
-  const url = notification.url;
-  // Security: only allow relative same-origin paths to prevent open-redirect.
-  // Blocks absolute URLs (no leading /) and protocol-relative URLs (//evil.com).
-  if (url && typeof url === 'string' && url.startsWith('/') && !url.startsWith('//')) {
-    if (url.startsWith('/contracts/')) return '/tenant' + url;
-    return url;
-  }
-  // Fallback to type-based routing when url is absent or fails the safety check
-  return TYPE_ROUTES_TENANT[notification.type] ?? DASHBOARD;
 }
 
 export default function TenantNotificationsPage() {
@@ -117,9 +92,21 @@ export default function TenantNotificationsPage() {
     setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
     fetch(`/api/notifications/${notification.id}/dismiss`, { method: 'DELETE' });
 
-    // Navigate to destination, falling back to dashboard if no valid route
-    const dest = resolveUrl(notification);
-    router.push(dest);
+    const notificationMode = NOTIFICATION_MODE[notification.type];
+    const currentRole = 'tenant';
+    if (notificationMode && notificationMode !== currentRole) {
+      await fetch('/api/account/mode', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active_mode: notificationMode }),
+      });
+      sessionStorage.setItem('rentos_mode_switch', notificationMode);
+      const dest = resolveNotification(notification, notificationMode);
+      window.location.href = dest;
+    } else {
+      const dest = resolveNotification(notification, currentRole);
+      router.push(dest);
+    }
   };
 
   if (loading) return <LoadingSkeleton count={5} />;
@@ -173,6 +160,12 @@ export default function TenantNotificationsPage() {
                       {!notification.read_at && (
                         <span className="inline-block h-2 w-2 flex-shrink-0 rounded-full bg-saffron-500" />
                       )}
+                      {NOTIFICATION_MODE[notification.type] &&
+                        NOTIFICATION_MODE[notification.type] !== 'tenant' && (
+                          <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium bg-saffron-100 text-saffron-700 shrink-0">
+                            {t('notifications.mode_landlord')}
+                          </span>
+                        )}
                     </div>
                     <p className="mt-0.5 text-sm text-charcoal-500 line-clamp-2">
                       {locale === 'en'

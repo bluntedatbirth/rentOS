@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+import { formatDisplayDate } from '@/lib/format/date';
 
 const supabase = createClient();
 
@@ -69,14 +70,6 @@ const TYPE_LABEL_KEYS: Record<string, string> = {
   deposit: 'payments.type_deposit',
   penalty: 'payments.type_penalty',
 };
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
 
 export default function TenantPaymentsPage() {
   const { user } = useAuth();
@@ -228,7 +221,7 @@ export default function TenantPaymentsPage() {
 
         <div className="mt-2 flex flex-wrap gap-4 text-sm text-charcoal-500">
           <span>
-            {t('payments.due_date')}: {payment.due_date}
+            {t('payments.due_date')}: {formatDisplayDate(payment.due_date)}
           </span>
           {payment.status !== 'paid' && !isOverdue && daysUntil >= 0 && (
             <span className={daysUntil <= 3 ? 'text-amber-600 font-medium' : ''}>
@@ -239,7 +232,8 @@ export default function TenantPaymentsPage() {
           )}
           {payment.paid_date && (
             <span>
-              {t('payments.paid_date')}: {payment.paid_date}
+              {t('payments.paid_date')}:{' '}
+              {payment.paid_date ? formatDisplayDate(payment.paid_date) : ''}
             </span>
           )}
         </div>
@@ -360,7 +354,8 @@ export default function TenantPaymentsPage() {
               <div>
                 <p className="text-xs text-charcoal-500">{t('payments.lease_period')}</p>
                 <p className="text-sm font-semibold text-charcoal-900">
-                  {formatDate(activeContract.lease_start)} → {formatDate(activeContract.lease_end)}
+                  {formatDisplayDate(activeContract.lease_start)} →{' '}
+                  {formatDisplayDate(activeContract.lease_end)}
                 </p>
               </div>
             </div>

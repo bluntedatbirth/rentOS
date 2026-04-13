@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { sendPushNotification } from './fcm';
+import type { NotificationPayload } from './payload';
 
 /** Notification types matching the DB CHECK constraint */
 export type NotificationType =
@@ -17,7 +18,8 @@ export type NotificationType =
   | 'lease_renewal_offer'
   | 'lease_renewal_response'
   | 'renewal_signing_reminder'
-  | 'slot_unlock_succeeded'
+  | 'pairing_confirmed'
+  | 'lease_ended'
   | 'custom';
 
 export interface SendNotificationParams {
@@ -29,6 +31,8 @@ export interface SendNotificationParams {
   bodyTh: string;
   /** Optional URL for push notification click-through */
   url?: string;
+  /** Structured routing payload for deep-link navigation */
+  payload?: NotificationPayload;
 }
 
 /**
@@ -82,6 +86,7 @@ export async function sendNotification(params: SendNotificationParams): Promise<
     body_th: bodyTh,
   };
   if (url) insertPayload.url = url;
+  insertPayload.payload = params.payload ?? null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let { error: insertError } = await supabase.from('notifications').insert(insertPayload as any);
@@ -93,6 +98,7 @@ export async function sendNotification(params: SendNotificationParams): Promise<
       insertError.message
     );
     delete insertPayload.url;
+    delete insertPayload.payload;
     delete insertPayload.title_en;
     delete insertPayload.title_th;
     delete insertPayload.body_en;

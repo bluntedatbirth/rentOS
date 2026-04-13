@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useState, useEffect, useRef } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { NotificationBell } from '@/components/ui/NotificationBell';
 import { BottomNav, type NavItem } from '@/components/ui/BottomNav';
 import { SideNav, type SideNavItem } from '@/components/ui/SideNav';
 import { MoreSheet, type MoreSheetItem } from '@/components/ui/MoreSheet';
+import { FEATURE_MAINTENANCE, FEATURE_CO_TENANTS, FEATURE_PENALTIES } from '@/lib/features';
 
 const SimulationPanel =
   process.env.NEXT_PUBLIC_BETA_SIMULATIONS === 'true'
@@ -21,12 +23,23 @@ const SimulationPanel =
       )
     : () => null;
 
+const TENANT_ROOT_TABS = [
+  '/tenant/dashboard',
+  '/tenant/contract/view',
+  '/tenant/payments',
+  '/tenant/maintenance',
+];
+
 export default function TenantShell({ children }: { children: React.ReactNode }) {
   const { profile, loading, signOut } = useAuth();
   const { t, locale, setLocale } = useI18n();
+  const router = useRouter();
+  const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
   const lastScrollY = useRef(0);
+
+  const isRootTab = TENANT_ROOT_TABS.includes(pathname);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -50,7 +63,7 @@ export default function TenantShell({ children }: { children: React.ReactNode })
     );
   }
 
-  if (!profile || profile.role !== 'tenant') {
+  if (!profile || (profile.active_mode ?? profile.role) !== 'tenant') {
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <div className="text-center">
@@ -115,25 +128,29 @@ export default function TenantShell({ children }: { children: React.ReactNode })
       ),
       matchPrefix: '/tenant/payments',
     },
-    {
-      href: '/tenant/maintenance',
-      label: t('nav.maintenance'),
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          className="h-5 w-5"
-        >
-          <path
-            fillRule="evenodd"
-            d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
-            clipRule="evenodd"
-          />
-        </svg>
-      ),
-      matchPrefix: '/tenant/maintenance',
-    },
+    ...(FEATURE_MAINTENANCE
+      ? [
+          {
+            href: '/tenant/maintenance',
+            label: t('nav.maintenance'),
+            icon: (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="h-5 w-5"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            ),
+            matchPrefix: '/tenant/maintenance',
+          } satisfies NavItem,
+        ]
+      : []),
   ];
 
   // More sheet items — everything not in the bottom tabs (no /tenant/profile — canonical profile edit is at /tenant/settings)
@@ -153,21 +170,25 @@ export default function TenantShell({ children }: { children: React.ReactNode })
         </svg>
       ),
     },
-    {
-      href: '/tenant/co-tenants',
-      label: t('nav.co_tenants'),
-      matchPrefix: '/tenant/co-tenants',
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          className="h-5 w-5"
-        >
-          <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
-        </svg>
-      ),
-    },
+    ...(FEATURE_CO_TENANTS
+      ? [
+          {
+            href: '/tenant/co-tenants',
+            label: t('nav.co_tenants'),
+            matchPrefix: '/tenant/co-tenants',
+            icon: (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="h-5 w-5"
+              >
+                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+              </svg>
+            ),
+          } satisfies MoreSheetItem,
+        ]
+      : []),
     {
       href: '/tenant/documents',
       label: t('nav.documents'),
@@ -203,25 +224,29 @@ export default function TenantShell({ children }: { children: React.ReactNode })
         </svg>
       ),
     },
-    {
-      href: '/tenant/penalties/appeal',
-      label: t('nav.penalties'),
-      matchPrefix: '/tenant/penalties',
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          className="h-5 w-5"
-        >
-          <path
-            fillRule="evenodd"
-            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-            clipRule="evenodd"
-          />
-        </svg>
-      ),
-    },
+    ...(FEATURE_PENALTIES
+      ? [
+          {
+            href: '/tenant/penalties/appeal',
+            label: t('nav.penalties'),
+            matchPrefix: '/tenant/penalties',
+            icon: (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="h-5 w-5"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            ),
+          } satisfies MoreSheetItem,
+        ]
+      : []),
     {
       href: '/tenant/security',
       label: t('nav.security'),
@@ -263,19 +288,35 @@ export default function TenantShell({ children }: { children: React.ReactNode })
     { href: '/tenant/dashboard', label: t('nav.dashboard') },
     { href: '/tenant/pair', label: t('nav.pair'), matchPrefix: '/tenant/pair' },
     { href: '/tenant/contract/view', label: t('nav.my_contract'), matchPrefix: '/tenant/contract' },
-    { href: '/tenant/co-tenants', label: t('nav.co_tenants'), matchPrefix: '/tenant/co-tenants' },
-    {
-      href: '/tenant/maintenance',
-      label: t('nav.maintenance'),
-      matchPrefix: '/tenant/maintenance',
-    },
+    ...(FEATURE_CO_TENANTS
+      ? [
+          {
+            href: '/tenant/co-tenants',
+            label: t('nav.co_tenants'),
+            matchPrefix: '/tenant/co-tenants',
+          } satisfies SideNavItem,
+        ]
+      : []),
+    ...(FEATURE_MAINTENANCE
+      ? [
+          {
+            href: '/tenant/maintenance',
+            label: t('nav.maintenance'),
+            matchPrefix: '/tenant/maintenance',
+          } satisfies SideNavItem,
+        ]
+      : []),
     { href: '/tenant/documents', label: t('nav.documents'), matchPrefix: '/tenant/documents' },
     { href: '/tenant/payments', label: t('nav.payments'), matchPrefix: '/tenant/payments' },
-    {
-      href: '/tenant/penalties/appeal',
-      label: t('nav.penalties'),
-      matchPrefix: '/tenant/penalties',
-    },
+    ...(FEATURE_PENALTIES
+      ? [
+          {
+            href: '/tenant/penalties/appeal',
+            label: t('nav.penalties'),
+            matchPrefix: '/tenant/penalties',
+          } satisfies SideNavItem,
+        ]
+      : []),
     {
       href: '/tenant/notifications',
       label: t('nav.notifications'),
@@ -293,6 +334,22 @@ export default function TenantShell({ children }: { children: React.ReactNode })
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
+            {!isRootTab && (
+              <button
+                type="button"
+                onClick={() => router.back()}
+                aria-label={t('common.back')}
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 text-charcoal-700 hover:bg-warm-100"
+              >
+                <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
+                  <path
+                    fillRule="evenodd"
+                    d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            )}
             <Link
               href="/tenant/dashboard"
               className="flex items-center gap-2 text-lg font-bold text-charcoal-900"
@@ -304,6 +361,21 @@ export default function TenantShell({ children }: { children: React.ReactNode })
             </Link>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={async () => {
+                await fetch('/api/account/mode', {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ active_mode: 'landlord' }),
+                });
+                sessionStorage.setItem('rentos_mode_switch', 'landlord');
+                window.location.href = '/landlord/properties';
+              }}
+              className="min-h-[44px] rounded-lg border border-saffron-300 bg-saffron-50 px-3 py-2 text-xs font-medium text-saffron-700 hover:bg-saffron-100"
+            >
+              {t('mode.switch_to_landlord')}
+            </button>
             <NotificationBell role="tenant" />
             <button
               type="button"
@@ -352,7 +424,7 @@ export default function TenantShell({ children }: { children: React.ReactNode })
         }}
       />
       <MoreSheet items={moreSheetItems} open={moreOpen} onClose={() => setMoreOpen(false)} />
-      <SimulationPanel role="tenant" />
+      <SimulationPanel role={profile.active_mode ?? profile.role} />
     </div>
   );
 }

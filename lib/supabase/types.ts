@@ -31,6 +31,7 @@ export interface Database {
         Row: {
           id: string;
           role: 'landlord' | 'tenant';
+          active_mode: 'landlord' | 'tenant';
           full_name: string | null;
           phone: string | null;
           language: 'th' | 'en' | 'zh';
@@ -48,6 +49,7 @@ export interface Database {
         Insert: {
           id: string;
           role: 'landlord' | 'tenant';
+          active_mode?: 'landlord' | 'tenant';
           full_name?: string | null;
           phone?: string | null;
           language?: 'th' | 'en' | 'zh';
@@ -65,6 +67,7 @@ export interface Database {
         Update: {
           id?: string;
           role?: 'landlord' | 'tenant';
+          active_mode?: 'landlord' | 'tenant';
           full_name?: string | null;
           phone?: string | null;
           language?: 'th' | 'en' | 'zh';
@@ -90,6 +93,8 @@ export interface Database {
           unit_number: string | null;
           is_active: boolean;
           created_at: string;
+          cover_image_url: string | null;
+          daily_rate: number | null;
         };
         Insert: {
           id?: string;
@@ -99,6 +104,8 @@ export interface Database {
           unit_number?: string | null;
           is_active?: boolean;
           created_at?: string;
+          cover_image_url?: string | null;
+          daily_rate?: number | null;
         };
         Update: {
           id?: string;
@@ -108,6 +115,8 @@ export interface Database {
           unit_number?: string | null;
           is_active?: boolean;
           created_at?: string;
+          cover_image_url?: string | null;
+          daily_rate?: number | null;
         };
         Relationships: [
           {
@@ -122,9 +131,9 @@ export interface Database {
       contracts: {
         Row: {
           id: string;
-          property_id: string;
+          property_id: string | null;
           tenant_id: string | null;
-          landlord_id: string;
+          landlord_id: string | null;
           original_file_url: string | null;
           file_type: 'image' | 'pdf' | null;
           raw_text_th: string | null;
@@ -148,12 +157,15 @@ export interface Database {
           renewed_from: string | null;
           renewal_changes: Json | null;
           created_at: string;
+          property_name: string | null;
+          due_day: number | null;
+          notes: string | null;
         };
         Insert: {
           id?: string;
-          property_id: string;
+          property_id?: string | null;
           tenant_id?: string | null;
-          landlord_id: string;
+          landlord_id?: string | null;
           original_file_url?: string | null;
           file_type?: 'image' | 'pdf' | null;
           raw_text_th?: string | null;
@@ -177,12 +189,15 @@ export interface Database {
           renewed_from?: string | null;
           renewal_changes?: Json | null;
           created_at?: string;
+          property_name?: string | null;
+          due_day?: number | null;
+          notes?: string | null;
         };
         Update: {
           id?: string;
-          property_id?: string;
+          property_id?: string | null;
           tenant_id?: string | null;
-          landlord_id?: string;
+          landlord_id?: string | null;
           original_file_url?: string | null;
           file_type?: 'image' | 'pdf' | null;
           raw_text_th?: string | null;
@@ -206,6 +221,9 @@ export interface Database {
           renewed_from?: string | null;
           renewal_changes?: Json | null;
           created_at?: string;
+          property_name?: string | null;
+          due_day?: number | null;
+          notes?: string | null;
         };
         Relationships: [
           {

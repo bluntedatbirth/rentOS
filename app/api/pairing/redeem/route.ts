@@ -2,26 +2,19 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getAuthenticatedUser, unauthorized, badRequest, serverError } from '@/lib/supabase/api';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { onTenantPaired } from '@/lib/notifications/events';
 import { activateContract } from '@/lib/contracts/activate';
+import { sendNotification } from '@/lib/notifications/send';
 
 const schema = z.object({
-  code: z.string().length(6),
+  code: z.string().length(8),
 });
 
-// Tenant redeems a pairing code to link to a contract.
+// Tenant redeems an 8-char pair code to link themselves to a property.
 //
-// P1-I: atomic claim-the-code pattern. Previously this route did a
-// SELECT-check-then-UPDATE, which races: two concurrent tenants could
-// both pass `tenant_id IS NULL` before either write landed, and the
-// second silently overwrote the first.
-//
-// The new flow issues a single UPDATE with all the guarding predicates
-// inside the WHERE clause and uses .select() so PostgREST compiles it
-// into one SQL statement with RETURNING. If zero rows come back, the
-// code is invalid/expired/already-claimed — no second query needed.
-// Combined with the unique partial index on contracts(pairing_code)
-// added by the database branch migration, this closes PA-1 and PA-2.
+// Atomic claim pattern: the UPDATE for current_tenant_id includes all guard
+// predicates in the WHERE clause so PostgREST compiles it into a single
+// SQL UPDATE ... WHERE ... RETURNING. This prevents the race where two
+// concurrent tenants both pass the IS NULL check before either write lands.
 export async function POST(request: Request) {
   const { user } = await getAuthenticatedUser();
   if (!user) return unauthorized();
@@ -32,36 +25,39 @@ export async function POST(request: Request) {
 
   const adminClient = createServiceRoleClient();
 
-  // Verify user is a tenant (cheap profile lookup, no race impact)
-  const { data: profile } = await adminClient
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
+  // 1. Look up the property by pair_code — must be real (not shell) and active
+  const { data: propertyRaw, error: lookupError } = await adminClient
+    .from('properties')
+    .select('id, name, landlord_id')
+    .eq('pair_code' as never, parsed.data.code.toUpperCase())
+    .eq('is_shell' as never, false)
+    .eq('is_active', true as never)
+    .maybeSingle();
 
-  if (profile?.role !== 'tenant') {
-    return badRequest('Only tenants can redeem pairing codes');
+  if (lookupError) {
+    return serverError(lookupError.message);
   }
 
-  // Atomic claim: one UPDATE that only touches a contract which is
-  //   (a) has a matching pairing code,
-  //   (b) still unclaimed (tenant_id IS NULL),
-  //   (c) in a status that can accept pairing,
-  //   (d) not yet expired.
-  // PostgREST turns this into a single SQL UPDATE ... WHERE ... RETURNING.
-  const nowIso = new Date().toISOString();
+  if (!propertyRaw) {
+    return NextResponse.json({ error: 'Invalid pair code.' }, { status: 404 });
+  }
+
+  const property = propertyRaw as Record<string, unknown>;
+  const propertyId = property['id'] as string;
+  const propertyName = property['name'] as string;
+  const landlordId = property['landlord_id'] as string;
+
+  // 2. Enforce 1-tenant cap atomically: UPDATE only when current_tenant_id IS NULL
+  //    If another tenant already claimed this property, zero rows are returned.
   const { data: claimed, error: claimError } = await adminClient
-    .from('contracts')
+    .from('properties')
     .update({
-      tenant_id: user.id,
-      pairing_code: null,
-      pairing_expires_at: null,
+      current_tenant_id: user.id,
+      grace_period_ends_at: null,
     } as Record<string, unknown>)
-    .eq('pairing_code', parsed.data.code.toUpperCase())
-    .is('tenant_id', null)
-    .in('status', ['pending', 'active'])
-    .gt('pairing_expires_at', nowIso)
-    .select('id, landlord_id')
+    .eq('id', propertyId)
+    .is('current_tenant_id' as never, null)
+    .select('id')
     .maybeSingle();
 
   if (claimError) {
@@ -69,27 +65,46 @@ export async function POST(request: Request) {
   }
 
   if (!claimed) {
-    // Either the code doesn't exist, already claimed, or expired.
-    // Return a generic "code_already_used" rather than a 404 so the
-    // client sees a single consistent failure mode for all three cases.
-    return NextResponse.json({ error: 'code_already_used' }, { status: 409 });
+    return NextResponse.json(
+      { error: 'This property already has a paired tenant.' },
+      { status: 409 }
+    );
   }
 
-  // Step 2: Route through activateContract — flips status to active AND
-  // seeds the rent payment rows. This must succeed for the pairing to be
-  // meaningful; if it fails we leave the tenant linked but inactive and
-  // the landlord can retry.
-  const result = await activateContract(adminClient, claimed.id);
-  if (!result.success) {
-    return NextResponse.json({ error: result.error }, { status: 500 });
+  // 3. Check for an unassigned contract on this property — assign the tenant
+  //    and attempt to activate it. Pairing is valid even if no contract exists.
+  const { data: unassignedContract } = await adminClient
+    .from('contracts')
+    .select('id')
+    .eq('property_id', propertyId)
+    .is('tenant_id', null)
+    .in('status', ['pending', 'active'])
+    .maybeSingle();
+
+  if (unassignedContract) {
+    // Assign the tenant to the contract first so activateContract can verify it
+    await adminClient
+      .from('contracts')
+      .update({ tenant_id: user.id })
+      .eq('id', unassignedContract.id);
+
+    const result = await activateContract(adminClient, unassignedContract.id);
+    if (!result.success) {
+      // Non-fatal: pairing succeeded; contract activation can be retried separately
+      console.error('[pairing/redeem] Contract activation failed:', result.error);
+    }
   }
 
-  // Fire-and-forget: notify both parties of successful pairing
-  void onTenantPaired(claimed.id);
-
-  return NextResponse.json({
-    success: true,
-    contract_id: claimed.id,
-    message: 'Successfully paired to contract',
+  // 4. Notify landlord of the new pairing (fire-and-forget)
+  void sendNotification({
+    recipientId: landlordId,
+    type: 'pairing_confirmed',
+    titleEn: 'Tenant Paired',
+    titleTh: 'เชื่อมต่อผู้เช่าแล้ว',
+    bodyEn: `A tenant has paired with your property "${propertyName}".`,
+    bodyTh: `ผู้เช่าได้เชื่อมต่อกับอสังหาริมทรัพย์ "${propertyName}" ของคุณแล้ว`,
+    url: `/landlord/properties/${propertyId}`,
   });
+
+  return NextResponse.json({ propertyId, propertyName });
 }

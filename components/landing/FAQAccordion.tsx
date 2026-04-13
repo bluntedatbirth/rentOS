@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 
 export interface FAQItem {
   id: string;
@@ -36,37 +37,20 @@ export function FAQAccordion({ title, subtitle, categories }: Props) {
   };
 
   return (
-    <section id="faq" style={{ background: 'rgba(240,165,0,0.04)', padding: '80px 24px' }}>
-      <div style={{ maxWidth: '768px', margin: '0 auto' }}>
+    <section id="faq" className="bg-saffron-500/[0.04] py-20 px-6">
+      <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          <h2
-            style={{
-              fontSize: 'clamp(28px, 4vw, 40px)',
-              fontWeight: 700,
-              color: '#2c2c2c',
-              margin: '0 0 8px',
-              letterSpacing: '-0.02em',
-            }}
-          >
+        <div className="text-center mb-4">
+          <h2 className="font-[var(--font-manrope)] text-3xl md:text-4xl font-bold text-charcoal-800 mb-2 tracking-tight">
             {title}
           </h2>
-          <p style={{ fontSize: '16px', color: 'rgba(44,44,44,0.6)', margin: 0 }}>{subtitle}</p>
+          <p className="text-base text-charcoal-800/60">{subtitle}</p>
         </div>
 
         {/* Categories */}
         {categories.map((cat) => (
           <div key={cat.key}>
-            <p
-              style={{
-                fontSize: '11px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: '#f0a500',
-                fontWeight: 600,
-                margin: '40px 0 16px',
-              }}
-            >
+            <p className="text-[11px] uppercase tracking-[0.08em] text-saffron-500 font-semibold font-[var(--font-manrope)] mt-10 mb-4">
               {cat.label}
             </p>
             {cat.items.map((item) => {
@@ -75,63 +59,23 @@ export function FAQAccordion({ title, subtitle, categories }: Props) {
                 <div
                   key={item.id}
                   onClick={() => toggle(item.id)}
-                  style={{
-                    background: '#fff',
-                    border: isOpen
-                      ? '1px solid rgba(240,165,0,0.35)'
-                      : '1px solid rgba(44,44,44,0.1)',
-                    borderLeft: isOpen ? '4px solid #f0a500' : '1px solid rgba(44,44,44,0.1)',
-                    borderRadius: '10px',
-                    padding: '16px 20px',
-                    marginBottom: '12px',
-                    cursor: 'pointer',
-                    transition: 'border-color 0.15s',
-                  }}
+                  className={`bg-white rounded-lg px-5 py-4 mb-3 cursor-pointer transition-colors duration-150 ${
+                    isOpen
+                      ? 'border border-saffron-500/35 border-l-4 border-l-saffron-500'
+                      : 'border border-charcoal-800/10'
+                  }`}
                 >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: '16px',
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: '15px',
-                        fontWeight: 500,
-                        color: '#2c2c2c',
-                        lineHeight: '1.5',
-                      }}
-                    >
+                  <div className="flex justify-between items-center gap-4">
+                    <span className="text-[15px] font-medium text-charcoal-800 leading-snug">
                       {item.q}
                     </span>
-                    <span
-                      style={{
-                        flexShrink: 0,
-                        color: '#f0a500',
-                        fontSize: '18px',
-                        lineHeight: 1,
-                        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.2s',
-                        display: 'inline-block',
-                      }}
+                    <ChevronDown
+                      className={`h-4 w-4 text-charcoal-500 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                       aria-hidden="true"
-                    >
-                      ›
-                    </span>
+                    />
                   </div>
                   {isOpen && (
-                    <p
-                      style={{
-                        fontSize: '14px',
-                        color: 'rgba(44,44,44,0.7)',
-                        margin: '12px 0 0',
-                        lineHeight: '1.7',
-                      }}
-                    >
-                      {item.a}
-                    </p>
+                    <p className="text-sm text-charcoal-800/70 mt-3 leading-relaxed">{item.a}</p>
                   )}
                 </div>
               );

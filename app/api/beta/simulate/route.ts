@@ -45,18 +45,19 @@ export async function POST(request: Request) {
   const admin = createServiceRoleClient();
   const { data: profile, error: profileErr } = await admin
     .from('profiles')
-    .select('role')
+    .select('role, active_mode')
     .eq('id', user.id)
     .single();
 
   if (profileErr || !profile) return serverError('Profile lookup failed');
-  if (profile.role !== 'landlord' && profile.role !== 'tenant') {
+  const effectiveRole = (profile.active_mode ?? profile.role) as string;
+  if (effectiveRole !== 'landlord' && effectiveRole !== 'tenant') {
     return serverError('Unknown role');
   }
 
   const result = await runSimulation(action, {
     userId: user.id,
-    role: profile.role,
+    role: effectiveRole as 'landlord' | 'tenant',
     ...(target_contract_id && { targetContractId: target_contract_id }),
   });
   return NextResponse.json(result, { status: result.success ? 200 : 400 });

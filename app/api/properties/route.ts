@@ -3,12 +3,24 @@ import { z } from 'zod';
 import { getAuthenticatedUser, unauthorized, badRequest, serverError } from '@/lib/supabase/api';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getPropertyLimit } from '@/lib/tier';
+import { generatePairCode } from '@/lib/pairing/code';
 
-const createPropertySchema = z.object({
-  name: z.string().min(1).max(200),
-  address: z.string().max(500).optional(),
-  unit_number: z.string().max(50).optional(),
-});
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD');
+
+const createPropertySchema = z
+  .object({
+    name: z.string().min(1).max(200),
+    address: z.string().max(500).optional(),
+    unit_number: z.string().max(50).optional(),
+    lease_start: isoDate.optional(),
+    lease_end: isoDate.optional(),
+    monthly_rent: z.number().positive().optional(),
+    daily_rate: z.number().positive().optional(),
+  })
+  .refine((d) => !(d.lease_start && d.lease_end) || d.lease_end > d.lease_start, {
+    message: 'lease_end must be after lease_start',
+    path: ['lease_end'],
+  });
 
 export async function GET() {
   const { user, supabase } = await getAuthenticatedUser();
@@ -78,7 +90,14 @@ export async function POST(request: Request) {
       name: parsed.data.name,
       address: parsed.data.address ?? null,
       unit_number: parsed.data.unit_number ?? null,
-    })
+      lease_start: parsed.data.lease_start ?? null,
+      lease_end: parsed.data.lease_end ?? null,
+      monthly_rent: parsed.data.monthly_rent ?? null,
+      daily_rate: parsed.data.daily_rate ?? null,
+      pair_code: generatePairCode(),
+      pair_code_rotated_at: new Date().toISOString(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- new columns not yet in generated types
+    } as any)
     .select()
     .single();
 

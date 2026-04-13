@@ -162,7 +162,7 @@ export async function POST(request: Request) {
   let contractRow: {
     id: string;
     tenant_id: string | null;
-    landlord_id: string;
+    landlord_id: string | null;
     status: string;
     property_id: string | null;
   } | null = null;
@@ -180,6 +180,15 @@ export async function POST(request: Request) {
     // Tenant must have an active contract
     if (contractRow.status !== 'active') {
       return NextResponse.json({ error: 'No active contract' }, { status: 403 });
+    }
+
+    // Tenant-owned contracts (no paired landlord) cannot upload documents yet —
+    // the documents table requires a landlord_id FK.
+    if (!contractRow.landlord_id) {
+      return NextResponse.json(
+        { error: 'Document upload is not available until your contract is paired with a landlord' },
+        { status: 403 }
+      );
     }
 
     // Tenants may only upload tenant_id, receipt, or other
@@ -211,11 +220,12 @@ export async function POST(request: Request) {
         return serverError('Storage upload failed: ' + uploadError.message);
       }
 
-      // landlord_id resolved from the contract row (NOT NULL requirement)
+      // landlord_id resolved from the contract row (NOT NULL requirement).
+      // We already checked landlord_id is non-null above, so this cast is safe.
       const { data: doc, error: insertError } = await adminClient
         .from('documents')
         .insert({
-          landlord_id: contractRow.landlord_id,
+          landlord_id: contractRow.landlord_id as string,
           uploaded_by: user.id,
           property_id: contractRow.property_id ?? null,
           contract_id: contractId,

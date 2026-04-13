@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getAuthenticatedUser, unauthorized, notFound } from '@/lib/supabase/api';
+import { z } from 'zod';
+import {
+  getAuthenticatedUser,
+  unauthorized,
+  badRequest,
+  notFound,
+  serverError,
+} from '@/lib/supabase/api';
 
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
   const { user, supabase } = await getAuthenticatedUser();
@@ -74,4 +81,63 @@ export async function DELETE(_request: Request, { params }: { params: { id: stri
   }
 
   return NextResponse.json({ success: true });
+}
+
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD');
+
+const patchPropertySchema = z
+  .object({
+    name: z.string().min(1).max(200).optional(),
+    address: z.string().max(500).optional(),
+    unit_number: z.string().max(50).optional(),
+    lease_start: isoDate.optional(),
+    lease_end: isoDate.optional(),
+    monthly_rent: z.number().positive().optional(),
+  })
+  .refine((d) => !(d.lease_start && d.lease_end) || d.lease_end > d.lease_start, {
+    message: 'lease_end must be after lease_start',
+    path: ['lease_end'],
+  });
+
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+  const { user, supabase } = await getAuthenticatedUser();
+  if (!user) return unauthorized();
+
+  const body: unknown = await request.json();
+  const parsed = patchPropertySchema.safeParse(body);
+  if (!parsed.success) {
+    return badRequest(parsed.error.issues.map((i) => i.message).join(', '));
+  }
+
+  // Build the update object — only include fields that were explicitly provided
+  const updates: Record<string, unknown> = {};
+  if (parsed.data.name !== undefined) updates.name = parsed.data.name;
+  if (parsed.data.address !== undefined) updates.address = parsed.data.address;
+  if (parsed.data.unit_number !== undefined) updates.unit_number = parsed.data.unit_number;
+  if (parsed.data.lease_start !== undefined) updates.lease_start = parsed.data.lease_start;
+  if (parsed.data.lease_end !== undefined) updates.lease_end = parsed.data.lease_end;
+  if (parsed.data.monthly_rent !== undefined) updates.monthly_rent = parsed.data.monthly_rent;
+
+  if (Object.keys(updates).length === 0) {
+    return badRequest('No fields to update');
+  }
+
+  // RLS policy ensures only the owning landlord can update their property.
+  // The .eq('landlord_id', user.id) guard below is an explicit belt-and-braces check.
+  const { data, error } = await supabase
+    .from('properties')
+    .update(updates)
+    .eq('id', params.id)
+    .eq('landlord_id', user.id)
+    .select()
+    .single();
+
+  if (error || !data) {
+    if (error?.code === 'PGRST116') {
+      return notFound('Property not found');
+    }
+    return serverError(error?.message);
+  }
+
+  return NextResponse.json(data);
 }

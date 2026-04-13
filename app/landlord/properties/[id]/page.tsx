@@ -3,6 +3,7 @@ import { getServerSession } from '@/lib/supabase/server-session';
 import { redirect } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { PropertyDetailClient } from './PropertyDetailClient';
+import { FEATURE_MAINTENANCE } from '@/lib/features';
 
 interface PropertyDetail {
   id: string;
@@ -10,6 +11,15 @@ interface PropertyDetail {
   address: string | null;
   unit_number: string | null;
   created_at: string;
+  cover_image_url: string | null;
+  // Lease / rent fields (type-asserted — not in generated types yet)
+  lease_start: string | null;
+  lease_end: string | null;
+  monthly_rent: number | null;
+  current_tenant_id: string | null;
+  pair_code: string | null;
+  pair_code_rotated_at: string | null;
+  previous_tenant_count: number;
 }
 
 interface LinkedContract {
@@ -28,6 +38,21 @@ interface MaintenanceRequest {
   status: string;
   created_at: string;
   contract_id: string;
+}
+
+interface PaymentRecord {
+  id: string;
+  contract_id: string;
+  amount: number;
+  due_date: string;
+  paid_date: string | null;
+  payment_type: 'rent' | 'utility' | 'deposit' | 'penalty';
+  status: 'pending' | 'paid' | 'overdue';
+  promptpay_ref: string | null;
+  notes: string | null;
+  claimed_by: string | null;
+  claimed_at: string | null;
+  claimed_note: string | null;
 }
 
 interface TenantProfile {
@@ -49,7 +74,9 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
   const [propRes, contractsRes] = await Promise.all([
     supabase
       .from('properties')
-      .select('id, name, address, unit_number, created_at')
+      .select(
+        'id, name, address, unit_number, created_at, cover_image_url, lease_start, lease_end, monthly_rent, current_tenant_id, pair_code, pair_code_rotated_at, previous_tenant_count'
+      )
       .eq('id', id)
       .eq('landlord_id', user.id)
       .eq('is_active', true)
@@ -65,7 +92,7 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
     notFound();
   }
 
-  const property = propRes.data as PropertyDetail;
+  const property = propRes.data as unknown as PropertyDetail;
   const contractList = (contractsRes.data ?? []) as LinkedContract[];
 
   // Fetch maintenance and tenant profiles in parallel
@@ -74,8 +101,13 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
     new Set(contractList.map((c) => c.tenant_id).filter(Boolean))
   ) as string[];
 
-  const [maintenanceRes, tenantsRes] = await Promise.all([
-    contractIds.length > 0
+  // Also include current_tenant_id so we can display the paired tenant name
+  if (property.current_tenant_id && !tenantIds.includes(property.current_tenant_id)) {
+    tenantIds.push(property.current_tenant_id);
+  }
+
+  const [maintenanceRes, tenantsRes, paymentsRes] = await Promise.all([
+    FEATURE_MAINTENANCE && contractIds.length > 0
       ? supabase
           .from('maintenance_requests')
           .select('id, title, status, created_at, contract_id')
@@ -85,9 +117,19 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
     tenantIds.length > 0
       ? supabase.from('profiles').select('id, full_name, phone').in('id', tenantIds)
       : Promise.resolve({ data: [] }),
+    contractIds.length > 0
+      ? supabase
+          .from('payments')
+          .select(
+            'id, contract_id, amount, due_date, paid_date, payment_type, status, promptpay_ref, notes, claimed_by, claimed_at, claimed_note'
+          )
+          .in('contract_id', contractIds)
+          .order('due_date', { ascending: true })
+      : Promise.resolve({ data: [] }),
   ]);
 
   const maintenance = (maintenanceRes.data ?? []) as MaintenanceRequest[];
+  const payments = (paymentsRes.data ?? []) as unknown as PaymentRecord[];
 
   const tenantMap: Record<string, TenantProfile> = {};
   ((tenantsRes.data ?? []) as unknown as TenantProfile[]).forEach((tp) => {
@@ -100,6 +142,7 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
       initialContracts={contractList}
       initialMaintenance={maintenance}
       initialTenants={tenantMap}
+      initialPayments={payments}
     />
   );
 }

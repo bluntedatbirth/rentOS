@@ -42,8 +42,8 @@ function FlagGB({ size = 20 }: { size?: number }) {
   );
 }
 
-// China: red field, large gold star + 4 small gold stars
-function FlagCN({ size = 20 }: { size?: number }) {
+// China: red field, large gold star + 4 small gold stars (hidden for now)
+function _FlagCN({ size = 20 }: { size?: number }) {
   const h = size * 0.667;
   return (
     <svg width={size} height={h} viewBox="0 0 60 40" aria-hidden="true" focusable="false">
@@ -87,7 +87,8 @@ interface LocaleOption {
 const LOCALE_OPTIONS: LocaleOption[] = [
   { locale: 'th', shortLabel: 'TH', fullLabel: 'ภาษาไทย', Flag: FlagTH },
   { locale: 'en', shortLabel: 'EN', fullLabel: 'English', Flag: FlagGB },
-  { locale: 'zh', shortLabel: 'ZH', fullLabel: '简体中文', Flag: FlagCN },
+  // ZH hidden for now — translations not production-ready; re-enable when expanding to Chinese market
+  // { locale: 'zh', shortLabel: 'ZH', fullLabel: '简体中文', Flag: FlagCN },
 ];
 
 // ── ChevronDown icon ───────────────────────────────────────────────────────
@@ -135,18 +136,24 @@ function Checkmark() {
 
 interface Props {
   variant?: 'inline' | 'dropdown';
+  /** Restrict which locales appear in the dropdown. Defaults to all. */
+  onlyLocales?: Locale[];
 }
 
-export function LanguageToggle({ variant: _variant = 'inline' }: Props) {
+export function LanguageToggle({ variant: _variant = 'inline', onlyLocales }: Props) {
   const { locale, setLocale } = useI18n();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
+  const visibleOptions = onlyLocales
+    ? LOCALE_OPTIONS.filter((o) => onlyLocales.includes(o.locale))
+    : LOCALE_OPTIONS;
+
   // LOCALE_OPTIONS always has entries for every valid Locale — non-null is safe
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const currentOption = LOCALE_OPTIONS.find((o) => o.locale === locale) ?? LOCALE_OPTIONS[0]!;
+  const currentOption = visibleOptions.find((o) => o.locale === locale) ?? visibleOptions[0]!;
 
   // Close on click outside
   useEffect(() => {
@@ -231,7 +238,7 @@ export function LanguageToggle({ variant: _variant = 'inline' }: Props) {
           className="absolute right-0 z-50 mt-1.5 min-w-[160px] rounded-lg border border-warm-200 bg-warm-50 py-1 shadow-md focus:outline-none"
           tabIndex={-1}
         >
-          {LOCALE_OPTIONS.map((opt) => {
+          {visibleOptions.map((opt) => {
             const isActive = opt.locale === locale;
             return (
               <li

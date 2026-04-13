@@ -1,393 +1,482 @@
 'use client';
 
-import { useCallback, useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/lib/supabase/useAuth';
+import { notFound } from 'next/navigation';
+import { AlertCircle, CheckCircle, Loader2, Upload } from 'lucide-react';
+import { FEATURE_CONTRACT_GENERATE } from '@/lib/features';
 import { useI18n } from '@/lib/i18n/context';
 import { createClient } from '@/lib/supabase/client';
-import { ProRibbon } from '@/components/ui/ProRibbon';
-import { useToast } from '@/components/ui/ToastProvider';
 
-const supabase = createClient();
+// ── Types ──────────────────────────────────────────────────────────────────
 
-interface Property {
-  id: string;
-  name: string;
+type PageState = 'ready' | 'uploading' | 'processing' | 'background' | 'done' | 'error';
+
+interface UploadResponse {
+  contract_id: string;
+  storage_path: string;
+  file_type: 'image' | 'pdf';
+  property_id: string;
 }
 
-type UploadState = 'idle' | 'uploading' | 'processing' | 'success' | 'error';
+interface SseMessage {
+  step: string;
+  progress?: number;
+  message?: string;
+  contract_id?: string;
+  error?: string;
+}
 
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-const MAX_SIZE = 20 * 1024 * 1024; // 20MB
+// ── Constants ──────────────────────────────────────────────────────────────
+
+const ACCEPTED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+const MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
+
+// ── Component ──────────────────────────────────────────────────────────────
 
 export default function ContractUploadPage() {
-  const { user } = useAuth();
-  const { t } = useI18n();
-  const router = useRouter();
-  const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
+  if (!FEATURE_CONTRACT_GENERATE) notFound();
 
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [selectedProperty, setSelectedProperty] = useState('auto');
-  const [state, setState] = useState<UploadState>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [dragOver, setDragOver] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { t } = useI18n();
+
+  const propertyIdParam = searchParams.get('property_id') ?? undefined;
+
+  const [pageState, setPageState] = useState<PageState>('ready');
+  const [propertyName, setPropertyName] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [stepMessage, setStepMessage] = useState('');
+  const [doneContractId, setDoneContractId] = useState<string | null>(null);
+  const [backgroundContractId, setBackgroundContractId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // Load properties
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const sseReaderRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
+
+  // Fetch property name if property_id is in URL
   useEffect(() => {
-    if (!user) return;
-    const loadProperties = async () => {
-      const { data } = await supabase
-        .from('properties')
-        .select('id, name')
-        .eq('landlord_id', user.id)
-        .eq('is_active', true);
-      if (data) {
-        setProperties(data);
-      }
-    };
-    loadProperties();
-  }, [user]);
+    if (!propertyIdParam) return;
 
-  const handleFileSelect = useCallback(
-    (selectedFile: File) => {
-      if (!ACCEPTED_TYPES.includes(selectedFile.type)) {
-        setErrorMessage(t('upload.error_type'));
-        return;
-      }
-      if (selectedFile.size > MAX_SIZE) {
-        setErrorMessage(t('upload.error_size'));
-        return;
-      }
-      setFile(selectedFile);
-      setErrorMessage('');
-
-      if (selectedFile.type.startsWith('image/')) {
-        const url = URL.createObjectURL(selectedFile);
-        setPreview(url);
-      } else {
-        setPreview(null);
-      }
-    },
-    [t]
-  );
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setDragOver(false);
-      const dropped = e.dataTransfer.files[0];
-      if (dropped) handleFileSelect(dropped);
-    },
-    [handleFileSelect]
-  );
-
-  const handleUploadAndProcess = async () => {
-    if (!file || !user) return;
-
-    setState('uploading');
-    setErrorMessage('');
-    setProgress(0);
-    setStepMessage(t('ocr.step_uploading'));
-
-    try {
-      // Step 1: Upload file + create contract via server API
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('property_id', selectedProperty);
-
-      const uploadRes = await fetch('/api/contracts/upload', {
-        method: 'POST',
-        body: formData,
+    const supabase = createClient();
+    supabase
+      .from('properties')
+      .select('name')
+      .eq('id', propertyIdParam)
+      .single()
+      .then(({ data }) => {
+        if (data?.name) setPropertyName(data.name);
       });
+  }, [propertyIdParam]);
 
-      if (!uploadRes.ok) {
-        const errData = await uploadRes.json().catch(() => ({}));
-        throw new Error((errData as { error?: string }).error ?? t('upload.error'));
-      }
+  // Auto-redirect after done
+  useEffect(() => {
+    if (pageState === 'done' && doneContractId) {
+      const timer = setTimeout(() => {
+        router.push(`/landlord/contracts/${doneContractId}`);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [pageState, doneContractId, router]);
 
-      const { contract_id, storage_path, file_type } = (await uploadRes.json()) as {
-        contract_id: string;
-        storage_path: string;
-        file_type: string;
-      };
+  // ── File validation ──────────────────────────────────────────────────────
 
-      // Step 2: Start OCR with SSE progress
-      setState('processing');
-      setProgress(5);
+  function validateFile(file: File): string | null {
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      return t('contract.upload_bad_type');
+    }
+    if (file.size > MAX_SIZE_BYTES) {
+      return t('contract.upload_file_too_large');
+    }
+    return null;
+  }
 
-      const ocrResponse = await fetch('/api/ocr', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contract_id, file_url: storage_path, file_type }),
-      });
+  // ── Upload + SSE pipeline ────────────────────────────────────────────────
 
-      if (!ocrResponse.ok || !ocrResponse.body) {
-        // Delete the contract row immediately — no lingering parse_failed rows
-        try {
-          await supabase.from('contracts').delete().eq('id', contract_id);
-        } catch (deleteErr) {
-          console.error('[Upload] Failed to delete contract after OCR failure:', deleteErr);
-        }
-        toast.error(t('contracts.parse_failed_toast'));
-        setState('idle');
-        return;
-      }
+  async function drainSseReader(
+    reader: ReadableStreamDefaultReader<Uint8Array>,
+    contractId: string
+  ) {
+    const decoder = new TextDecoder();
+    let buffer = '';
 
-      // Read SSE stream
-      const reader = ocrResponse.body.getReader();
-      readerRef.current = reader;
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let finalContractId = contract_id;
-      let parseFailed = false;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      buffer += decoder.decode(value, { stream: true });
 
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n\n');
-        buffer = lines.pop() ?? '';
+      // Split on double-newlines (SSE event boundaries)
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop() ?? '';
 
-        for (const line of lines) {
+      for (const part of parts) {
+        for (const line of part.split('\n')) {
           if (!line.startsWith('data: ')) continue;
+          const jsonStr = line.slice('data: '.length).trim();
+          if (!jsonStr) continue;
+
+          let msg: SseMessage;
           try {
-            const sseData = JSON.parse(line.slice(6)) as {
-              step: string;
-              progress?: number;
-              message?: string;
-              error?: string;
-              contract_id?: string;
-            };
+            msg = JSON.parse(jsonStr) as SseMessage;
+          } catch {
+            continue;
+          }
 
-            if (sseData.progress != null) setProgress(sseData.progress);
-            if (sseData.message) setStepMessage(t(sseData.message));
+          if (msg.step === 'error') {
+            throw new Error(msg.error ?? 'Processing failed');
+          }
 
-            if (sseData.step === 'error') {
-              parseFailed = true;
-              // Delete the contract row immediately — no lingering parse_failed rows
-              supabase
-                .from('contracts')
-                .delete()
-                .eq('id', contract_id)
-                .then(({ error }) => {
-                  if (error)
-                    console.error('[Upload] Failed to delete contract after SSE error:', error);
-                });
-              toast.error(t('contracts.parse_failed_toast'));
-              setState('idle');
-              return;
-            }
+          if (typeof msg.progress === 'number') {
+            setProgress(msg.progress);
+          }
+          if (msg.message) {
+            setStepMessage(msg.message);
+          }
 
-            if (sseData.step === 'done') {
-              finalContractId = sseData.contract_id ?? contract_id;
-            }
-          } catch (e) {
-            if (e instanceof Error && !parseFailed) throw e;
+          if (msg.step === 'done') {
+            const resolvedId = msg.contract_id ?? contractId;
+            setDoneContractId(resolvedId);
+            setPageState('done');
+            return;
           }
         }
       }
-
-      if (parseFailed) return;
-
-      setState('success');
-      setProgress(100);
-      setStepMessage(t('ocr.step_done'));
-
-      setTimeout(() => {
-        router.push(`/landlord/contracts/${finalContractId}`);
-      }, 1500);
-    } catch (err) {
-      setState('error');
-      setErrorMessage(err instanceof Error ? err.message : t('upload.error'));
     }
-  };
+  }
 
-  const removeFile = () => {
-    setFile(null);
-    setPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
+  async function processFile(file: File) {
+    const validationError = validateFile(file);
+    if (validationError) {
+      setFileError(validationError);
+      return;
+    }
+    setFileError(null);
+
+    // Step 1: upload file
+    setPageState('uploading');
+
+    let uploadData: UploadResponse;
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      if (propertyIdParam) form.append('property_id', propertyIdParam);
+
+      const res = await fetch('/api/contracts/upload', {
+        method: 'POST',
+        body: form,
+      });
+
+      if (!res.ok) {
+        let detail = `Upload failed (${res.status})`;
+        try {
+          const json = (await res.json()) as { error?: string; message?: string };
+          detail = json.error ?? json.message ?? detail;
+        } catch {
+          // ignore
+        }
+        throw new Error(detail);
+      }
+
+      uploadData = (await res.json()) as UploadResponse;
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Upload failed');
+      setPageState('error');
+      return;
+    }
+
+    // Step 2: kick off AI extraction — get SSE response
+    let sseRes: Response;
+    try {
+      sseRes = await fetch('/api/ocr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contract_id: uploadData.contract_id,
+          file_type: uploadData.file_type,
+        }),
+      });
+
+      if (!sseRes.ok || !sseRes.body) {
+        throw new Error(`OCR request failed (${sseRes.status})`);
+      }
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Processing failed');
+      setPageState('error');
+      return;
+    }
+
+    // Store the reader so "Watch progress" can resume it
+    const reader = sseRes.body.getReader();
+    sseReaderRef.current = reader;
+
+    // Show the background-mode screen — user can choose to watch or leave
+    setBackgroundContractId(uploadData.contract_id);
+    setPageState('background');
+    setProgress(0);
+    setStepMessage('');
+
+    // Keep draining in the background so state updates if user stays on page
+    void drainSseReader(reader, uploadData.contract_id).catch((err) => {
+      // Only update error state if the user is still in processing/background state
+      setErrorMessage(err instanceof Error ? err.message : 'Processing failed');
+      setPageState('error');
+    });
+  }
+
+  function handleWatchProgress() {
+    setPageState('processing');
+  }
+
+  // ── Event handlers ───────────────────────────────────────────────────────
+
+  function handleFileSelect(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    void processFile(files[0]!);
+  }
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    handleFileSelect(e.target.files);
+    // Reset so same file can be selected again after error
+    e.target.value = '';
+  }
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    handleFileSelect(e.dataTransfer.files);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function handleReset() {
+    setPageState('ready');
+    setProgress(0);
+    setStepMessage('');
+    setErrorMessage(null);
+    setFileError(null);
+    setDoneContractId(null);
+    setBackgroundContractId(null);
+    sseReaderRef.current = null;
+  }
+
+  // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="mx-auto max-w-lg">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900">{t('upload.title')}</h2>
-          <p className="mt-1 text-sm text-gray-500">{t('upload.description')}</p>
-        </div>
+    <div className="mx-auto max-w-lg px-4 py-8">
+      {/* Page header */}
+      <div className="mb-6 flex items-center gap-3">
         <Link
-          href="/landlord/contracts/create"
-          className="relative overflow-hidden shrink-0 min-h-[36px] flex items-center rounded-lg border border-saffron-300 px-3 py-1.5 text-xs font-medium text-saffron-600 hover:bg-saffron-50"
+          href="/landlord/contracts"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-warm-200 bg-white text-charcoal-400 hover:bg-warm-100"
+          aria-label={t('common.back')}
         >
-          {t('upload.or_create_ai')}
-          <ProRibbon size="sm" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="h-5 w-5"
+          >
+            <path
+              fillRule="evenodd"
+              d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+              clipRule="evenodd"
+            />
+          </svg>
         </Link>
+        <div>
+          <h1 className="text-xl font-bold text-charcoal-900">{t('contract.upload_title')}</h1>
+          <p className="mt-0.5 text-sm text-charcoal-500">{t('contract.upload_subtitle')}</p>
+        </div>
       </div>
 
-      {/* Property selector */}
-      <div className="mb-6">
-        <label htmlFor="property" className="mb-1 block text-sm font-medium text-gray-700">
-          {t('upload.select_property')}
-        </label>
-        <select
-          id="property"
-          value={selectedProperty}
-          onChange={(e) => setSelectedProperty(e.target.value)}
-          className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
-        >
-          <option value="auto">🔍 {t('upload.auto_detect_property')}</option>
-          {properties.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        {selectedProperty === 'auto' && (
-          <p className="mt-1 text-xs text-saffron-600">{t('upload.auto_detect_hint')}</p>
-        )}
-      </div>
+      {/* Property banner */}
+      {propertyName && (
+        <div className="mb-4 rounded-xl border border-saffron-200 bg-saffron-50 px-4 py-2.5 text-sm font-medium text-saffron-800">
+          For property: {propertyName}
+        </div>
+      )}
 
-      {/* Processing state */}
-      {state === 'processing' && (
-        <div className="mb-6 flex flex-col items-center rounded-lg border border-saffron-200 bg-saffron-50 p-8">
-          <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-saffron-500 border-t-transparent" />
-          <p className="text-lg font-semibold text-saffron-900">{stepMessage}</p>
-          <div className="mt-4 w-full max-w-xs">
-            <div className="h-2.5 w-full overflow-hidden rounded-full bg-saffron-200">
-              <div
-                className="h-full rounded-full bg-saffron-500 transition-all duration-700 ease-out"
-                style={{ width: `${progress}%` }}
+      {/* Main card */}
+      <div className="rounded-2xl border border-warm-200 bg-white p-6 shadow-sm">
+        {/* ── STATE: READY ── */}
+        {pageState === 'ready' && (
+          <>
+            {/* Drop zone */}
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label={t('contract.upload_dropzone_hint')}
+              onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
+              }}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-14 text-center transition-colors ${
+                isDragging
+                  ? 'border-saffron-400 bg-saffron-50'
+                  : 'border-warm-300 bg-warm-50 hover:border-saffron-300 hover:bg-saffron-50'
+              }`}
+            >
+              <Upload
+                className={`mb-4 h-10 w-10 transition-colors ${
+                  isDragging ? 'text-saffron-500' : 'text-charcoal-300'
+                }`}
               />
+              <p className="text-sm text-charcoal-600">
+                {t('contract.upload_dropzone_hint')}{' '}
+                <span className="font-semibold text-saffron-600 hover:text-saffron-700">
+                  {t('contract.upload_browse')}
+                </span>
+              </p>
+              <p className="mt-2 text-xs text-charcoal-400">{t('contract.upload_formats')}</p>
             </div>
-            <p className="mt-2 text-center text-xs text-saffron-600">{progress}%</p>
-          </div>
-          <p className="mt-4 text-center text-xs text-charcoal-500">
-            {t('upload.background_note')}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              readerRef.current?.cancel().catch(() => {});
-              router.push('/landlord/contracts');
-            }}
-            className="mt-3 min-h-[44px] rounded-lg border border-saffron-300 px-4 py-2 text-sm font-medium text-saffron-700 hover:bg-saffron-100"
-          >
-            {t('upload.continue_browsing')}
-          </button>
-        </div>
-      )}
 
-      {/* Success state */}
-      {state === 'success' && (
-        <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-6 text-center">
-          <p className="text-lg font-semibold text-green-900">{t('upload.success')}</p>
-        </div>
-      )}
-
-      {/* Error state */}
-      {state === 'error' && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-6">
-          <p className="font-semibold text-red-900">{t('upload.error')}</p>
-          {errorMessage && <p className="mt-1 text-sm text-red-700">{errorMessage}</p>}
-          <button
-            type="button"
-            onClick={() => {
-              setState('idle');
-              setErrorMessage('');
-            }}
-            className="mt-3 min-h-[44px] rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-          >
-            {t('upload.retry')}
-          </button>
-        </div>
-      )}
-
-      {/* Upload area - only show when idle */}
-      {(state === 'idle' || state === 'uploading') && (
-        <>
-          {/* Drag and drop zone */}
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOver(true);
-            }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-            className={`mb-4 rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
-              dragOver ? 'border-saffron-500 bg-saffron-50' : 'border-warm-200 bg-warm-50'
-            }`}
-          >
-            {file ? (
-              <div>
-                {preview && (
-                  <img // eslint-disable-line @next/next/no-img-element
-                    src={preview}
-                    alt="Contract preview"
-                    className="mx-auto mb-3 max-h-48 rounded-lg object-contain"
-                  />
-                )}
-                <p className="text-sm font-medium text-gray-900">
-                  {t('upload.file_selected')}: {file.name}
-                </p>
-                <p className="text-xs text-gray-500">{(file.size / (1024 * 1024)).toFixed(1)} MB</p>
-                <button
-                  type="button"
-                  onClick={removeFile}
-                  className="mt-2 min-h-[44px] text-sm font-medium text-red-600 hover:text-red-700"
-                >
-                  {t('upload.remove_file')}
-                </button>
-              </div>
-            ) : (
-              <div>
-                <p className="mb-2 text-sm text-gray-600">{t('upload.drag_drop')}</p>
-                <p className="mb-3 text-xs text-gray-400">{t('upload.or')}</p>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="min-h-[44px] rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50"
-                >
-                  {t('upload.browse')}
-                </button>
-                <p className="mt-3 text-xs text-gray-400">{t('upload.supported')}</p>
+            {/* File error */}
+            {fileError && (
+              <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                <span>{fileError}</span>
               </div>
             )}
+
+            {/* Hidden input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.webp"
+              className="hidden"
+              onChange={handleInputChange}
+            />
+          </>
+        )}
+
+        {/* ── STATE: UPLOADING ── */}
+        {pageState === 'uploading' && (
+          <div className="flex flex-col items-center justify-center py-14 text-center">
+            <Loader2 className="mb-4 h-10 w-10 animate-spin text-saffron-500" />
+            <p className="text-sm font-medium text-charcoal-700">{t('contract.uploading')}</p>
           </div>
+        )}
 
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".jpg,.jpeg,.png,.webp,.pdf"
-            className="hidden"
-            onChange={(e) => {
-              const selected = e.target.files?.[0];
-              if (selected) handleFileSelect(selected);
-            }}
-          />
+        {/* ── STATE: PROCESSING ── */}
+        {pageState === 'processing' && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            {/* Pulse ring behind spinner */}
+            <div className="relative mb-6">
+              <span className="absolute inset-0 animate-ping rounded-full bg-saffron-200 opacity-60" />
+              <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-saffron-100">
+                <Loader2 className="h-7 w-7 animate-spin text-saffron-600" />
+              </div>
+            </div>
 
-          {errorMessage && state === 'idle' && (
-            <p className="mb-4 text-sm text-red-600">{errorMessage}</p>
-          )}
+            <p className="mb-5 text-sm font-medium text-charcoal-700">
+              {stepMessage ? t(stepMessage) : t('contract.processing')}
+            </p>
 
-          {/* Upload button */}
-          <button
-            type="button"
-            disabled={!file || state === 'uploading'}
-            onClick={handleUploadAndProcess}
-            className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-500 focus:ring-offset-2 disabled:opacity-50"
-          >
-            {state === 'uploading' ? t('upload.uploading') : t('upload.upload_button')}
-          </button>
-        </>
-      )}
+            {/* Progress bar */}
+            <div className="w-full max-w-xs">
+              <div className="mb-1.5 flex justify-between text-xs text-charcoal-400">
+                <span>{progress}%</span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-warm-200">
+                <div
+                  className="h-full rounded-full bg-saffron-500 transition-all duration-500 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── STATE: BACKGROUND ── */}
+        {pageState === 'background' && backgroundContractId && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            {/* Pulse ring */}
+            <div className="relative mb-6">
+              <span className="absolute inset-0 animate-ping rounded-full bg-saffron-200 opacity-60" />
+              <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-saffron-100">
+                <CheckCircle className="h-7 w-7 text-saffron-600" />
+              </div>
+            </div>
+
+            <h2 className="mb-2 text-lg font-bold text-charcoal-900">
+              {t('contract.background_title')}
+            </h2>
+            <p className="mb-1 text-sm text-charcoal-600">{t('contract.background_subtitle')}</p>
+            <p className="mb-6 text-xs text-charcoal-400">{t('contract.background_note')}</p>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={handleWatchProgress}
+                className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-warm-300 bg-white px-5 text-sm font-semibold text-charcoal-700 hover:bg-warm-50"
+              >
+                {t('contract.background_watch')}
+              </button>
+              <Link
+                href="/landlord/properties"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-saffron-500 px-5 text-sm font-semibold text-white hover:bg-saffron-600"
+              >
+                {t('contract.background_leave')} →
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* ── STATE: DONE ── */}
+        {pageState === 'done' && doneContractId && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <h2 className="mb-1 text-lg font-bold text-charcoal-900">{t('contract.done_title')}</h2>
+            <p className="mb-6 text-sm text-charcoal-500">{t('contract.done_subtitle')}</p>
+            <Link
+              href={`/landlord/contracts/${doneContractId}`}
+              className="inline-flex min-h-[44px] items-center rounded-xl bg-saffron-500 px-6 text-sm font-semibold text-white hover:bg-saffron-600"
+            >
+              {t('contract.view_results')}
+            </Link>
+          </div>
+        )}
+
+        {/* ── STATE: ERROR ── */}
+        {pageState === 'error' && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+              <AlertCircle className="h-8 w-8 text-red-600" />
+            </div>
+            <h2 className="mb-1 text-lg font-bold text-charcoal-900">
+              {t('contract.upload_error_title')}
+            </h2>
+            {errorMessage && (
+              <p className="mb-6 max-w-xs text-sm text-charcoal-500">{errorMessage}</p>
+            )}
+            <button
+              type="button"
+              onClick={handleReset}
+              className="inline-flex min-h-[44px] items-center rounded-xl bg-saffron-500 px-6 text-sm font-semibold text-white hover:bg-saffron-600"
+            >
+              {t('contract.upload_try_again')}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

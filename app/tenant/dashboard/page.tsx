@@ -10,21 +10,25 @@ interface ContractSummary {
   lease_end: string | null;
   monthly_rent: number | null;
   property_id: string;
-  properties: { name: string } | null;
+  properties: { name: string; daily_rate: number | null } | null;
 }
 
-interface MaintenanceSummary {
+interface NextPaymentSummary {
   id: string;
-  title: string;
+  amount: number;
+  due_date: string;
   status: string;
-  created_at: string;
+  contract_id: string;
 }
 
-interface PenaltySummary {
+export interface ShellProperty {
   id: string;
-  status: string;
-  confirmed_amount: number | null;
-  calculated_amount: number | null;
+  name: string;
+  address: string | null;
+  lease_start: string | null;
+  lease_end: string | null;
+  monthly_rent: number | null;
+  notes: string | null;
 }
 
 export default async function TenantDashboard() {
@@ -36,61 +40,54 @@ export default async function TenantDashboard() {
 
   const supabase = createServerSupabaseClient();
 
-  // Step 1: fetch active contract + pending renewal in parallel.
-  const [contractsResult, renewalsResult] = await Promise.all([
+  // Step 1: fetch active contracts + pending renewals + shell properties in parallel.
+  const [contractsResult, renewalsResult, shellResult] = await Promise.all([
     supabase
       .from('contracts')
-      .select('id, status, lease_start, lease_end, monthly_rent, property_id, properties(name)')
+      .select(
+        'id, status, lease_start, lease_end, monthly_rent, property_id, properties(name, daily_rate)'
+      )
       .eq('tenant_id', user.id)
-      .eq('status', 'active')
-      .limit(1),
+      .eq('status', 'active'),
     supabase
       .from('contracts')
-      .select('id, status, lease_start, lease_end, monthly_rent, property_id, properties(name)')
+      .select(
+        'id, status, lease_start, lease_end, monthly_rent, property_id, properties(name, daily_rate)'
+      )
       .eq('tenant_id', user.id)
       .eq('status', 'pending')
-      .not('renewed_from', 'is', null)
-      .limit(1),
+      .not('renewed_from', 'is', null),
+    supabase
+      .from('properties')
+      .select('id, name, address, lease_start, lease_end, monthly_rent, notes')
+      .eq('created_by_tenant_id' as string, user.id)
+      .eq('is_shell' as string, true),
   ]);
 
-  const activeContract = (contractsResult.data?.[0] as unknown as ContractSummary) ?? null;
-  const pendingRenewal = (renewalsResult.data?.[0] as unknown as ContractSummary) ?? null;
+  const contracts = (contractsResult.data as unknown as ContractSummary[]) ?? [];
+  const pendingRenewals = (renewalsResult.data as unknown as ContractSummary[]) ?? [];
+  const shellProperties = (shellResult.data as unknown as ShellProperty[]) ?? [];
 
-  const daysUntilExpiry = activeContract?.lease_end
-    ? Math.ceil((new Date(activeContract.lease_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : null;
-
-  // Step 2: if there is an active contract, fetch maintenance + penalties in parallel.
-  let maintenance: MaintenanceSummary[] = [];
-  let penalties: PenaltySummary[] = [];
-
-  if (activeContract) {
-    const [maintResult, pensResult] = await Promise.all([
-      supabase
-        .from('maintenance_requests')
-        .select('id, title, status, created_at')
-        .eq('contract_id', activeContract.id)
-        .order('created_at', { ascending: false })
-        .limit(3),
-      supabase
-        .from('penalties')
-        .select('id, status, confirmed_amount, calculated_amount')
-        .eq('contract_id', activeContract.id)
-        .order('created_at', { ascending: false }),
-    ]);
-
-    maintenance = (maintResult.data ?? []) as MaintenanceSummary[];
-    penalties = (pensResult.data ?? []) as PenaltySummary[];
+  // Step 2: fetch payments for all active contract IDs in one query.
+  const contractIds = contracts.map((c) => c.id);
+  let allPayments: NextPaymentSummary[] = [];
+  if (contractIds.length > 0) {
+    const { data: paymentData } = await supabase
+      .from('payments')
+      .select('id, amount, due_date, status, contract_id')
+      .in('contract_id', contractIds)
+      .neq('status', 'paid')
+      .order('due_date', { ascending: true });
+    allPayments = (paymentData as unknown as NextPaymentSummary[]) ?? [];
   }
 
   return (
     <TenantDashboardClient
       fullName={profile?.full_name ?? null}
-      contract={activeContract}
-      pendingRenewal={pendingRenewal}
-      maintenance={maintenance}
-      penalties={penalties}
-      daysUntilExpiry={daysUntilExpiry}
+      contracts={contracts}
+      pendingRenewals={pendingRenewals}
+      allPayments={allPayments}
+      shellProperties={shellProperties}
     />
   );
 }

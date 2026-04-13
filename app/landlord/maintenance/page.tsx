@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+import { FEATURE_MAINTENANCE } from '@/lib/features';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getServerSession } from '@/lib/supabase/server-session';
 import { redirect } from 'next/navigation';
@@ -26,6 +28,8 @@ const statusOrder: Record<string, number> = {
 };
 
 export default async function LandlordMaintenancePage() {
+  if (!FEATURE_MAINTENANCE) notFound();
+
   const { user, profile } = await getServerSession();
 
   if (!user) {
@@ -68,7 +72,7 @@ export default async function LandlordMaintenancePage() {
         .in('id', contractIds);
 
       for (const c of contracts ?? []) {
-        contractPropertyMap.set(c.id, c.property_id);
+        if (c.property_id) contractPropertyMap.set(c.id, c.property_id);
       }
     }
 

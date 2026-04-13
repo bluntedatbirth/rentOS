@@ -155,8 +155,50 @@ export async function POST(request: Request) {
           }
         }
 
+        // Sync lease/rent info to property (but never overwrite name)
+        if (contract.property_id) {
+          const propertyUpdate: Record<string, unknown> = {};
+          if (extracted.lease_start) propertyUpdate.lease_start = extracted.lease_start;
+          if (extracted.lease_end) propertyUpdate.lease_end = extracted.lease_end;
+          if (extracted.monthly_rent) propertyUpdate.monthly_rent = extracted.monthly_rent;
+          // security_deposit is not a column on the properties table — omitted intentionally
+
+          if (Object.keys(propertyUpdate).length > 0) {
+            await adminClient
+              .from('properties')
+              .update(propertyUpdate)
+              .eq('id', contract.property_id);
+          }
+        }
+
         // Step 5: Save to DB
         send({ step: 'saving', progress: 90, message: 'ocr.step_saving' });
+
+        // Determine contract status based on extracted dates
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let derivedStatus = 'active';
+        if (extracted.lease_start && extracted.lease_end) {
+          const leaseStart = new Date(extracted.lease_start);
+          const leaseEnd = new Date(extracted.lease_end);
+          if (leaseEnd < today) {
+            derivedStatus = 'expired';
+          } else if (leaseStart > today) {
+            derivedStatus = 'scheduled';
+          } else {
+            derivedStatus = 'active';
+          }
+        } else if (extracted.lease_start) {
+          const leaseStart = new Date(extracted.lease_start);
+          if (leaseStart > today) {
+            derivedStatus = 'scheduled';
+          }
+        } else if (extracted.lease_end) {
+          const leaseEnd = new Date(extracted.lease_end);
+          if (leaseEnd < today) {
+            derivedStatus = 'expired';
+          }
+        }
 
         const updateData: Record<string, unknown> = {
           raw_text_th: extracted.raw_text_th,
@@ -166,6 +208,7 @@ export async function POST(request: Request) {
           lease_end: extracted.lease_end,
           monthly_rent: extracted.monthly_rent,
           security_deposit: extracted.security_deposit,
+          status: derivedStatus,
         };
 
         const { error: updateError } = await adminClient

@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
+import { resolveNotification } from '@/lib/notifications/resolve';
+import { NOTIFICATION_MODE } from '@/lib/notifications/mode';
 
 interface NotificationBellProps {
   /** Role determines which set of fallback routes to use and which /notifications/inbox page the "view all" link points at */
@@ -24,42 +26,6 @@ interface Notification {
   sent_at: string;
   read_at: string | null;
 }
-
-// Fallback routes when a notification has no stored URL. Keep in sync with the
-// inbox page — when that page adds a new type, add it here too.
-const TYPE_ROUTES_LANDLORD: Record<string, string> = {
-  payment_due: '/landlord/payments',
-  payment_overdue: '/landlord/payments',
-  payment_claimed: '/landlord/payments',
-  lease_expiry: '/landlord/contracts',
-  penalty_raised: '/landlord/penalties',
-  penalty_appeal: '/landlord/penalties',
-  penalty_resolved: '/landlord/penalties',
-  maintenance_raised: '/landlord/maintenance',
-  maintenance_updated: '/landlord/maintenance',
-  lease_renewal_offer: '/landlord/contracts',
-  lease_renewal_response: '/landlord/contracts',
-  renewal_signing_reminder: '/landlord/contracts',
-  tier_expiry_warning: '/landlord/billing',
-  tier_downgraded: '/landlord/billing',
-};
-
-const TYPE_ROUTES_TENANT: Record<string, string> = {
-  payment_due: '/tenant/payments',
-  payment_overdue: '/tenant/payments',
-  payment_claimed: '/tenant/payments',
-  lease_expiry: '/tenant/contract/view',
-  penalty_raised: '/tenant/contract/view',
-  penalty_appeal: '/tenant/contract/view',
-  penalty_resolved: '/tenant/contract/view',
-  maintenance_raised: '/tenant/maintenance',
-  maintenance_updated: '/tenant/maintenance',
-  lease_renewal_offer: '/tenant/contract/view',
-  lease_renewal_response: '/tenant/contract/view',
-  renewal_signing_reminder: '/tenant/contract/view',
-  tier_expiry_warning: '/tenant/dashboard',
-  tier_downgraded: '/tenant/dashboard',
-};
 
 const TYPE_ICONS: Record<string, string> = {
   payment_due: '\u{1F4B3}',
@@ -88,17 +54,6 @@ function timeAgo(dateStr: string, t: (key: string) => string): string {
   if (diffMins < 60) return t('notifications.time_ago_minutes').replace('{}', String(diffMins));
   if (diffHours < 24) return t('notifications.time_ago_hours').replace('{}', String(diffHours));
   return t('notifications.time_ago_days').replace('{}', String(diffDays));
-}
-
-function resolveUrl(notification: Notification, role: 'landlord' | 'tenant'): string {
-  const url = notification.url;
-  const dashboard = role === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
-  if (url && typeof url === 'string' && url.startsWith('/') && !url.startsWith('//')) {
-    if (url.startsWith('/contracts/')) return `/${role}${url}`;
-    return url;
-  }
-  const table = role === 'landlord' ? TYPE_ROUTES_LANDLORD : TYPE_ROUTES_TENANT;
-  return table[notification.type] ?? dashboard;
 }
 
 export function NotificationBell({ role }: NotificationBellProps) {
@@ -190,13 +145,29 @@ export function NotificationBell({ role }: NotificationBellProps) {
     await fetch('/api/notifications/dismiss-all', { method: 'DELETE' });
   };
 
-  const handleClick = (notification: Notification) => {
+  const handleClick = async (notification: Notification) => {
     setNotifications((prev) => prev.filter((n) => n.id !== notification.id));
     setCount((c) => Math.max(0, c - 1));
     void fetch(`/api/notifications/${notification.id}/dismiss`, { method: 'DELETE' });
-    const dest = resolveUrl(notification, role);
-    setOpen(false);
-    router.push(dest);
+
+    const notificationMode = NOTIFICATION_MODE[notification.type];
+    if (notificationMode && notificationMode !== role) {
+      // Cross-mode: switch mode first, then full-page navigate
+      await fetch('/api/account/mode', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active_mode: notificationMode }),
+      });
+      sessionStorage.setItem('rentos_mode_switch', notificationMode);
+      const dest = resolveNotification(notification, notificationMode);
+      setOpen(false);
+      window.location.href = dest;
+    } else {
+      // Same mode: normal SPA navigation
+      const dest = resolveNotification(notification, role);
+      setOpen(false);
+      router.push(dest);
+    }
   };
 
   const inboxHref =
@@ -294,6 +265,17 @@ export function NotificationBell({ role }: NotificationBellProps) {
                           {!notification.read_at && (
                             <span className="inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-saffron-500" />
                           )}
+                          {NOTIFICATION_MODE[notification.type] &&
+                            NOTIFICATION_MODE[notification.type] !== role &&
+                            (NOTIFICATION_MODE[notification.type] === 'landlord' ? (
+                              <span className="inline-flex items-center rounded px-1 py-0.5 text-[9px] font-medium bg-saffron-100 text-saffron-700 shrink-0">
+                                {t('notifications.mode_landlord')}
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center rounded px-1 py-0.5 text-[9px] font-medium bg-teal-100 text-teal-700 shrink-0">
+                                {t('notifications.mode_tenant')}
+                              </span>
+                            ))}
                         </div>
                         <p className="mt-0.5 line-clamp-2 text-xs text-gray-500">
                           {locale === 'en'

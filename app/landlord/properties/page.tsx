@@ -2,142 +2,84 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { createClient } from '@/lib/supabase/client';
-import { StatusBadge } from '@/components/ui/StatusBadge';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
 import { useProGate } from '@/lib/hooks/useProGate';
 import { useToast } from '@/components/ui/ToastProvider';
 import { getPropertyLimit } from '@/lib/tier';
+import { computePropertyStatus, type PropertyStatus } from '@/lib/properties/status';
 
 const supabase = createClient();
-
-type ContractStatus =
-  | 'pending'
-  | 'active'
-  | 'expired'
-  | 'terminated'
-  | 'parse_failed'
-  | 'scheduled';
-
-interface ContractSummary {
-  id: string;
-  status: ContractStatus;
-  lease_start: string | null;
-  lease_end: string | null;
-  monthly_rent: number | null;
-  tenant_id: string | null;
-  renewed_from: string | null;
-  created_at: string;
-  tenant_name: string | null;
-}
 
 interface PropertyRow {
   id: string;
   name: string;
   address: string | null;
   unit_number: string | null;
-  contracts: ContractSummary[];
+  cover_image_url: string | null;
+  lease_start: string | null;
+  lease_end: string | null;
+  monthly_rent: number | null;
+  daily_rate: number | null;
+  current_tenant_id: string | null;
+  pair_code: string | null;
+  created_at: string;
 }
 
-function getActiveContract(contracts: ContractSummary[]): ContractSummary | null {
-  return contracts.find((c) => c.status === 'active') ?? null;
+// ── Status badge ───────────────────────────────────────────────────────────────
+
+function statusBadgeClass(status: PropertyStatus): string {
+  switch (status) {
+    case 'active':
+      return 'bg-green-100 text-green-800';
+    case 'expiring':
+      return 'bg-amber-100 text-amber-800';
+    case 'vacant':
+      return 'bg-gray-100 text-gray-500';
+    case 'upcoming':
+      return 'bg-blue-100 text-blue-800';
+  }
 }
 
-function getPendingContract(contracts: ContractSummary[]): ContractSummary | null {
-  return contracts.find((c) => c.status === 'pending') ?? null;
+function statusLabel(status: PropertyStatus, t: (k: string) => string): string {
+  switch (status) {
+    case 'active':
+      return t('contract.status_active');
+    case 'expiring':
+      return t('tier.expiring_soon').split(' ')[0] + '…'; // fallback — overridden below
+    case 'vacant':
+      return t('properties.vacant');
+    case 'upcoming':
+      return t('contract.status_pending');
+  }
 }
 
-function getExpiredContracts(contracts: ContractSummary[]): ContractSummary[] {
-  return contracts
-    .filter((c) => c.status === 'expired' || c.status === 'terminated')
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-}
-
-interface ContractSubRowProps {
-  contract: ContractSummary;
-  label: string;
-  prominent?: boolean;
-}
-
-function ContractSubRow({ contract, label, prominent }: ContractSubRowProps) {
-  const { t, formatDateRange } = useI18n();
-  return (
-    <Link
-      href={`/landlord/contracts/${contract.id}`}
-      className={`flex items-center justify-between rounded-lg px-4 py-3 transition-colors hover:bg-gray-100 ${
-        prominent ? 'bg-white shadow-sm' : 'bg-gray-50'
-      }`}
-    >
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={`text-xs font-semibold uppercase tracking-wide ${
-              prominent ? 'text-gray-700' : 'text-gray-400'
-            }`}
-          >
-            {label}
-          </span>
-          <StatusBadge status={contract.status} />
-          {contract.monthly_rent != null && (
-            <span
-              className={`text-sm font-medium ${prominent ? 'text-gray-900' : 'text-gray-500'}`}
-            >
-              ฿{contract.monthly_rent.toLocaleString()}
-              {t('payments.per_month')}
-            </span>
-          )}
-        </div>
-        <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-400">
-          {contract.tenant_name && <span>{contract.tenant_name}</span>}
-          {!contract.tenant_id && <span>{t('contract.unpaired')}</span>}
-          {contract.lease_start && contract.lease_end && (
-            <span>{formatDateRange(contract.lease_start, contract.lease_end)}</span>
-          )}
-        </div>
-      </div>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-        className="ml-2 h-4 w-4 shrink-0 text-gray-300"
-      >
-        <path
-          fillRule="evenodd"
-          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-          clipRule="evenodd"
-        />
-      </svg>
-    </Link>
-  );
-}
+// ── Property row card ──────────────────────────────────────────────────────────
 
 interface PropertyListRowProps {
   property: PropertyRow;
+  overdueIds: Set<string>;
   onRemoved: (id: string) => void;
 }
 
-function PropertyListRow({ property, onRemoved }: PropertyListRowProps) {
+function PropertyListRow({ property, overdueIds, onRemoved }: PropertyListRowProps) {
   const { t } = useI18n();
   const { toast } = useToast();
   const [expanded, setExpanded] = useState(false);
-  const [showPast, setShowPast] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // Filter out parse_failed / scheduled from the display lists
-  const visibleContracts = property.contracts.filter(
-    (c) => c.status !== 'parse_failed' && c.status !== 'scheduled'
+  const status = computePropertyStatus(
+    property.lease_start,
+    property.lease_end,
+    undefined,
+    !!property.daily_rate
   );
-
-  const activeContract = getActiveContract(visibleContracts);
-  const pendingContract = getPendingContract(visibleContracts);
-  const expiredContracts = getExpiredContracts(visibleContracts);
-
-  const hasContracts = activeContract || pendingContract || expiredContracts.length > 0;
-  const isVacant = !activeContract;
+  const isOverdue = overdueIds.has(property.id);
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -150,7 +92,6 @@ function PropertyListRow({ property, onRemoved }: PropertyListRowProps) {
       } else {
         const body = (await res.json().catch(() => ({}))) as { message?: string };
         toast.error(body.message ?? t('auth.error'));
-        // keep modal open on 409 (active contract)
       }
     } catch {
       toast.error(t('auth.error'));
@@ -159,8 +100,23 @@ function PropertyListRow({ property, onRemoved }: PropertyListRowProps) {
     }
   };
 
+  // Resolve the display label for the expiring status
+  const resolvedStatusLabel = (s: PropertyStatus) => {
+    if (s === 'expiring') return 'Expiring';
+    return statusLabel(s, t);
+  };
+
   return (
-    <div className="rounded-lg bg-white shadow-sm transition-shadow hover:shadow-md">
+    <div className="overflow-hidden rounded-lg bg-white shadow-sm transition-shadow hover:shadow-md">
+      {/* Cover image banner */}
+      {property.cover_image_url && (
+        <div
+          className="h-32 w-full bg-cover bg-center"
+          style={{ backgroundImage: `url(${property.cover_image_url})` }}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Main property row */}
       <button
         type="button"
@@ -170,13 +126,16 @@ function PropertyListRow({ property, onRemoved }: PropertyListRowProps) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="font-medium text-gray-900">{property.name}</p>
-            {activeContract ? (
-              <StatusBadge status="active" />
-            ) : pendingContract ? (
-              <StatusBadge status="pending" />
-            ) : (
-              <span className="inline-block rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
-                {t('properties.vacant')}
+            {/* Status badge */}
+            <span
+              className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadgeClass(status)}`}
+            >
+              {resolvedStatusLabel(status)}
+            </span>
+            {/* Overdue indicator */}
+            {isOverdue && (
+              <span className="inline-block rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-medium text-rose-700">
+                {t('payments.overdue')}
               </span>
             )}
           </div>
@@ -187,17 +146,20 @@ function PropertyListRow({ property, onRemoved }: PropertyListRowProps) {
                 {t('property.unit')}: {property.unit_number}
               </span>
             )}
-            {activeContract?.tenant_name && (
-              <span className="text-gray-600">
-                {t('properties.current_tenant')}: {activeContract.tenant_name}
-              </span>
-            )}
-            {activeContract?.monthly_rent != null && (
+            {property.daily_rate != null && status !== 'vacant' && (
               <span>
-                ฿{activeContract.monthly_rent.toLocaleString()}
-                {t('payments.per_month')}
+                ฿{property.daily_rate.toLocaleString()}
+                {t('property.per_night')}
               </span>
             )}
+            {property.daily_rate == null &&
+              property.monthly_rent != null &&
+              status !== 'vacant' && (
+                <span>
+                  ฿{property.monthly_rent.toLocaleString()}
+                  {t('payments.per_month')}
+                </span>
+              )}
           </div>
         </div>
 
@@ -215,98 +177,51 @@ function PropertyListRow({ property, onRemoved }: PropertyListRowProps) {
         </svg>
       </button>
 
-      {/* Expanded contract section */}
+      {/* Expanded quick actions */}
       {expanded && (
-        <div className="border-t border-gray-100 px-2 pb-2">
-          {!hasContracts ? (
-            <p className="px-2 py-4 text-center text-xs text-gray-400">
-              {t('properties.no_contracts')}
-            </p>
-          ) : (
-            <div className="mt-2 space-y-2">
-              {activeContract && (
-                <ContractSubRow
-                  contract={activeContract}
-                  label={t('properties.active_contract')}
-                  prominent
-                />
-              )}
-              {pendingContract && (
-                <ContractSubRow
-                  contract={pendingContract}
-                  label={t('properties.pending_contract')}
-                />
-              )}
-              {expiredContracts.length > 0 && (
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setShowPast((v) => !v)}
-                    className="flex w-full items-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-400 hover:text-gray-600"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      className={`h-3.5 w-3.5 transition-transform ${showPast ? 'rotate-90' : ''}`}
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    {showPast
-                      ? t('properties.hide_past_contracts')
-                      : t('properties.show_past_contracts').replace(
-                          '{}',
-                          String(expiredContracts.length)
-                        )}
-                  </button>
-                  {showPast && (
-                    <div className="mt-1 space-y-1">
-                      {expiredContracts.map((c) => (
-                        <ContractSubRow
-                          key={c.id}
-                          contract={c}
-                          label={
-                            c.status === 'terminated'
-                              ? t('contract.status_terminated')
-                              : t('contract.status_expired')
-                          }
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Quick actions */}
-          <div className="mt-2 flex flex-wrap items-center gap-2 px-2 pb-1">
+        <div className="border-t border-gray-100 px-4 pb-4 pt-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            {/* Property detail — always */}
             <Link
               href={`/landlord/properties/${property.id}`}
-              className="text-xs font-medium text-saffron-600 hover:text-saffron-800"
+              className="w-full text-xs font-medium text-saffron-600 hover:text-saffron-800 sm:w-auto"
             >
               {t('property.detail_title')} &rarr;
             </Link>
 
-            {/* Create contract CTA — shown when no active contract */}
-            {isVacant && (
+            {/* Pair Tenant — when no current tenant and not a shell */}
+            {!property.current_tenant_id && (
               <Link
-                href={`/landlord/contracts/create?property_id=${property.id}`}
-                className="rounded-md bg-saffron-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-saffron-600"
+                href={`/landlord/properties/${property.id}`}
+                className="w-full rounded-md border border-saffron-500 px-3 py-1.5 text-xs font-medium text-saffron-600 hover:bg-saffron-50 sm:w-auto"
               >
-                {t('properties.v2c_create_contract')}
+                {t('properties.action_pair_tenant')}
               </Link>
             )}
 
-            {/* Remove property — destructive, red outline */}
+            {/* Upload Contract — always */}
+            <Link
+              href={`/landlord/contracts/upload?property_id=${property.id}`}
+              className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 sm:w-auto"
+            >
+              {t('properties.action_upload_contract')}
+            </Link>
+
+            {/* Renew Lease — when expiring */}
+            {status === 'expiring' && (
+              <Link
+                href={`/landlord/properties/${property.id}`}
+                className="w-full rounded-md bg-amber-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-600 sm:w-auto"
+              >
+                {t('properties.action_renew_lease')}
+              </Link>
+            )}
+
+            {/* Remove — soft-delete */}
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
-              className="ml-auto rounded-md border border-red-600 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+              className="w-full rounded-md border border-red-600 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 sm:ml-auto sm:w-auto"
             >
               {t('properties.v2c_remove')}
             </button>
@@ -369,86 +284,78 @@ function PropertyListRow({ property, onRemoved }: PropertyListRowProps) {
   );
 }
 
+// ── Page ───────────────────────────────────────────────────────────────────────
+
 export default function PropertiesPage() {
   const { user, profile } = useAuth();
   const { t } = useI18n();
-  const { toast } = useToast();
+  const router = useRouter();
   const { PromptModal } = useProGate('slot_limit', { showSlotUnlock: true });
   const [properties, setProperties] = useState<PropertyRow[]>([]);
+  const [overduePropertyIds, setOverduePropertyIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
   const [showSlotModal, setShowSlotModal] = useState(false);
-  const [name, setName] = useState('');
-  const [address, setAddress] = useState('');
-  const [unitNumber, setUnitNumber] = useState('');
-  const [creating, setCreating] = useState(false);
 
   const loadProperties = useCallback(async () => {
     if (!user) return;
 
-    // Load properties
-    const { data: propData } = await supabase
+    // Load properties — select all fields needed for status computation.
+    // lease_start, lease_end, monthly_rent, current_tenant_id, pair_code, is_shell
+    // are not yet in generated types, so we cast via unknown.
+    const { data: propData } = await (supabase
       .from('properties')
-      .select('id, name, address, unit_number')
+      .select(
+        'id, name, address, unit_number, cover_image_url, lease_start, lease_end, monthly_rent, daily_rate, current_tenant_id, pair_code, created_at, is_shell'
+      )
       .eq('landlord_id', user.id)
       .eq('is_active', true)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false }) as unknown as Promise<{
+      data: Array<PropertyRow & { is_shell: boolean }> | null;
+    }>);
 
-    const props = (propData ?? []) as Omit<PropertyRow, 'contracts'>[];
+    const props = (propData ?? []).filter((p) => !p.is_shell) as PropertyRow[];
 
     if (props.length === 0) {
       setProperties([]);
+      setOverduePropertyIds(new Set());
       setLoading(false);
       return;
     }
 
     const propIds = props.map((p) => p.id);
 
-    // Load contracts for all properties in one query, excluding parse_failed
-    const { data: contractData } = await supabase
+    // Load active contracts so we can resolve which properties have overdue payments
+    const { data: contractData } = (await supabase
       .from('contracts')
-      .select(
-        'id, property_id, status, lease_start, lease_end, monthly_rent, tenant_id, renewed_from, created_at'
-      )
+      .select('id, property_id')
       .in('property_id', propIds)
-      .neq('status', 'parse_failed')
-      .order('created_at', { ascending: false });
+      .eq('status', 'active')) as {
+      data: Array<{ id: string; property_id: string }> | null;
+    };
 
-    const contracts = (contractData ?? []) as (ContractSummary & { property_id: string })[];
-
-    // Load tenant names
-    const tenantIds = Array.from(
-      new Set(contracts.map((c) => c.tenant_id).filter(Boolean))
-    ) as string[];
-
-    let tenantMap: Record<string, string> = {};
-    if (tenantIds.length > 0) {
-      const { data: tenantData } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .in('id', tenantIds);
-      tenantMap = Object.fromEntries(
-        (tenantData ?? []).map((tp) => [tp.id as string, (tp.full_name as string | null) ?? ''])
-      );
-    }
-
-    // Group contracts by property_id
-    const contractsByProp: Record<string, ContractSummary[]> = {};
+    const contracts = contractData ?? [];
+    const contractIds = contracts.map((c) => c.id);
+    const contractToProperty: Record<string, string> = {};
     for (const c of contracts) {
-      const { property_id, ...rest } = c;
-      if (!contractsByProp[property_id]) contractsByProp[property_id] = [];
-      contractsByProp[property_id].push({
-        ...rest,
-        tenant_name: rest.tenant_id ? (tenantMap[rest.tenant_id] ?? null) : null,
-      });
+      contractToProperty[c.id] = c.property_id;
     }
 
-    const rows: PropertyRow[] = props.map((p) => ({
-      ...p,
-      contracts: contractsByProp[p.id] ?? [],
-    }));
+    const overdueSet = new Set<string>();
+    if (contractIds.length > 0) {
+      const { data: overdueData } = (await supabase
+        .from('payments')
+        .select('contract_id')
+        .in('contract_id', contractIds)
+        .eq('status', 'overdue')) as { data: Array<{ contract_id: string }> | null };
 
-    setProperties(rows);
+      for (const r of overdueData ?? []) {
+        const propId = contractToProperty[r.contract_id];
+        if (propId) overdueSet.add(propId);
+      }
+    }
+
+    setProperties(props);
+    setOverduePropertyIds(overdueSet);
     setLoading(false);
   }, [user]);
 
@@ -456,50 +363,10 @@ export default function PropertiesPage() {
     loadProperties();
   }, [loadProperties]);
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-    setCreating(true);
-
-    const response = await fetch('/api/properties', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: name.trim(),
-        address: address.trim() || undefined,
-        unit_number: unitNumber.trim() || undefined,
-      }),
-    });
-
-    if (response.ok) {
-      setName('');
-      setAddress('');
-      setUnitNumber('');
-      setShowForm(false);
-      await loadProperties();
-    } else {
-      let errorMessage = t('auth.error');
-      try {
-        const body = await response.json();
-        if (body?.error === 'property_limit_reached') {
-          errorMessage = t('properties.slots_full_toast');
-        } else if (body?.message) {
-          errorMessage = body.message;
-        }
-      } catch {
-        // body wasn't JSON — fall back to generic error
-      }
-      toast.error(errorMessage);
-    }
-    setCreating(false);
-  };
-
   const profileTier = profile?.tier ?? 'free';
   const profilePurchasedSlots = profile?.purchased_slots ?? 0;
   const slotLimit = getPropertyLimit(profileTier, profilePurchasedSlots);
   const slotsUsed = properties.length;
-  // When DEFER_TIER_ENFORCEMENT=true, slotLimit is Infinity — always treat as 'under'
-  // so the amber warning pill and gate modal never appear during alpha.
   const slotState: 'under' | 'at' | 'over' =
     slotLimit === Infinity
       ? 'under'
@@ -509,9 +376,19 @@ export default function PropertiesPage() {
           ? 'at'
           : 'over';
 
+  // Compute summary bar counts from loaded property data
+  const overdueCount = overduePropertyIds.size;
+  const expiringCount = properties.filter(
+    (p) =>
+      computePropertyStatus(p.lease_start, p.lease_end, undefined, !!p.daily_rate) === 'expiring'
+  ).length;
+  const vacantCount = properties.filter(
+    (p) => computePropertyStatus(p.lease_start, p.lease_end, undefined, !!p.daily_rate) === 'vacant'
+  ).length;
+
   if (loading) return <LoadingSkeleton count={3} />;
 
-  // Pill styling by state
+  // Pill styling by slot state
   const pillStyles =
     slotState === 'under'
       ? 'bg-warm-100 text-charcoal-600'
@@ -528,7 +405,8 @@ export default function PropertiesPage() {
         />
       )}
 
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      {/* Header row */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-xl font-bold text-gray-900">{t('property.title')}</h2>
           {/* Slot usage pill — hidden when limit is Infinity (alpha/defer mode) */}
@@ -557,137 +435,35 @@ export default function PropertiesPage() {
           type="button"
           onClick={() => {
             if (slotState !== 'under') {
-              // At or over slot limit for any tier — show slot-unlock modal
               setShowSlotModal(true);
               return;
             }
-            setShowForm(!showForm);
+            router.push('/landlord/properties/new');
           }}
           className="min-h-[44px] rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {showForm ? t('common.cancel') : t('property.add')}
+          {t('property.add')}
         </button>
       </div>
 
-      {/* Add property form */}
-      {showForm && (
-        <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
-          {/* Quick contract options */}
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/landlord/contracts/create"
-              className="flex flex-1 items-center gap-3 rounded-lg border-2 border-dashed border-green-300 bg-green-50 p-4 transition-colors hover:border-green-400 hover:bg-green-100"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="h-8 w-8 shrink-0 text-green-500"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5zm4.75 6.75a.75.75 0 00-1.5 0v2.25H5.5a.75.75 0 000 1.5h2.25v2.25a.75.75 0 001.5 0v-2.25h2.25a.75.75 0 000-1.5h-2.25V8.75z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <div>
-                <p className="text-sm font-semibold text-green-800">
-                  {t('property.create_contract_option')}
-                </p>
-                <p className="text-xs text-green-600">{t('property.create_contract_hint')}</p>
-              </div>
-            </Link>
-            <Link
-              href="/landlord/contracts/upload"
-              className="flex flex-1 items-center gap-3 rounded-lg border-2 border-dashed border-saffron-300 bg-saffron-50 p-4 transition-colors hover:border-saffron-400 hover:bg-saffron-100"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="h-8 w-8 shrink-0 text-saffron-500"
-              >
-                <path d="M9.25 13.25a.75.75 0 001.5 0V4.636l2.955 3.129a.75.75 0 001.09-1.03l-4.25-4.5a.75.75 0 00-1.09 0l-4.25 4.5a.75.75 0 101.09 1.03L9.25 4.636v8.614z" />
-                <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
-              </svg>
-              <div>
-                <p className="text-sm font-semibold text-saffron-800">
-                  {t('property.upload_contract_option')}
-                </p>
-                <p className="text-xs text-saffron-600">{t('property.upload_contract_hint')}</p>
-              </div>
-            </Link>
-          </div>
-
-          <div className="relative mb-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-white px-3 text-xs text-gray-400">{t('property.or_manual')}</span>
-            </div>
-          </div>
-
-          <form onSubmit={handleCreate}>
-            <div className="space-y-3">
-              <div>
-                <label
-                  htmlFor="prop-name"
-                  className="mb-1 block text-sm font-medium text-charcoal-700"
-                >
-                  {t('property.name')}
-                </label>
-                <input
-                  id="prop-name"
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={t('property.name_placeholder')}
-                  className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="prop-address"
-                  className="mb-1 block text-sm font-medium text-charcoal-700"
-                >
-                  {t('property.address')}
-                </label>
-                <input
-                  id="prop-address"
-                  type="text"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder={t('property.address_placeholder')}
-                  className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="prop-unit"
-                  className="mb-1 block text-sm font-medium text-charcoal-700"
-                >
-                  {t('property.unit')}
-                </label>
-                <input
-                  id="prop-unit"
-                  type="text"
-                  value={unitNumber}
-                  onChange={(e) => setUnitNumber(e.target.value)}
-                  placeholder={t('property.unit_placeholder')}
-                  className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={creating}
-                className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
-              >
-                {creating ? t('property.creating') : t('property.add')}
-              </button>
-            </div>
-          </form>
+      {/* Summary bar — only shown when there are properties */}
+      {properties.length > 0 && (overdueCount > 0 || expiringCount > 0 || vacantCount > 0) && (
+        <div className="mb-5 flex flex-wrap gap-2">
+          {overdueCount > 0 && (
+            <span className="inline-flex items-center rounded-full bg-rose-100 px-3 py-1 text-xs font-medium text-rose-700">
+              {t('properties.summary_overdue').replace('{n}', String(overdueCount))}
+            </span>
+          )}
+          {expiringCount > 0 && (
+            <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+              {t('properties.summary_expiring').replace('{n}', String(expiringCount))}
+            </span>
+          )}
+          {vacantCount > 0 && (
+            <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">
+              {t('properties.summary_vacant').replace('{n}', String(vacantCount))}
+            </span>
+          )}
         </div>
       )}
 
@@ -702,6 +478,7 @@ export default function PropertiesPage() {
             <PropertyListRow
               key={p.id}
               property={p}
+              overdueIds={overduePropertyIds}
               onRemoved={(id) => setProperties((prev) => prev.filter((x) => x.id !== id))}
             />
           ))}

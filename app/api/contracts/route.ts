@@ -16,6 +16,19 @@ const createContractSchema = z.object({
   structured_clauses: z.array(z.any()).optional(),
 });
 
+// Fields a tenant is allowed to supply when creating their own standalone lease row.
+// All other fields (landlord_id, status, property_id, etc.) are either forced by the
+// server or rejected. This schema intentionally has no property_id — tenant-owned
+// contracts are not linked to a properties row (no landlord, no property_id join).
+const tenantCreateLeaseSchema = z.object({
+  property_name: z.string().min(1).max(255),
+  lease_start: z.string().optional(),
+  lease_end: z.string().optional(),
+  monthly_rent: z.number().positive().optional(),
+  due_day: z.number().int().min(1).max(31).optional(),
+  notes: z.string().max(2000).optional(),
+});
+
 export async function GET() {
   const { user, supabase } = await getAuthenticatedUser();
   if (!user) return unauthorized();
@@ -26,7 +39,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from('contracts')
     .select(
-      'id, property_id, tenant_id, landlord_id, lease_start, lease_end, monthly_rent, security_deposit, status, pairing_code, pairing_expires_at, renewed_from, created_at, properties(name, address, unit_number)'
+      'id, property_id, tenant_id, landlord_id, lease_start, lease_end, monthly_rent, security_deposit, status, pairing_code, pairing_expires_at, renewed_from, created_at, property_name, due_day, notes, properties(name, address, unit_number)'
     )
     .order('created_at', { ascending: false });
 
@@ -41,6 +54,55 @@ export async function POST(request: Request) {
   const { user, supabase } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
+  // Look up the caller's role to determine which branch to take.
+  const admin = createServiceRoleClient();
+  const { data: profile } = await admin.from('profiles').select('role').eq('id', user.id).single();
+
+  const isTenant = profile?.role === 'tenant';
+
+  // --- Tenant branch: create a standalone lease row with no landlord ---
+  if (isTenant) {
+    const body: unknown = await request.json();
+
+    // Reject any attempt to embed landlord_id, status, or property_id
+    if (
+      typeof body === 'object' &&
+      body !== null &&
+      ('landlord_id' in body || 'status' in body || 'property_id' in body)
+    ) {
+      return badRequest('Tenants may not set landlord_id, status, or property_id');
+    }
+
+    const parsed = tenantCreateLeaseSchema.safeParse(body);
+    if (!parsed.success) {
+      return badRequest(parsed.error.issues.map((i) => i.message).join(', '));
+    }
+
+    const { data, error } = await supabase
+      .from('contracts')
+      .insert({
+        tenant_id: user.id,
+        landlord_id: null,
+        property_id: null,
+        property_name: parsed.data.property_name,
+        status: 'active',
+        lease_start: parsed.data.lease_start ?? null,
+        lease_end: parsed.data.lease_end ?? null,
+        monthly_rent: parsed.data.monthly_rent ?? null,
+        due_day: parsed.data.due_day ?? null,
+        notes: parsed.data.notes ?? null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return serverError(error.message);
+    }
+
+    return NextResponse.json(data, { status: 201 });
+  }
+
+  // --- Landlord branch (original logic, unchanged) ---
   const body: unknown = await request.json();
   const parsed = createContractSchema.safeParse(body);
   if (!parsed.success) {
@@ -107,7 +169,6 @@ export async function POST(request: Request) {
 
   // If contract is active, seed payment rows via shared helper
   if (initialStatus === 'active' && data) {
-    const admin = createServiceRoleClient();
     const result = await activateContract(admin, data.id);
     if (!result.success) {
       console.error('[POST /api/contracts] Payment seeding failed:', result.error);
