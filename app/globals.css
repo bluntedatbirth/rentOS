@@ -7,6 +7,11 @@
   --foreground: #2c2c2c;
 }
 
+.dark {
+  --background: #1a1a1a;
+  --foreground: #fafaf9;
+}
+
 html,
 body {
   overflow-x: hidden;
@@ -17,6 +22,9 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  transition:
+    background-color 200ms,
+    color 200ms;
 }
 
 @layer utilities {

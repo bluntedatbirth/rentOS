@@ -6,9 +6,17 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { LanguageToggle } from '@/components/ui/LanguageToggle';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { useTheme } from '@/lib/theme/context';
 import { SocialLoginButtons } from '@/components/auth/SocialLoginButtons';
 import { formatPhone, stripPhone } from '@/lib/format/phone';
 import { createClient } from '@/lib/supabase/client';
+import dynamic from 'next/dynamic';
+
+const CanvasRevealEffect = dynamic(
+  () => import('@/components/ui/canvas-reveal-effect').then((mod) => mod.CanvasRevealEffect),
+  { ssr: false }
+);
 
 function SignupPageInner() {
   const { signUp } = useAuth();
@@ -16,6 +24,7 @@ function SignupPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
+  const { resolvedTheme, mounted } = useTheme();
 
   // Pair code from QR scan: when present, signup is locked to tenant role
   // and triggers auto-pair on success.
@@ -97,41 +106,85 @@ function SignupPageInner() {
     setLoading(false);
   };
 
+  const canvasColors: [number, number, number][] =
+    resolvedTheme === 'dark'
+      ? [
+          [232, 167, 35], // saffron-500
+          [196, 139, 25], // saffron-600
+        ]
+      : [[44, 44, 44]]; // charcoal dots on light
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-warm-50 px-4">
-      <div className="w-full max-w-sm">
+    <div className="flex min-h-screen items-center justify-center bg-warm-50 dark:bg-charcoal-900 px-4 relative overflow-hidden">
+      {/* Canvas background */}
+      <div className="absolute inset-0 z-0">
+        {mounted && (
+          <CanvasRevealEffect
+            animationSpeed={3}
+            containerClassName="bg-warm-50 dark:bg-charcoal-900"
+            colors={canvasColors}
+            dotSize={5}
+            showGradient={false}
+          />
+        )}
+        {/* Radial vignette — dark mode only */}
+        <div className="hidden dark:block absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_30%,_rgba(26,26,26,0.8)_100%)]" />
+      </div>
+
+      {/* Content */}
+      <div className="w-full max-w-sm relative z-10">
         <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-charcoal-900">{t('app.title')}</h1>
-          <LanguageToggle variant="inline" />
+          <Link
+            href="/"
+            className="text-2xl font-bold text-charcoal-900 dark:text-white hover:text-saffron-600 dark:hover:text-saffron-400 transition-colors"
+          >
+            {t('app.title')}
+          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <LanguageToggle variant="inline" />
+          </div>
         </div>
 
         {/* Pair-flow banner: shown when tenant arrives from a landlord's QR code */}
         {isPairFlow && (
-          <div className="mb-4 rounded-lg border border-saffron-200 bg-saffron-50 px-4 py-3">
-            <p className="text-sm font-semibold text-charcoal-900">{t('auth.pair_banner_title')}</p>
-            <p className="mt-0.5 text-xs text-charcoal-700">{t('auth.pair_banner_description')}</p>
+          <div className="mb-4 rounded-lg border border-saffron-200 dark:border-saffron-500/30 bg-saffron-50 dark:bg-saffron-500/10 px-4 py-3">
+            <p className="text-sm font-semibold text-charcoal-900 dark:text-white">
+              {t('auth.pair_banner_title')}
+            </p>
+            <p className="mt-0.5 text-xs text-charcoal-700 dark:text-white/60">
+              {t('auth.pair_banner_description')}
+            </p>
           </div>
         )}
 
         {/* Beta disclaimer */}
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm font-medium text-amber-800">{t('auth.beta_title')}</p>
-          <p className="mt-0.5 text-xs text-amber-700">{t('auth.beta_description')}</p>
+        <div className="mb-4 rounded-lg border border-amber-200 dark:border-saffron-500/30 bg-amber-50 dark:bg-saffron-500/10 backdrop-blur-sm px-4 py-3">
+          <p className="text-sm font-medium text-amber-800 dark:text-saffron-300">
+            {t('auth.beta_title')}
+          </p>
+          <p className="mt-0.5 text-xs text-amber-700 dark:text-saffron-200/70">
+            {t('auth.beta_description')}
+          </p>
         </div>
 
         {sent ? (
-          <div className="rounded-lg border border-warm-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-2 text-lg font-semibold text-charcoal-900">
+          <div className="rounded-xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800/60 p-6 shadow-sm dark:shadow-2xl dark:backdrop-blur-xl">
+            <h2 className="mb-2 text-lg font-semibold text-charcoal-900 dark:text-white">
               {t('auth.check_email')}
             </h2>
-            <p className="text-sm text-charcoal-700">{t('auth.check_email_description')}</p>
+            <p className="text-sm text-charcoal-500 dark:text-white/50">
+              {t('auth.check_email_description')}
+            </p>
           </div>
         ) : (
-          <div className="rounded-lg border border-warm-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-1 text-lg font-semibold text-charcoal-900">
+          <div className="rounded-xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800/60 p-6 shadow-sm dark:shadow-2xl dark:backdrop-blur-xl">
+            <h2 className="mb-1 text-lg font-semibold text-charcoal-900 dark:text-white">
               {t('auth.get_started')}
             </h2>
-            <p className="mb-6 text-sm text-charcoal-500">{t('auth.get_started_description')}</p>
+            <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
+              {t('auth.get_started_description')}
+            </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Role selector hidden in pair flow — role is locked to tenant */}
@@ -139,7 +192,7 @@ function SignupPageInner() {
                 <div>
                   <label
                     htmlFor="role"
-                    className="mb-1 block text-sm font-medium text-charcoal-700"
+                    className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                   >
                     {t('auth.role')}
                   </label>
@@ -150,8 +203,8 @@ function SignupPageInner() {
                       aria-pressed={role === 'landlord'}
                       className={`min-h-[44px] rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
                         role === 'landlord'
-                          ? 'border-saffron-500 bg-saffron-50 text-saffron-700'
-                          : 'border-warm-200 text-charcoal-700 hover:bg-warm-50'
+                          ? 'border-saffron-500 bg-saffron-50 dark:bg-saffron-500/15 text-saffron-700 dark:text-saffron-300'
+                          : 'border-warm-200 dark:border-white/10 text-charcoal-700 dark:text-white/60 hover:bg-warm-50 dark:hover:bg-white/5'
                       }`}
                     >
                       {t('auth.role_landlord')}
@@ -162,8 +215,8 @@ function SignupPageInner() {
                       aria-pressed={role === 'tenant'}
                       className={`min-h-[44px] rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
                         role === 'tenant'
-                          ? 'border-saffron-500 bg-saffron-50 text-saffron-700'
-                          : 'border-warm-200 text-charcoal-700 hover:bg-warm-50'
+                          ? 'border-saffron-500 bg-saffron-50 dark:bg-saffron-500/15 text-saffron-700 dark:text-saffron-300'
+                          : 'border-warm-200 dark:border-white/10 text-charcoal-700 dark:text-white/60 hover:bg-warm-50 dark:hover:bg-white/5'
                       }`}
                     >
                       {t('auth.role_tenant')}
@@ -175,7 +228,7 @@ function SignupPageInner() {
               <div>
                 <label
                   htmlFor="fullName"
-                  className="mb-1 block text-sm font-medium text-charcoal-700"
+                  className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                 >
                   {t('auth.full_name')}
                 </label>
@@ -186,7 +239,7 @@ function SignupPageInner() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder={t('auth.full_name_placeholder')}
-                  className="block w-full rounded-lg border border-warm-200 bg-warm-50 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                  className="block w-full rounded-lg border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-white/5 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/30 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                 />
               </div>
 
@@ -195,7 +248,7 @@ function SignupPageInner() {
                 <div>
                   <label
                     htmlFor="phone"
-                    className="mb-1 block text-sm font-medium text-charcoal-700"
+                    className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                   >
                     {t('auth.phone')}
                   </label>
@@ -205,13 +258,16 @@ function SignupPageInner() {
                     value={phone}
                     onChange={(e) => setPhone(formatPhone(e.target.value))}
                     placeholder={t('auth.phone_placeholder')}
-                    className="block w-full rounded-lg border border-warm-200 bg-warm-50 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                    className="block w-full rounded-lg border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-white/5 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/30 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                   />
                 </div>
               )}
 
               <div>
-                <label htmlFor="email" className="mb-1 block text-sm font-medium text-charcoal-700">
+                <label
+                  htmlFor="email"
+                  className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
+                >
                   {t('auth.email')}
                 </label>
                 <input
@@ -221,14 +277,14 @@ function SignupPageInner() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={t('auth.email_placeholder')}
-                  className="block w-full rounded-lg border border-warm-200 bg-warm-50 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                  className="block w-full rounded-lg border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-white/5 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/30 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="password"
-                  className="mb-1 block text-sm font-medium text-charcoal-700"
+                  className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                 >
                   {t('auth.password')}
                 </label>
@@ -238,13 +294,15 @@ function SignupPageInner() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t('auth.password_placeholder')}
-                  className="block w-full rounded-lg border border-warm-200 bg-warm-50 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                  className="block w-full rounded-lg border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-white/5 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/30 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                 />
-                <p className="mt-1 text-xs text-charcoal-400">{t('auth.password_hint')}</p>
+                <p className="mt-1 text-xs text-charcoal-400 dark:text-white/40">
+                  {t('auth.password_hint')}
+                </p>
               </div>
 
               {/* Consent checkbox */}
-              <label className="flex items-start gap-2 text-sm text-charcoal-700">
+              <label className="flex items-start gap-2 text-sm text-charcoal-700 dark:text-white/70">
                 <input
                   type="checkbox"
                   checked={consented}
@@ -257,7 +315,7 @@ function SignupPageInner() {
                     href="/legal#terms"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-saffron-600 underline hover:text-saffron-700"
+                    className="text-saffron-600 dark:text-saffron-400 underline hover:text-saffron-700 dark:hover:text-saffron-300"
                   >
                     {t('auth.consent_tos_link')}
                   </a>{' '}
@@ -266,19 +324,19 @@ function SignupPageInner() {
                     href="/legal#privacy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-saffron-600 underline hover:text-saffron-700"
+                    className="text-saffron-600 dark:text-saffron-400 underline hover:text-saffron-700 dark:hover:text-saffron-300"
                   >
                     {t('auth.consent_privacy_link')}
                   </a>
                 </span>
               </label>
 
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
               <button
                 type="submit"
                 disabled={loading || !consented}
-                className="min-h-[44px] w-full rounded-lg bg-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-500 focus:ring-offset-2 disabled:opacity-50"
+                className="min-h-[44px] w-full rounded-lg bg-gradient-to-r from-saffron-600 to-saffron-500 px-4 py-2.5 text-sm font-medium text-white hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-saffron-500 focus:ring-offset-2 focus:ring-offset-warm-50 dark:focus:ring-offset-charcoal-900 disabled:opacity-50 transition-all"
               >
                 {loading ? t('auth.signing_in') : t('auth.create_account')}
               </button>
@@ -291,9 +349,12 @@ function SignupPageInner() {
               disabled={loading}
             />
 
-            <p className="mt-4 text-center text-sm text-charcoal-500">
+            <p className="mt-4 text-center text-sm text-charcoal-500 dark:text-white/50">
               {t('auth.have_account')}{' '}
-              <Link href="/login" className="font-medium text-saffron-600 hover:text-saffron-700">
+              <Link
+                href="/login"
+                className="font-medium text-saffron-600 dark:text-saffron-400 hover:text-saffron-700 dark:hover:text-saffron-300"
+              >
                 {t('app.login')}
               </Link>
             </p>

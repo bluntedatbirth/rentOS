@@ -30,12 +30,12 @@ export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanels
             {t('landing.for_both_label')}
           </p>
           <h2
-            className="font-[var(--font-manrope)] text-3xl md:text-4xl font-bold text-charcoal-800 mb-3"
+            className="font-[var(--font-manrope)] text-3xl md:text-4xl font-bold text-charcoal-800 dark:text-white mb-3"
             style={{ letterSpacing: '-0.02em' }}
           >
             {t('landing.for_both_h2')}
           </h2>
-          <p className="text-charcoal-600 text-lg max-w-[540px] mx-auto">
+          <p className="text-charcoal-600 dark:text-white/60 text-lg max-w-[540px] mx-auto">
             {t('landing.for_both_sub')}
           </p>
         </AnimatedSection>
@@ -92,7 +92,7 @@ export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanels
           {/* Tenants panel — light */}
           <AnimatedSection
             delay={0.1}
-            className="bg-white rounded-sm p-10 border border-charcoal-800/[0.06]"
+            className="bg-white dark:bg-charcoal-800 rounded-sm p-10 border border-charcoal-800/[0.06] dark:border-white/10"
           >
             <div className="flex items-center gap-3 mb-6">
               <div className="w-11 h-11 rounded-sm bg-sage-500/15 flex items-center justify-center">
@@ -102,7 +102,7 @@ export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanels
                 <p className="text-xs font-semibold tracking-[0.1em] uppercase text-sage-500 font-[var(--font-manrope)]">
                   {t('landing.tenant_panel_title')}
                 </p>
-                <p className="text-xl font-bold text-charcoal-800 leading-tight font-[var(--font-manrope)]">
+                <p className="text-xl font-bold text-charcoal-800 dark:text-white leading-tight font-[var(--font-manrope)]">
                   {t('landing.tenant_panel_sub')}
                 </p>
               </div>
@@ -114,7 +114,7 @@ export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanels
                 return (
                   <div
                     key={i}
-                    className="flex items-start gap-3 text-charcoal-600 text-sm leading-relaxed"
+                    className="flex items-start gap-3 text-charcoal-600 dark:text-white/70 text-sm leading-relaxed"
                   >
                     <Icon className="w-4 h-4 mt-0.5 text-sage-500 shrink-0" />
                     <span>{text}</span>
@@ -123,7 +123,7 @@ export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanels
               })}
             </div>
 
-            <div className="pt-6 border-t border-charcoal-800/[0.06] space-y-4">
+            <div className="pt-6 border-t border-charcoal-800/[0.06] dark:border-white/10 space-y-4">
               <div className="bg-sage-500/[0.08] border border-sage-500/20 rounded-sm px-4 py-3">
                 <p className="text-sm font-semibold text-sage-500">
                   {t('landing.tenant_free_badge')}
@@ -131,7 +131,7 @@ export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanels
               </div>
               <Link
                 href="/signup"
-                className="flex items-center justify-center gap-2 border-2 border-charcoal-800 text-charcoal-800 py-3 rounded-sm text-sm font-semibold no-underline hover:bg-charcoal-800 hover:text-warm-50 transition-colors"
+                className="flex items-center justify-center gap-2 border-2 border-charcoal-800 dark:border-white/30 text-charcoal-800 dark:text-white py-3 rounded-sm text-sm font-semibold no-underline hover:bg-charcoal-800 dark:hover:bg-white/10 hover:text-warm-50 transition-colors"
               >
                 {t('landing.tenant_cta')}
                 <ArrowRight className="w-3.5 h-3.5" />

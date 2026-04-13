@@ -22,8 +22,11 @@
     "@anthropic-ai/sdk": "^0.82.0",
     "@google/genai": "^1.49.0",
     "@pdf-lib/fontkit": "^1.1.1",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@react-three/fiber": "^8.18.0",
     "@supabase/ssr": "^0.10.0",
     "@supabase/supabase-js": "^2.101.1",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",
@@ -36,6 +39,7 @@
     "rehype-slug": "^6.0.0",
     "resend": "^6.10.0",
     "tailwind-merge": "^3.5.0",
+    "three": "^0.183.2",
     "zod": "^4.3.6"
   },
   "engines": {
@@ -46,6 +50,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/three": "^0.183.1",
     "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.2.35",

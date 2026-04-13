@@ -53,9 +53,11 @@ export function SocialLoginButtons({
     <div className="mt-6">
       {/* Divider */}
       <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-warm-200" />
-        <span className="text-sm text-charcoal-500">{t('auth.or_continue_with')}</span>
-        <div className="h-px flex-1 bg-warm-200" />
+        <div className="h-px flex-1 bg-warm-200 dark:bg-white/10" />
+        <span className="text-sm text-charcoal-500 dark:text-white/40">
+          {t('auth.or_continue_with')}
+        </span>
+        <div className="h-px flex-1 bg-warm-200 dark:bg-white/10" />
       </div>
 
       {oauthError && <p className="mt-3 text-sm text-red-600">{oauthError}</p>}
@@ -68,7 +70,7 @@ export function SocialLoginButtons({
             type="button"
             onClick={() => handleOAuth(provider)}
             disabled={isAllDisabled}
-            className="flex min-h-[44px] w-full items-center gap-3 rounded-lg border border-warm-200 bg-white px-4 py-2.5 text-sm font-medium text-charcoal-900 transition-colors hover:border-saffron-400 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex min-h-[44px] w-full items-center gap-3 rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-2.5 text-sm font-medium text-charcoal-900 dark:text-white transition-colors hover:border-saffron-400 dark:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <SocialProviderIcon provider={provider} size={24} />
             <span className="flex-1 text-center">{t(labelKey)}</span>
@@ -82,12 +84,12 @@ export function SocialLoginButtons({
           aria-disabled="true"
           tabIndex={-1}
           title={t('auth.apple_coming_soon_tooltip')}
-          className="flex min-h-[44px] w-full cursor-not-allowed items-center gap-3 rounded-lg border border-warm-200 bg-white px-4 py-2.5 text-sm font-medium text-charcoal-900 opacity-60"
+          className="flex min-h-[44px] w-full cursor-not-allowed items-center gap-3 rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-2.5 text-sm font-medium text-charcoal-900 dark:text-white opacity-60"
           onClick={(e) => e.preventDefault()}
         >
           <SocialProviderIcon provider="apple" size={24} />
           <span className="flex-1 text-center">{t('auth.continue_with_apple')}</span>
-          <span className="ml-2 inline-flex items-center rounded-full bg-warm-100 px-2 py-0.5 text-xs text-charcoal-500">
+          <span className="ml-2 inline-flex items-center rounded-full bg-warm-100 dark:bg-white/10 px-2 py-0.5 text-xs text-charcoal-500 dark:text-white/50">
             {t('auth.apple_coming_soon')}
           </span>
         </button>
@@ -99,12 +101,12 @@ export function SocialLoginButtons({
           aria-disabled="true"
           tabIndex={-1}
           title={t('auth.line_coming_soon_tooltip')}
-          className="flex min-h-[44px] w-full cursor-not-allowed items-center gap-3 rounded-lg border border-warm-200 bg-white px-4 py-2.5 text-sm font-medium text-charcoal-900 opacity-60"
+          className="flex min-h-[44px] w-full cursor-not-allowed items-center gap-3 rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-2.5 text-sm font-medium text-charcoal-900 dark:text-white opacity-60"
           onClick={(e) => e.preventDefault()}
         >
           <SocialProviderIcon provider="line" size={24} />
           <span className="flex-1 text-center">{t('auth.continue_with_line')}</span>
-          <span className="ml-2 inline-flex items-center rounded-full bg-warm-100 px-2 py-0.5 text-xs text-charcoal-500">
+          <span className="ml-2 inline-flex items-center rounded-full bg-warm-100 dark:bg-white/10 px-2 py-0.5 text-xs text-charcoal-500 dark:text-white/50">
             {t('auth.line_coming_soon')}
           </span>
         </button>

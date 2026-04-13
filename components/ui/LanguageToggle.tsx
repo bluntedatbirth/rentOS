@@ -221,7 +221,7 @@ export function LanguageToggle({ variant: _variant = 'inline', onlyLocales }: Pr
         aria-label={`Language — ${currentOption.fullLabel}`}
         onClick={() => setOpen((v) => !v)}
         onKeyDown={handleTriggerKeyDown}
-        className="inline-flex items-center gap-1.5 rounded-full border border-warm-200 bg-transparent px-3 py-1.5 text-sm font-medium text-charcoal-700 hover:bg-warm-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-saffron-400"
+        className="inline-flex items-center gap-1.5 rounded-full border border-warm-200 dark:border-white/10 bg-transparent px-3 py-1.5 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-saffron-400"
       >
         <currentOption.Flag size={18} />
         <span>{currentOption.shortLabel}</span>
@@ -235,7 +235,7 @@ export function LanguageToggle({ variant: _variant = 'inline', onlyLocales }: Pr
           role="listbox"
           aria-label="Select language"
           onKeyDown={handleListKeyDown}
-          className="absolute right-0 z-50 mt-1.5 min-w-[160px] rounded-lg border border-warm-200 bg-warm-50 py-1 shadow-md focus:outline-none"
+          className="absolute right-0 z-50 mt-1.5 min-w-[160px] rounded-lg border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-charcoal-800 py-1 shadow-md focus:outline-none"
           tabIndex={-1}
         >
           {visibleOptions.map((opt) => {
@@ -256,8 +256,8 @@ export function LanguageToggle({ variant: _variant = 'inline', onlyLocales }: Pr
                 className={[
                   'flex cursor-pointer items-center gap-2.5 px-3 py-2 text-sm focus:outline-none',
                   isActive
-                    ? 'bg-saffron-50 text-saffron-700'
-                    : 'text-charcoal-700 hover:bg-warm-100 focus:bg-warm-100',
+                    ? 'bg-saffron-50 dark:bg-saffron-500/15 text-saffron-700 dark:text-saffron-300'
+                    : 'text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10 focus:bg-warm-100 dark:focus:bg-white/10',
                 ].join(' ')}
               >
                 <opt.Flag size={18} />

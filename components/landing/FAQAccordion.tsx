@@ -37,14 +37,14 @@ export function FAQAccordion({ title, subtitle, categories }: Props) {
   };
 
   return (
-    <section id="faq" className="bg-saffron-500/[0.04] py-20 px-6">
+    <section id="faq" className="bg-saffron-500/[0.04] dark:bg-charcoal-900 py-20 px-6">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-4">
-          <h2 className="font-[var(--font-manrope)] text-3xl md:text-4xl font-bold text-charcoal-800 mb-2 tracking-tight">
+          <h2 className="font-[var(--font-manrope)] text-3xl md:text-4xl font-bold text-charcoal-800 dark:text-white mb-2 tracking-tight">
             {title}
           </h2>
-          <p className="text-base text-charcoal-800/60">{subtitle}</p>
+          <p className="text-base text-charcoal-800/60 dark:text-white/50">{subtitle}</p>
         </div>
 
         {/* Categories */}
@@ -59,23 +59,25 @@ export function FAQAccordion({ title, subtitle, categories }: Props) {
                 <div
                   key={item.id}
                   onClick={() => toggle(item.id)}
-                  className={`bg-white rounded-lg px-5 py-4 mb-3 cursor-pointer transition-colors duration-150 ${
+                  className={`bg-white dark:bg-charcoal-800 rounded-lg px-5 py-4 mb-3 cursor-pointer transition-colors duration-150 ${
                     isOpen
                       ? 'border border-saffron-500/35 border-l-4 border-l-saffron-500'
-                      : 'border border-charcoal-800/10'
+                      : 'border border-charcoal-800/10 dark:border-white/10'
                   }`}
                 >
                   <div className="flex justify-between items-center gap-4">
-                    <span className="text-[15px] font-medium text-charcoal-800 leading-snug">
+                    <span className="text-[15px] font-medium text-charcoal-800 dark:text-white leading-snug">
                       {item.q}
                     </span>
                     <ChevronDown
-                      className={`h-4 w-4 text-charcoal-500 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                      className={`h-4 w-4 text-charcoal-500 dark:text-white/50 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                       aria-hidden="true"
                     />
                   </div>
                   {isOpen && (
-                    <p className="text-sm text-charcoal-800/70 mt-3 leading-relaxed">{item.a}</p>
+                    <p className="text-sm text-charcoal-800/70 dark:text-white/60 mt-3 leading-relaxed">
+                      {item.a}
+                    </p>
                   )}
                 </div>
               );

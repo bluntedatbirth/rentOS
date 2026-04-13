@@ -15,19 +15,19 @@ interface FeaturesGridProps {
 
 export function FeaturesGrid({ t, features }: FeaturesGridProps) {
   return (
-    <section id="features" className="py-20 px-6 bg-warm-50">
+    <section id="features" className="py-20 px-6 bg-warm-50 dark:bg-charcoal-900">
       <div className="max-w-[1100px] mx-auto">
         <AnimatedSection className="text-center mb-14">
           <p className="text-xs font-semibold tracking-[0.1em] uppercase text-saffron-500 mb-3 font-[var(--font-manrope)]">
             {t('landing.features_label')}
           </p>
           <h2
-            className="font-[var(--font-manrope)] text-3xl md:text-4xl font-bold text-charcoal-800 mb-3"
+            className="font-[var(--font-manrope)] text-3xl md:text-4xl font-bold text-charcoal-800 dark:text-white mb-3"
             style={{ letterSpacing: '-0.02em' }}
           >
             {t('landing.features_h2')}
           </h2>
-          <p className="text-charcoal-600 text-lg max-w-[520px] mx-auto">
+          <p className="text-charcoal-600 dark:text-white/60 text-lg max-w-[520px] mx-auto">
             {t('landing.features_sub')}
           </p>
         </AnimatedSection>
@@ -41,7 +41,7 @@ export function FeaturesGrid({ t, features }: FeaturesGridProps) {
               <AnimatedSection
                 key={titleKey}
                 delay={i * 0.06}
-                className="bg-white rounded-sm p-7 border border-charcoal-800/[0.05]"
+                className="bg-white dark:bg-charcoal-800 rounded-sm p-7 border border-charcoal-800/[0.05] dark:border-white/10"
               >
                 <div
                   className={`w-12 h-12 rounded-sm flex items-center justify-center mb-4 ${
@@ -54,10 +54,12 @@ export function FeaturesGrid({ t, features }: FeaturesGridProps) {
                     }`}
                   />
                 </div>
-                <h3 className="font-[var(--font-manrope)] text-base font-bold text-charcoal-800 mb-2">
+                <h3 className="font-[var(--font-manrope)] text-base font-bold text-charcoal-800 dark:text-white mb-2">
                   {t(titleKey)}
                 </h3>
-                <p className="text-sm text-charcoal-600 leading-relaxed">{t(descKey)}</p>
+                <p className="text-sm text-charcoal-600 dark:text-white/60 leading-relaxed">
+                  {t(descKey)}
+                </p>
               </AnimatedSection>
             );
           })}
