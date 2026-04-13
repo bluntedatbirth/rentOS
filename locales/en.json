@@ -23,6 +23,8 @@
   "auth.password_placeholder": "Enter your password",
   "auth.password_hint": "Min 8 characters. Optional — you can also use magic link.",
   "auth.password_min_length": "Password must be at least 8 characters.",
+  "auth.invalid_credentials": "Invalid email or password. Please try again.",
+  "auth.email_not_confirmed": "Please check your email and click the confirmation link before signing in.",
   "auth.sign_in": "Sign In",
   "auth.use_magic_link": "Sign in with magic link instead",
   "auth.use_password": "Sign in with password instead",

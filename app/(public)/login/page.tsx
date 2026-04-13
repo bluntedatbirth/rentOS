@@ -36,11 +36,20 @@ function LoginPageInner() {
 
   // Redirect after successful sign-in
   useEffect(() => {
-    if (user && profile) {
-      const dest = profile.role === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
+    if (!user || loading) return;
+    if (profile) {
+      // Profile exists — go to the correct dashboard
+      const dest =
+        (profile.active_mode ?? profile.role) === 'landlord'
+          ? '/landlord/dashboard'
+          : '/tenant/dashboard';
       router.push(dest);
+    } else {
+      // User authenticated but no profile yet — let middleware create it
+      // (safety net handles profile auto-creation on the server side)
+      router.push('/landlord/dashboard');
     }
-  }, [user, profile, router]);
+  }, [user, profile, loading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +66,15 @@ function LoginPageInner() {
     } else {
       const { error: authError } = await signInWithPassword(email, password);
       if (authError) {
-        setError(authError.message);
+        // Map Supabase's generic messages to user-friendly ones
+        const msg = authError.message;
+        if (msg.toLowerCase().includes('invalid login credentials')) {
+          setError(t('auth.invalid_credentials'));
+        } else if (msg.toLowerCase().includes('email not confirmed')) {
+          setError(t('auth.email_not_confirmed'));
+        } else {
+          setError(msg);
+        }
       }
     }
     setLoading(false);
