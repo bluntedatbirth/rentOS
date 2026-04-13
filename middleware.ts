@@ -202,39 +202,52 @@ export async function middleware(request: NextRequest) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (serviceKey && supabaseUrl) {
       const admin = createClient(supabaseUrl, serviceKey);
-      const { error: upsertError } = await admin.from('profiles').upsert(
-        {
-          id: user.id,
-          role: resolvedRole,
-          full_name: fullName,
-          phone: (metadata.phone as string) || null,
-          language: 'th',
-          tier: 'pro',
-          tier_expires_at: oneYearFromNow.toISOString(),
-          founding_member: true,
-        },
-        { onConflict: 'id', ignoreDuplicates: true }
-      );
+      const { data: upsertData, error: upsertError } = await admin
+        .from('profiles')
+        .upsert(
+          {
+            id: user.id,
+            role: resolvedRole,
+            full_name: fullName,
+            phone: (metadata.phone as string) || null,
+            language: 'th',
+            tier: 'pro',
+            tier_expires_at: oneYearFromNow.toISOString(),
+            founding_member: true,
+          },
+          { onConflict: 'id' }
+        )
+        .select('role, active_mode')
+        .single();
 
-      if (!upsertError) {
+      console.log('[middleware] profile upsert', {
+        userId: user.id,
+        upsertError: upsertError ? String(upsertError) : null,
+        upsertData,
+      });
+
+      if (!upsertError && upsertData) {
         // Profile created — redirect to dashboard
         const dashboardUrl =
-          resolvedRole === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
+          (upsertData.active_mode ?? upsertData.role) === 'landlord'
+            ? '/landlord/dashboard'
+            : '/tenant/dashboard';
         return NextResponse.redirect(new URL(dashboardUrl, request.url));
       }
+    } else {
+      console.error(
+        '[middleware] missing SUPABASE_SERVICE_ROLE_KEY or SUPABASE_URL for profile upsert'
+      );
     }
 
-    // Fallback: still redirect to signup if profile creation failed
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[middleware]', {
-        pathname,
-        has_user: true,
-        profile_via_session_client: profileViaSession,
-        profile_via_service_role: profileViaServiceRole,
-        redirect_target: '/signup',
-      });
-    }
-    return NextResponse.redirect(new URL('/signup', request.url));
+    // Fallback: sign the user out and redirect to login so they don't loop
+    // (this only happens if profile creation fails AND service role is misconfigured)
+    console.error('[middleware] profile creation failed, clearing session', {
+      userId: user.id,
+      profileViaSession,
+      profileViaServiceRole,
+    });
+    return NextResponse.redirect(new URL('/login?error=profile_failed', request.url));
   }
 
   // Block wrong-role access

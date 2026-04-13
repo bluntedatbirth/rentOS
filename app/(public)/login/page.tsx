@@ -34,21 +34,14 @@ function LoginPageInner() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Redirect after successful sign-in
+  // Redirect after successful sign-in (only when we have both user AND profile)
   useEffect(() => {
-    if (!user || loading) return;
-    if (profile) {
-      // Profile exists — go to the correct dashboard
-      const dest =
-        (profile.active_mode ?? profile.role) === 'landlord'
-          ? '/landlord/dashboard'
-          : '/tenant/dashboard';
-      router.push(dest);
-    } else {
-      // User authenticated but no profile yet — let middleware create it
-      // (safety net handles profile auto-creation on the server side)
-      router.push('/landlord/dashboard');
-    }
+    if (!user || !profile || loading) return;
+    const dest =
+      (profile.active_mode ?? profile.role) === 'landlord'
+        ? '/landlord/dashboard'
+        : '/tenant/dashboard';
+    router.push(dest);
   }, [user, profile, loading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,6 +147,13 @@ function LoginPageInner() {
           <div className="mb-4 rounded-lg border border-amber-300 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 backdrop-blur-sm px-4 py-3">
             <p className="text-sm text-amber-800 dark:text-amber-200">
               {t('auth.oauth_failed_msg')}
+            </p>
+          </div>
+        )}
+        {urlError === 'profile_failed' && (
+          <div className="mb-4 rounded-lg border border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 backdrop-blur-sm px-4 py-3">
+            <p className="text-sm text-red-800 dark:text-red-200">
+              Account setup failed. Please try signing in again. If this persists, contact support.
             </p>
           </div>
         )}
