@@ -66,19 +66,21 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="rounded-lg bg-white p-4 shadow-sm">
-      <p className="text-xs font-medium text-charcoal-500">{label}</p>
+    <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-charcoal-800 dark:shadow-black/20">
+      <p className="text-xs font-medium text-charcoal-500 dark:text-white/50">{label}</p>
       <div className="mt-1 flex items-end gap-2">
-        <p className={`text-xl font-bold ${valueColor ?? 'text-charcoal-900'}`}>{value}</p>
+        <p className={`text-xl font-bold ${valueColor ?? 'text-charcoal-900 dark:text-white'}`}>
+          {value}
+        </p>
         {badge && (
           <span
-            className={`mb-0.5 rounded-full px-2 py-0.5 text-xs font-semibold ${badgeColor ?? 'bg-warm-200 text-charcoal-600'}`}
+            className={`mb-0.5 rounded-full px-2 py-0.5 text-xs font-semibold ${badgeColor ?? 'bg-warm-200 text-charcoal-600 dark:bg-white/5 dark:text-white/60'}`}
           >
             {badge}
           </span>
         )}
       </div>
-      {sub && <p className="mt-1 text-xs text-charcoal-400">{sub}</p>}
+      {sub && <p className="mt-1 text-xs text-charcoal-400 dark:text-white/40">{sub}</p>}
     </div>
   );
 }
@@ -90,8 +92,8 @@ function BarChart({ data }: { data: { month: string; revenue: number; expected: 
   const maxVal = Math.max(...data.flatMap((d) => [d.revenue, d.expected]), 1);
 
   return (
-    <div className="rounded-lg bg-white p-4 shadow-sm">
-      <h3 className="mb-4 text-sm font-semibold text-charcoal-700">
+    <div className="rounded-lg bg-white p-4 shadow-sm dark:bg-charcoal-800 dark:shadow-black/20">
+      <h3 className="mb-4 text-sm font-semibold text-charcoal-700 dark:text-white/70">
         {t('analytics.revenue_trend')}
       </h3>
       {/* Legend */}
@@ -101,7 +103,7 @@ function BarChart({ data }: { data: { month: string; revenue: number; expected: 
           {t('analytics.collected')}
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-sm bg-warm-200" />
+          <span className="inline-block h-3 w-3 rounded-sm bg-warm-200 dark:bg-charcoal-700" />
           {t('analytics.expected')}
         </span>
       </div>
@@ -121,7 +123,7 @@ function BarChart({ data }: { data: { month: string; revenue: number; expected: 
                 <div className="flex w-full items-end gap-0.5" style={{ height: '140px' }}>
                   {/* Expected (warm behind) */}
                   <div
-                    className="flex-1 rounded-t bg-warm-200 transition-all"
+                    className="flex-1 rounded-t bg-warm-200 transition-all dark:bg-charcoal-700"
                     style={{ height: `${expPct}%`, minHeight: d.expected > 0 ? '2px' : '0' }}
                     title={`${t('analytics.expected')}: ${fmt(d.expected)}`}
                   />
@@ -133,9 +135,11 @@ function BarChart({ data }: { data: { month: string; revenue: number; expected: 
                   />
                 </div>
                 {/* Month label */}
-                <span className="text-[10px] text-charcoal-400">{shortMonth}</span>
+                <span className="text-[10px] text-charcoal-400 dark:text-white/40">
+                  {shortMonth}
+                </span>
                 {/* Tooltip */}
-                <div className="pointer-events-none absolute bottom-full mb-2 hidden w-28 rounded-lg bg-charcoal-900 p-2 text-center text-xs text-white shadow-lg group-hover:block">
+                <div className="pointer-events-none absolute bottom-full mb-2 hidden w-28 rounded-lg bg-charcoal-900 p-2 text-center text-xs text-white shadow-lg group-hover:block dark:bg-charcoal-700">
                   <p className="font-semibold">{d.month}</p>
                   <p>
                     {t('analytics.collected')}: {fmt(d.revenue)}
@@ -178,23 +182,24 @@ function PropertyTable({ data }: { data: AnalyticsData['property_performance'] }
   });
 
   function SortIcon({ col }: { col: SortKey }) {
-    if (sortKey !== col) return <span className="ml-1 text-charcoal-300">↕</span>;
+    if (sortKey !== col)
+      return <span className="ml-1 text-charcoal-300 dark:text-white/40">↕</span>;
     return <span className="ml-1 text-saffron-500">{sortDir === 'asc' ? '↑' : '↓'}</span>;
   }
 
   const thCls =
-    'min-h-[44px] cursor-pointer select-none px-3 py-3 text-left text-xs font-semibold text-charcoal-500 uppercase tracking-wide hover:text-charcoal-700';
+    'min-h-[44px] cursor-pointer select-none px-3 py-3 text-left text-xs font-semibold text-charcoal-500 uppercase tracking-wide hover:text-charcoal-700 dark:text-white/50 dark:hover:text-white/70';
 
   return (
-    <div className="rounded-lg bg-white shadow-sm">
-      <h3 className="border-b border-warm-200 px-4 py-3 text-sm font-semibold text-charcoal-700">
+    <div className="rounded-lg bg-white shadow-sm dark:bg-charcoal-800 dark:shadow-black/20">
+      <h3 className="border-b border-warm-200 px-4 py-3 text-sm font-semibold text-charcoal-700 dark:border-white/10 dark:text-white/70">
         {t('analytics.property_performance')}
       </h3>
 
       {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full">
-          <thead className="border-b border-warm-200">
+          <thead className="border-b border-warm-200 dark:border-white/10">
             <tr>
               <th className={thCls} onClick={() => toggleSort('property_name')}>
                 {t('analytics.property_name')}
@@ -212,24 +217,28 @@ function PropertyTable({ data }: { data: AnalyticsData['property_performance'] }
                 {t('analytics.overdue')}
                 <SortIcon col="total_overdue" />
               </th>
-              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-charcoal-500">
+              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-charcoal-500 dark:text-white/50">
                 {t('analytics.status')}
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-warm-50">
+          <tbody className="divide-y divide-warm-50 dark:divide-white/5">
             {sorted.map((row) => (
-              <tr key={row.property_id} className="hover:bg-warm-50">
-                <td className="px-3 py-3 text-sm font-medium text-charcoal-900">
+              <tr key={row.property_id} className="hover:bg-warm-50 dark:hover:bg-white/5">
+                <td className="px-3 py-3 text-sm font-medium text-charcoal-900 dark:text-white">
                   {row.property_name}
                 </td>
-                <td className="px-3 py-3 text-sm text-charcoal-700">
+                <td className="px-3 py-3 text-sm text-charcoal-700 dark:text-white/70">
                   {row.monthly_rent > 0 ? fmt(row.monthly_rent) : '—'}
                 </td>
-                <td className="px-3 py-3 text-sm text-charcoal-700">{fmt(row.total_collected)}</td>
+                <td className="px-3 py-3 text-sm text-charcoal-700 dark:text-white/70">
+                  {fmt(row.total_collected)}
+                </td>
                 <td
                   className={`px-3 py-3 text-sm font-medium ${
-                    row.total_overdue > 0 ? 'text-red-600' : 'text-charcoal-500'
+                    row.total_overdue > 0
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-charcoal-500 dark:text-white/50'
                   }`}
                 >
                   {row.total_overdue > 0 ? fmt(row.total_overdue) : '—'}
@@ -238,8 +247,8 @@ function PropertyTable({ data }: { data: AnalyticsData['property_performance'] }
                   <span
                     className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
                       row.is_occupied
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-warm-200 text-charcoal-500'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
+                        : 'bg-warm-200 text-charcoal-500 dark:bg-white/5 dark:text-white/50'
                     }`}
                   >
                     {row.is_occupied ? t('analytics.occupied') : t('analytics.vacant')}
@@ -249,7 +258,10 @@ function PropertyTable({ data }: { data: AnalyticsData['property_performance'] }
             ))}
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-sm text-charcoal-400">
+                <td
+                  colSpan={5}
+                  className="px-3 py-8 text-center text-sm text-charcoal-400 dark:text-white/40"
+                >
                   {t('analytics.no_properties')}
                 </td>
               </tr>
@@ -259,21 +271,21 @@ function PropertyTable({ data }: { data: AnalyticsData['property_performance'] }
       </div>
 
       {/* Mobile cards */}
-      <div className="divide-y divide-warm-200 md:hidden">
+      <div className="divide-y divide-warm-200 md:hidden dark:divide-white/10">
         {sorted.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-charcoal-400">
+          <p className="px-4 py-8 text-center text-sm text-charcoal-400 dark:text-white/40">
             {t('analytics.no_properties')}
           </p>
         ) : (
           sorted.map((row) => (
             <div key={row.property_id} className="px-4 py-4">
               <div className="flex items-start justify-between">
-                <p className="font-medium text-charcoal-900">{row.property_name}</p>
+                <p className="font-medium text-charcoal-900 dark:text-white">{row.property_name}</p>
                 <span
                   className={`ml-2 shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
                     row.is_occupied
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-warm-200 text-charcoal-500'
+                      ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
+                      : 'bg-warm-200 text-charcoal-500 dark:bg-white/5 dark:text-white/50'
                   }`}
                 >
                   {row.is_occupied ? t('analytics.occupied') : t('analytics.vacant')}
@@ -281,20 +293,30 @@ function PropertyTable({ data }: { data: AnalyticsData['property_performance'] }
               </div>
               <div className="mt-2 grid grid-cols-3 gap-2 text-sm">
                 <div>
-                  <p className="text-xs text-charcoal-400">{t('analytics.monthly_rent')}</p>
-                  <p className="font-medium text-charcoal-700">
+                  <p className="text-xs text-charcoal-400 dark:text-white/40">
+                    {t('analytics.monthly_rent')}
+                  </p>
+                  <p className="font-medium text-charcoal-700 dark:text-white/70">
                     {row.monthly_rent > 0 ? fmt(row.monthly_rent) : '—'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-charcoal-400">{t('analytics.collected')}</p>
-                  <p className="font-medium text-charcoal-700">{fmt(row.total_collected)}</p>
+                  <p className="text-xs text-charcoal-400 dark:text-white/40">
+                    {t('analytics.collected')}
+                  </p>
+                  <p className="font-medium text-charcoal-700 dark:text-white/70">
+                    {fmt(row.total_collected)}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs text-charcoal-400">{t('analytics.overdue')}</p>
+                  <p className="text-xs text-charcoal-400 dark:text-white/40">
+                    {t('analytics.overdue')}
+                  </p>
                   <p
                     className={`font-medium ${
-                      row.total_overdue > 0 ? 'text-red-600' : 'text-charcoal-500'
+                      row.total_overdue > 0
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-charcoal-500 dark:text-white/50'
                     }`}
                   >
                     {row.total_overdue > 0 ? fmt(row.total_overdue) : '—'}
@@ -368,10 +390,15 @@ export function AnalyticsClient({
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl">
-        <h2 className="mb-6 text-xl font-bold text-charcoal-900">{t('analytics.title')}</h2>
+        <h2 className="mb-6 text-xl font-bold text-charcoal-900 dark:text-white">
+          {t('analytics.title')}
+        </h2>
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-xl bg-warm-200" />
+            <div
+              key={i}
+              className="h-24 animate-pulse rounded-xl bg-warm-200 dark:bg-charcoal-700"
+            />
           ))}
         </div>
       </div>
@@ -380,7 +407,7 @@ export function AnalyticsClient({
 
   if (error || !data) {
     return (
-      <div className="mx-auto max-w-3xl rounded-lg bg-white p-8 text-center shadow-sm">
+      <div className="mx-auto max-w-3xl rounded-lg bg-white p-8 text-center shadow-sm dark:bg-charcoal-800 dark:shadow-black/20">
         <p className="text-sm text-red-500">{error ?? t('analytics.load_error')}</p>
         <button
           type="button"
@@ -401,14 +428,16 @@ export function AnalyticsClient({
         : '0%';
   const momColor =
     data.revenue.mom_change > 0
-      ? 'bg-green-100 text-green-700'
+      ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
       : data.revenue.mom_change < 0
-        ? 'bg-red-100 text-red-700'
-        : 'bg-warm-200 text-charcoal-600';
+        ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400'
+        : 'bg-warm-200 text-charcoal-600 dark:bg-white/5 dark:text-white/60';
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h2 className="text-xl font-bold text-charcoal-900">{t('analytics.title')}</h2>
+      <h2 className="text-xl font-bold text-charcoal-900 dark:text-white">
+        {t('analytics.title')}
+      </h2>
 
       {/* ── Top Stats ── */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -422,7 +451,11 @@ export function AnalyticsClient({
         <StatCard
           label={t('analytics.outstanding')}
           value={fmt(data.revenue.total_outstanding)}
-          valueColor={data.revenue.total_outstanding > 0 ? 'text-red-600' : 'text-charcoal-900'}
+          valueColor={
+            data.revenue.total_outstanding > 0
+              ? 'text-red-600 dark:text-red-400'
+              : 'text-charcoal-900 dark:text-white'
+          }
         />
         <StatCard
           label={t('analytics.vacancy_rate')}
@@ -433,7 +466,11 @@ export function AnalyticsClient({
           label={t('analytics.late_payment_rate')}
           value={fmtPct(data.payments.late_payment_rate)}
           sub={`${t('analytics.on_time_rate')}: ${fmtPct(data.payments.on_time_rate)}`}
-          valueColor={data.payments.late_payment_rate > 20 ? 'text-red-600' : 'text-charcoal-900'}
+          valueColor={
+            data.payments.late_payment_rate > 20
+              ? 'text-red-600 dark:text-red-400'
+              : 'text-charcoal-900 dark:text-white'
+          }
         />
       </div>
 

@@ -114,12 +114,14 @@ export default function TenantNotificationsPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-charcoal-900">{t('notifications.inbox_title')}</h2>
+        <h2 className="text-xl font-bold text-charcoal-900 dark:text-white">
+          {t('notifications.inbox_title')}
+        </h2>
         {notifications.length > 0 && (
           <button
             type="button"
             onClick={dismissAll}
-            className="min-h-[44px] rounded-lg border border-warm-200 px-4 py-2 text-sm font-medium text-charcoal-700 hover:bg-warm-100"
+            className="min-h-[44px] rounded-lg border border-warm-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/5"
           >
             {t('notifications.clear_all')}
           </button>
@@ -127,15 +129,17 @@ export default function TenantNotificationsPage() {
       </div>
 
       {notifications.length === 0 ? (
-        <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-          <p className="text-sm text-charcoal-500">{t('notifications.no_notifications')}</p>
+        <div className="rounded-lg bg-white dark:bg-charcoal-800 p-8 text-center shadow-sm">
+          <p className="text-sm text-charcoal-500 dark:text-white/50">
+            {t('notifications.no_notifications')}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
           {notifications.map((notification) => (
             <div
               key={notification.id}
-              className={`flex items-center gap-0 rounded-lg bg-white shadow-sm transition-colors hover:bg-warm-50 ${
+              className={`flex items-center gap-0 rounded-lg bg-white dark:bg-charcoal-800 shadow-sm transition-colors hover:bg-warm-50 dark:hover:bg-white/5 ${
                 !notification.read_at ? 'border-l-4 border-saffron-500' : ''
               }`}
             >
@@ -151,7 +155,7 @@ export default function TenantNotificationsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p
-                        className={`text-sm ${!notification.read_at ? 'font-semibold text-charcoal-900' : 'font-medium text-charcoal-700'}`}
+                        className={`text-sm ${!notification.read_at ? 'font-semibold text-charcoal-900 dark:text-white' : 'font-medium text-charcoal-700 dark:text-white/70'}`}
                       >
                         {locale === 'en'
                           ? (notification.title_en ?? notification.title)
@@ -167,12 +171,12 @@ export default function TenantNotificationsPage() {
                           </span>
                         )}
                     </div>
-                    <p className="mt-0.5 text-sm text-charcoal-500 line-clamp-2">
+                    <p className="mt-0.5 text-sm text-charcoal-500 dark:text-white/50 line-clamp-2">
                       {locale === 'en'
                         ? (notification.body_en ?? notification.body)
                         : (notification.body_th ?? notification.body)}
                     </p>
-                    <p className="mt-1 text-xs text-charcoal-400">
+                    <p className="mt-1 text-xs text-charcoal-400 dark:text-white/40">
                       {timeAgo(notification.sent_at, t)}
                     </p>
                   </div>
@@ -180,7 +184,7 @@ export default function TenantNotificationsPage() {
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 20 20"
                     fill="currentColor"
-                    className="h-4 w-4 shrink-0 text-charcoal-300"
+                    className="h-4 w-4 shrink-0 text-charcoal-300 dark:text-white/30"
                   >
                     <path
                       fillRule="evenodd"
@@ -194,7 +198,7 @@ export default function TenantNotificationsPage() {
               <button
                 type="button"
                 onClick={() => dismiss(notification.id)}
-                className="mr-2 shrink-0 rounded-lg p-2 text-charcoal-300 hover:bg-warm-100 hover:text-charcoal-500"
+                className="mr-2 shrink-0 rounded-lg p-2 text-charcoal-300 dark:text-white/30 hover:bg-warm-100 dark:hover:bg-white/5 hover:text-charcoal-500 dark:hover:text-white/50"
                 title={t('notifications.dismiss')}
               >
                 <svg

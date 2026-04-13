@@ -232,7 +232,7 @@ export default function TenantContractViewPage() {
   if (!contract) {
     return (
       <div className="py-12 text-center">
-        <p className="mb-6 text-charcoal-500">{t('tenant.no_contract')}</p>
+        <p className="mb-6 text-charcoal-500 dark:text-white/50">{t('tenant.no_contract')}</p>
         <button
           type="button"
           onClick={() => setShowAddLeaseModal(true)}
@@ -260,13 +260,13 @@ export default function TenantContractViewPage() {
             role="dialog"
             aria-modal="true"
           >
-            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-              <h2 className="mb-4 text-lg font-bold text-charcoal-900">
+            <div className="w-full max-w-md rounded-2xl bg-white dark:bg-charcoal-800 p-6 shadow-xl dark:shadow-black/20">
+              <h2 className="mb-4 text-lg font-bold text-charcoal-900 dark:text-white">
                 {t('tenant.add_lease_title')}
               </h2>
               <form onSubmit={handleAddLeaseSubmit} className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-charcoal-700">
+                  <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                     {t('tenant.add_lease_property_name')}
                     <span className="ml-1 text-red-500">*</span>
                   </label>
@@ -282,7 +282,7 @@ export default function TenantContractViewPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-charcoal-700">
+                    <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                       {t('tenant.add_lease_start')}
                     </label>
                     <input
@@ -291,11 +291,11 @@ export default function TenantContractViewPage() {
                       onChange={(e) =>
                         setAddLeaseForm((f) => ({ ...f, lease_start: e.target.value }))
                       }
-                      className="w-full rounded-lg border border-warm-200 px-3 py-2 text-sm text-charcoal-900 focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                      className="w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-charcoal-700">
+                    <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                       {t('tenant.add_lease_end')}
                     </label>
                     <input
@@ -304,13 +304,13 @@ export default function TenantContractViewPage() {
                       onChange={(e) =>
                         setAddLeaseForm((f) => ({ ...f, lease_end: e.target.value }))
                       }
-                      className="w-full rounded-lg border border-warm-200 px-3 py-2 text-sm text-charcoal-900 focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                      className="w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-charcoal-700">
+                    <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                       {t('tenant.add_lease_rent')}
                     </label>
                     <input
@@ -321,11 +321,11 @@ export default function TenantContractViewPage() {
                       onChange={(e) =>
                         setAddLeaseForm((f) => ({ ...f, monthly_rent: e.target.value }))
                       }
-                      className="w-full rounded-lg border border-warm-200 px-3 py-2 text-sm text-charcoal-900 focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                      className="w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-charcoal-700">
+                    <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                       {t('tenant.add_lease_due_day')}
                     </label>
                     <input
@@ -334,12 +334,12 @@ export default function TenantContractViewPage() {
                       max="31"
                       value={addLeaseForm.due_day}
                       onChange={(e) => setAddLeaseForm((f) => ({ ...f, due_day: e.target.value }))}
-                      className="w-full rounded-lg border border-warm-200 px-3 py-2 text-sm text-charcoal-900 focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                      className="w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-charcoal-700">
+                  <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                     {t('tenant.add_lease_notes')}
                   </label>
                   <textarea
@@ -351,7 +351,7 @@ export default function TenantContractViewPage() {
                 </div>
 
                 {addLeaseError && (
-                  <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                  <p className="rounded-lg bg-red-100 dark:bg-red-500/15 px-3 py-2 text-sm text-red-700 dark:text-red-400">
                     {addLeaseError}
                   </p>
                 )}
@@ -365,7 +365,7 @@ export default function TenantContractViewPage() {
                   <button
                     type="button"
                     onClick={() => setShowAddLeaseModal(false)}
-                    className="flex-1 rounded-lg border border-warm-200 px-4 py-2 text-sm font-medium text-charcoal-700 hover:bg-warm-50"
+                    className="flex-1 rounded-lg border border-warm-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5"
                   >
                     {t('common.cancel')}
                   </button>
@@ -395,21 +395,29 @@ export default function TenantContractViewPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6 flex items-center gap-3">
-        <h2 className="text-xl font-bold text-charcoal-900">{t('tenant.my_contract')}</h2>
+        <h2 className="text-xl font-bold text-charcoal-900 dark:text-white">
+          {t('tenant.my_contract')}
+        </h2>
         <StatusBadge status={contract.status} />
       </div>
 
       {/* Property info — show from FK join (paired) or free-text property_name (tenant-owned) */}
       {contract.properties ? (
-        <div className="mb-4 rounded-lg bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-charcoal-900">{contract.properties.name}</p>
+        <div className="mb-4 rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm dark:shadow-black/20">
+          <p className="text-sm font-semibold text-charcoal-900 dark:text-white">
+            {contract.properties.name}
+          </p>
           {contract.properties.address && (
-            <p className="mt-1 text-xs text-charcoal-500">{contract.properties.address}</p>
+            <p className="mt-1 text-xs text-charcoal-500 dark:text-white/50">
+              {contract.properties.address}
+            </p>
           )}
         </div>
       ) : contract.property_name ? (
-        <div className="mb-4 rounded-lg bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-charcoal-900">{contract.property_name}</p>
+        <div className="mb-4 rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm dark:shadow-black/20">
+          <p className="text-sm font-semibold text-charcoal-900 dark:text-white">
+            {contract.property_name}
+          </p>
         </div>
       ) : null}
 
@@ -417,47 +425,63 @@ export default function TenantContractViewPage() {
       <RenewalNotice contract={contract} onResponded={() => window.location.reload()} />
 
       {/* Contract summary */}
-      <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg bg-white p-4 shadow-sm sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm dark:shadow-black/20 sm:grid-cols-4">
         <div className="col-span-2 sm:col-span-1">
-          <p className="text-xs text-charcoal-500">{t('contract.lease_period')}</p>
-          <p className="break-all text-sm font-medium text-charcoal-900">
+          <p className="text-xs text-charcoal-500 dark:text-white/50">
+            {t('contract.lease_period')}
+          </p>
+          <p className="break-all text-sm font-medium text-charcoal-900 dark:text-white">
             {contract.lease_start ? formatDisplayDate(contract.lease_start) : '—'} →{' '}
             {contract.lease_end ? formatDisplayDate(contract.lease_end) : '—'}
           </p>
         </div>
         <div>
-          <p className="text-xs text-charcoal-500">{t('contract.monthly_rent')}</p>
-          <p className="text-sm font-medium text-charcoal-900">
+          <p className="text-xs text-charcoal-500 dark:text-white/50">
+            {t('contract.monthly_rent')}
+          </p>
+          <p className="text-sm font-medium text-charcoal-900 dark:text-white">
             {contract.monthly_rent ? `฿${contract.monthly_rent.toLocaleString()}` : '—'}
           </p>
         </div>
         {!isTenantOwned && (
           <div>
-            <p className="text-xs text-charcoal-500">{t('contract.security_deposit')}</p>
-            <p className="text-sm font-medium text-charcoal-900">
+            <p className="text-xs text-charcoal-500 dark:text-white/50">
+              {t('contract.security_deposit')}
+            </p>
+            <p className="text-sm font-medium text-charcoal-900 dark:text-white">
               {contract.security_deposit ? `฿${contract.security_deposit.toLocaleString()}` : '—'}
             </p>
           </div>
         )}
         {!isTenantOwned && (
           <div>
-            <p className="text-xs text-charcoal-500">{t('contract.clauses')}</p>
-            <p className="text-sm font-medium text-charcoal-900">{clauses.length}</p>
+            <p className="text-xs text-charcoal-500 dark:text-white/50">{t('contract.clauses')}</p>
+            <p className="text-sm font-medium text-charcoal-900 dark:text-white">
+              {clauses.length}
+            </p>
           </div>
         )}
         {isTenantOwned && contract.due_day && (
           <div>
-            <p className="text-xs text-charcoal-500">{t('tenant.add_lease_due_day')}</p>
-            <p className="text-sm font-medium text-charcoal-900">{contract.due_day}</p>
+            <p className="text-xs text-charcoal-500 dark:text-white/50">
+              {t('tenant.add_lease_due_day')}
+            </p>
+            <p className="text-sm font-medium text-charcoal-900 dark:text-white">
+              {contract.due_day}
+            </p>
           </div>
         )}
       </div>
 
       {/* Tenant-owned notes */}
       {isTenantOwned && contract.notes && (
-        <div className="mb-6 rounded-lg bg-white p-4 shadow-sm">
-          <p className="text-xs text-charcoal-500">{t('tenant.add_lease_notes')}</p>
-          <p className="mt-1 whitespace-pre-wrap text-sm text-charcoal-800">{contract.notes}</p>
+        <div className="mb-6 rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm dark:shadow-black/20">
+          <p className="text-xs text-charcoal-500 dark:text-white/50">
+            {t('tenant.add_lease_notes')}
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-charcoal-800 dark:text-white/90">
+            {contract.notes}
+          </p>
         </div>
       )}
 
@@ -466,7 +490,7 @@ export default function TenantContractViewPage() {
         <>
           {/* Extracted clauses */}
           {clauses.length === 0 ? (
-            <div className="rounded-lg bg-warm-50 p-8 text-center text-sm text-charcoal-500">
+            <div className="rounded-lg bg-warm-50 dark:bg-charcoal-900 p-8 text-center text-sm text-charcoal-500 dark:text-white/50">
               {t('contract.no_clauses')}
             </div>
           ) : (
@@ -504,12 +528,12 @@ export default function TenantContractViewPage() {
                           </span>
                         )}
                       </div>
-                      <h3 className="mb-1 text-sm font-semibold text-charcoal-900">
+                      <h3 className="mb-1 text-sm font-semibold text-charcoal-900 dark:text-white">
                         {clauseLang === 'en'
                           ? (clause.title_en ?? clause.title_th)
                           : clause.title_th}
                       </h3>
-                      <p className="whitespace-pre-wrap text-sm text-charcoal-800">
+                      <p className="whitespace-pre-wrap text-sm text-charcoal-800 dark:text-white/90">
                         {clauseLang === 'en' ? (clause.text_en ?? clause.text_th) : clause.text_th}
                       </p>
                     </div>

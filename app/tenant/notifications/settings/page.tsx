@@ -107,21 +107,32 @@ export default function TenantNotificationSettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="mb-1 text-xl font-bold text-charcoal-900">
+      <h2 className="mb-1 text-xl font-bold text-charcoal-900 dark:text-white">
         {t('notifications.settings_title')}
       </h2>
-      <p className="mb-6 text-sm text-charcoal-500">{t('notifications.settings_description')}</p>
+      <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
+        {t('notifications.settings_description')}
+      </p>
 
       <div className="space-y-6">
         {groups.map((group) => (
-          <div key={group.label} className="rounded-lg bg-white p-4 shadow-sm">
-            <h3 className="mb-3 text-sm font-semibold text-charcoal-900">{group.label}</h3>
+          <div
+            key={group.label}
+            className="rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm dark:shadow-black/20"
+          >
+            <h3 className="mb-3 text-sm font-semibold text-charcoal-900 dark:text-white">
+              {group.label}
+            </h3>
             <div className="space-y-3">
               {group.items.map((item) => (
                 <div key={item.key} className="flex items-center justify-between gap-4">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-charcoal-900">{item.label}</p>
-                    <p className="text-xs text-charcoal-500">{item.description}</p>
+                    <p className="text-sm font-medium text-charcoal-900 dark:text-white">
+                      {item.label}
+                    </p>
+                    <p className="text-xs text-charcoal-500 dark:text-white/50">
+                      {item.description}
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -134,7 +145,7 @@ export default function TenantNotificationSettingsPage() {
                     aria-label={item.label}
                   >
                     <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition-transform ${
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white dark:bg-charcoal-200 shadow ring-0 transition-transform ${
                         prefs[item.key] ? 'translate-x-5' : 'translate-x-0.5'
                       } mt-0.5`}
                     />
@@ -156,7 +167,9 @@ export default function TenantNotificationSettingsPage() {
           {saving ? t('common.loading') : t('common.save')}
         </button>
         {saved && (
-          <span className="text-sm font-medium text-green-600">{t('notifications.saved')}</span>
+          <span className="text-sm font-medium text-green-600 dark:text-green-400">
+            {t('notifications.saved')}
+          </span>
         )}
       </div>
     </div>

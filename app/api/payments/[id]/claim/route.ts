@@ -39,27 +39,15 @@ export async function POST(request: Request, { params }: { params: { id: string 
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Fetch payment. Select '*' and cast — the new claimed_* columns may not yet
-  // be present in the generated Database types if the migration hasn't been
-  // reflected. The data is still returned by Postgres.
-  const { data: paymentRaw, error: fetchError } = await adminClient
+  const { data: payment, error: fetchError } = await adminClient
     .from('payments')
     .select('*')
     .eq('id', params.id)
     .single();
 
-  if (fetchError || !paymentRaw) {
+  if (fetchError || !payment) {
     return notFound('Payment not found');
   }
-
-  const payment = paymentRaw as unknown as {
-    id: string;
-    status: string;
-    contract_id: string;
-    amount: number;
-    due_date: string;
-    claimed_at: string | null;
-  };
 
   if (payment.status === 'paid') {
     return badRequest('Payment is already marked as paid');
@@ -91,8 +79,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const now = new Date().toISOString();
 
   // Record the claim on the payments row
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updatePayload: Record<string, any> = {
+  const updatePayload: { claimed_by: string; claimed_at: string; claimed_note?: string } = {
     claimed_by: user.id,
     claimed_at: now,
   };
@@ -100,8 +87,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   const { data: updated, error: updateError } = await adminClient
     .from('payments')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update(updatePayload as any)
+    .update(updatePayload)
     .eq('id', params.id)
     .select()
     .single();

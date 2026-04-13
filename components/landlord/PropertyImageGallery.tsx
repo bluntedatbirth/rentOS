@@ -98,12 +98,14 @@ export function PropertyImageGallery({ propertyId }: PropertyImageGalleryProps) 
   ];
 
   return (
-    <div className="rounded-lg bg-white p-4 shadow-sm">
+    <div className="rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm">
       {/* Title */}
-      <h3 className="mb-4 text-sm font-semibold text-gray-900">{t('property.photos_title')}</h3>
+      <h3 className="mb-4 text-sm font-semibold text-charcoal-900 dark:text-white">
+        {t('property.photos_title')}
+      </h3>
 
       {/* Tabs */}
-      <div className="mb-4 flex gap-1 rounded-lg bg-gray-100 p-1">
+      <div className="mb-4 flex gap-1 rounded-lg bg-warm-100 dark:bg-white/5 p-1">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -111,8 +113,8 @@ export function PropertyImageGallery({ propertyId }: PropertyImageGalleryProps) 
             onClick={() => setActiveTab(tab.key)}
             className={`min-h-[44px] flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === tab.key
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white dark:bg-charcoal-800 text-charcoal-900 dark:text-white shadow-sm'
+                : 'text-charcoal-500 dark:text-white/50 hover:text-charcoal-700 dark:hover:text-white/70'
             }`}
           >
             {tab.label}
@@ -131,7 +133,10 @@ export function PropertyImageGallery({ propertyId }: PropertyImageGalleryProps) 
       {loading ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="aspect-square animate-pulse rounded-lg bg-gray-200" />
+            <div
+              key={i}
+              className="aspect-square animate-pulse rounded-lg bg-warm-200 dark:bg-charcoal-700"
+            />
           ))}
         </div>
       ) : (
@@ -170,7 +175,7 @@ export function PropertyImageGallery({ propertyId }: PropertyImageGalleryProps) 
             type="button"
             disabled={uploading}
             onClick={() => fileInputRef.current?.click()}
-            className="aspect-square rounded-lg border-2 border-dashed border-gray-300 transition-colors hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="aspect-square rounded-lg border-2 border-dashed border-warm-300 dark:border-white/15 transition-colors hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
             aria-label="Add photo"
           >
             <div className="flex h-full flex-col items-center justify-center gap-1">
@@ -187,7 +192,7 @@ export function PropertyImageGallery({ propertyId }: PropertyImageGalleryProps) 
                     fill="none"
                     stroke="currentColor"
                     strokeWidth={1.5}
-                    className="h-8 w-8 text-gray-400"
+                    className="h-8 w-8 text-charcoal-400 dark:text-white/40"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                   </svg>
@@ -200,7 +205,9 @@ export function PropertyImageGallery({ propertyId }: PropertyImageGalleryProps) 
 
       {/* Empty state */}
       {!loading && filteredImages.length === 0 && !uploading && (
-        <p className="mt-3 text-center text-xs text-gray-400">{t('property.photos_empty')}</p>
+        <p className="mt-3 text-center text-xs text-charcoal-400 dark:text-white/40">
+          {t('property.photos_empty')}
+        </p>
       )}
 
       {/* Hidden file input */}

@@ -5,7 +5,11 @@ import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { formatPhone, stripPhone } from '@/lib/format/phone';
 
-export default function ProfileForm() {
+interface ProfileFormProps {
+  showTitle?: boolean;
+}
+
+export default function ProfileForm({ showTitle = true }: ProfileFormProps) {
   const { profile, loading } = useAuth();
   const { t, locale, setLocale } = useI18n();
 
@@ -63,12 +67,19 @@ export default function ProfileForm() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-charcoal-900">{t('profile.title')}</h1>
+      {showTitle && (
+        <h1 className="text-2xl font-bold text-charcoal-900 dark:text-white">
+          {t('profile.title')}
+        </h1>
+      )}
 
-      <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+      <div className="bg-white dark:bg-charcoal-800 rounded-lg shadow-sm dark:shadow-black/20 p-4 space-y-4">
         {/* Full Name */}
         <div>
-          <label htmlFor="full_name" className="block text-sm font-medium text-charcoal-700 mb-1">
+          <label
+            htmlFor="full_name"
+            className="block text-sm font-medium text-charcoal-700 dark:text-white/70 mb-1"
+          >
             {t('profile.full_name')}
           </label>
           <input
@@ -76,13 +87,16 @@ export default function ProfileForm() {
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            className="min-h-[44px] w-full rounded-lg border border-warm-200 px-3 py-2 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+            className="min-h-[44px] w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
           />
         </div>
 
         {/* Phone */}
         <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-charcoal-700 mb-1">
+          <label
+            htmlFor="phone"
+            className="block text-sm font-medium text-charcoal-700 dark:text-white/70 mb-1"
+          >
             {t('profile.phone')}
           </label>
           <input
@@ -90,13 +104,13 @@ export default function ProfileForm() {
             type="tel"
             value={phone}
             onChange={(e) => setPhone(formatPhone(e.target.value))}
-            className="min-h-[44px] w-full rounded-lg border border-warm-200 px-3 py-2 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+            className="min-h-[44px] w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
           />
         </div>
 
         {/* Language Preference */}
         <div>
-          <label className="block text-sm font-medium text-charcoal-700 mb-1">
+          <label className="block text-sm font-medium text-charcoal-700 dark:text-white/70 mb-1">
             {t('profile.language')}
           </label>
           <div className="flex gap-2">
@@ -106,8 +120,8 @@ export default function ProfileForm() {
               aria-pressed={language === 'th'}
               className={`min-h-[44px] flex-1 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                 language === 'th'
-                  ? 'border-saffron-500 bg-saffron-50 text-saffron-700'
-                  : 'border-warm-200 bg-white text-charcoal-700 hover:bg-warm-50'
+                  ? 'border-saffron-500 bg-saffron-50 dark:bg-saffron-900/30 text-saffron-700 dark:text-saffron-400'
+                  : 'border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5'
               }`}
             >
               {t('auth.switch_to_th')}
@@ -118,8 +132,8 @@ export default function ProfileForm() {
               aria-pressed={language === 'en'}
               className={`min-h-[44px] flex-1 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                 language === 'en'
-                  ? 'border-saffron-500 bg-saffron-50 text-saffron-700'
-                  : 'border-warm-200 bg-white text-charcoal-700 hover:bg-warm-50'
+                  ? 'border-saffron-500 bg-saffron-50 dark:bg-saffron-900/30 text-saffron-700 dark:text-saffron-400'
+                  : 'border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5'
               }`}
             >
               {t('auth.switch_to_en')}
@@ -129,10 +143,10 @@ export default function ProfileForm() {
 
         {/* Account Type (read-only) */}
         <div>
-          <label className="block text-sm font-medium text-charcoal-700 mb-1">
+          <label className="block text-sm font-medium text-charcoal-700 dark:text-white/70 mb-1">
             {t('profile.account_type')}
           </label>
-          <div className="min-h-[44px] flex items-center rounded-lg border border-warm-200 bg-warm-50 px-3 py-2 text-sm text-charcoal-500">
+          <div className="min-h-[44px] flex items-center rounded-lg border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-white/5 px-3 py-2 text-sm text-charcoal-500 dark:text-white/50">
             {profile?.role === 'landlord' ? t('auth.role_landlord') : t('auth.role_tenant')}
           </div>
         </div>

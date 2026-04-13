@@ -126,7 +126,9 @@ export function TenantDocumentsClient({ documents, activeContractId }: TenantDoc
       )}
 
       <div className="mb-6 flex items-center justify-between gap-4">
-        <h2 className="text-xl font-bold text-charcoal-900">{t('documents.title')}</h2>
+        <h2 className="text-xl font-bold text-charcoal-900 dark:text-white">
+          {t('documents.title')}
+        </h2>
         {activeContractId && (
           <button
             type="button"
@@ -148,10 +150,10 @@ export function TenantDocumentsClient({ documents, activeContractId }: TenantDoc
       {activeContractId && showForm && (
         <form
           onSubmit={handleSubmit}
-          className="mb-6 space-y-4 rounded-xl border border-charcoal-200 bg-white p-5 shadow-sm"
+          className="mb-6 space-y-4 rounded-xl border border-charcoal-200 bg-white dark:bg-charcoal-800 p-5 shadow-sm"
         >
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-charcoal-700">
+            <label className="mb-1.5 block text-sm font-medium text-charcoal-700 dark:text-white/70">
               {t('tenant.documents_upload_category')}
             </label>
             <select
@@ -159,7 +161,7 @@ export function TenantDocumentsClient({ documents, activeContractId }: TenantDoc
               onChange={(e) =>
                 setUploadCategory(e.target.value as 'tenant_id' | 'receipt' | 'other')
               }
-              className="w-full rounded-lg border border-charcoal-300 bg-white px-3 py-2 text-sm text-charcoal-900 focus:outline-none focus:ring-2 focus:ring-saffron-400"
+              className="w-full rounded-lg border border-charcoal-300 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-saffron-400"
             >
               <option value="tenant_id">{t('tenant.documents_upload_category_tenant_id')}</option>
               <option value="receipt">{t('tenant.documents_upload_category_receipt')}</option>
@@ -168,7 +170,7 @@ export function TenantDocumentsClient({ documents, activeContractId }: TenantDoc
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-charcoal-700">
+            <label className="mb-1.5 block text-sm font-medium text-charcoal-700 dark:text-white/70">
               {t('tenant.documents_upload_file')}
             </label>
             <input
@@ -177,7 +179,7 @@ export function TenantDocumentsClient({ documents, activeContractId }: TenantDoc
               accept="image/*,application/pdf"
               required
               onChange={handleFileChange}
-              className="block w-full text-sm text-charcoal-700 file:mr-3 file:rounded-lg file:border-0 file:bg-saffron-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-saffron-700 hover:file:bg-saffron-100"
+              className="block w-full text-sm text-charcoal-700 dark:text-white/70 file:mr-3 file:rounded-lg file:border-0 file:bg-saffron-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-saffron-700 hover:file:bg-saffron-100"
             />
             {fileSizeError && (
               <p className="mt-1 text-xs text-red-600">{t('tenant.documents_upload_too_large')}</p>
@@ -185,14 +187,14 @@ export function TenantDocumentsClient({ documents, activeContractId }: TenantDoc
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-charcoal-700">
+            <label className="mb-1.5 block text-sm font-medium text-charcoal-700 dark:text-white/70">
               {t('tenant.documents_upload_notes')}
             </label>
             <textarea
               value={uploadNotes}
               onChange={(e) => setUploadNotes(e.target.value)}
               rows={2}
-              className="w-full resize-none rounded-lg border border-charcoal-300 px-3 py-2 text-sm text-charcoal-900 placeholder-charcoal-400 focus:outline-none focus:ring-2 focus:ring-saffron-400"
+              className="w-full resize-none rounded-lg border border-charcoal-300 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white placeholder-charcoal-400 dark:placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-saffron-400"
             />
           </div>
 
@@ -200,7 +202,7 @@ export function TenantDocumentsClient({ documents, activeContractId }: TenantDoc
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="rounded-lg border border-charcoal-300 px-4 py-2 text-sm text-charcoal-700 transition-colors hover:bg-charcoal-50"
+              className="rounded-lg border border-charcoal-300 dark:border-white/10 px-4 py-2 text-sm text-charcoal-700 dark:text-white/70 transition-colors hover:bg-charcoal-50 dark:hover:bg-white/5"
             >
               {t('common.cancel') || 'Cancel'}
             </button>
@@ -216,21 +218,21 @@ export function TenantDocumentsClient({ documents, activeContractId }: TenantDoc
       )}
 
       {docList.length === 0 ? (
-        <div className="rounded-lg bg-warm-50 p-8 text-center text-sm text-charcoal-500">
+        <div className="rounded-lg bg-warm-50 dark:bg-charcoal-900 p-8 text-center text-sm text-charcoal-500 dark:text-white/50">
           {t('documents.empty_tenant')}
         </div>
       ) : (
         <div className="space-y-3">
           {docList.map((doc) => (
-            <div key={doc.id} className="rounded-lg bg-white p-4 shadow-sm">
+            <div key={doc.id} className="rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-semibold text-charcoal-900">
+                    <p className="truncate text-sm font-semibold text-charcoal-900 dark:text-white">
                       {doc.file_name}
                     </p>
                     {doc.version > 1 && (
-                      <span className="rounded bg-warm-100 px-1.5 py-0.5 text-xs text-charcoal-500">
+                      <span className="rounded bg-warm-100 dark:bg-white/5 px-1.5 py-0.5 text-xs text-charcoal-500 dark:text-white/50">
                         v{doc.version}
                       </span>
                     )}
@@ -242,17 +244,23 @@ export function TenantDocumentsClient({ documents, activeContractId }: TenantDoc
                       {categoryLabel(doc.category)}
                     </span>
                     {doc.properties?.name && (
-                      <span className="text-xs text-charcoal-500">{doc.properties.name}</span>
+                      <span className="text-xs text-charcoal-500 dark:text-white/50">
+                        {doc.properties.name}
+                      </span>
                     )}
                     {doc.file_size && (
-                      <span className="text-xs text-charcoal-400">
+                      <span className="text-xs text-charcoal-400 dark:text-white/40">
                         {formatFileSize(doc.file_size)}
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-xs text-charcoal-400">{formatDate(doc.created_at)}</p>
+                  <p className="mt-1 text-xs text-charcoal-400 dark:text-white/40">
+                    {formatDate(doc.created_at)}
+                  </p>
                   {doc.notes && (
-                    <p className="mt-1 text-xs italic text-charcoal-500">{doc.notes}</p>
+                    <p className="mt-1 text-xs italic text-charcoal-500 dark:text-white/50">
+                      {doc.notes}
+                    </p>
                   )}
                 </div>
                 <a

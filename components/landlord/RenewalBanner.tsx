@@ -60,18 +60,18 @@ export function RenewalBanner({ contract, pendingRenewal, onRenewed }: RenewalBa
     };
 
     return (
-      <div className="mb-6 rounded-lg bg-indigo-50 p-4 shadow-sm ring-1 ring-indigo-200">
+      <div className="mb-6 rounded-lg bg-indigo-50 p-4 shadow-sm ring-1 ring-indigo-200 dark:bg-indigo-500/15 dark:ring-indigo-500/30 dark:shadow-black/20">
         <div className="flex items-start gap-3">
           <span className="mt-0.5 text-xl leading-none">✍️</span>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-indigo-900">
+            <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-300">
               {t('renewal.awaiting_signature_title')}
             </p>
-            <p className="mt-0.5 text-sm text-indigo-800">
+            <p className="mt-0.5 text-sm text-indigo-800 dark:text-indigo-400">
               {t('renewal.awaiting_signature_message')}
             </p>
             {pendingRenewal!.lease_end && (
-              <p className="mt-1 text-xs text-indigo-600">
+              <p className="mt-1 text-xs text-indigo-600 dark:text-indigo-400">
                 {t('renewal.new_lease_end')}: {pendingRenewal!.lease_end}
                 {pendingRenewal!.monthly_rent &&
                   ` · ฿${pendingRenewal!.monthly_rent.toLocaleString()}/mo`}
@@ -112,14 +112,18 @@ export function RenewalBanner({ contract, pendingRenewal, onRenewed }: RenewalBa
     };
 
     return (
-      <div className="mb-6 rounded-lg bg-blue-50 p-4 shadow-sm ring-1 ring-blue-200">
+      <div className="mb-6 rounded-lg bg-saffron-50 p-4 shadow-sm ring-1 ring-saffron-200 dark:bg-saffron-500/10 dark:ring-saffron-500/20 dark:shadow-black/20">
         <div className="flex items-start gap-3">
           <span className="mt-0.5 text-xl leading-none">📨</span>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-blue-900">{t('renewal.pending_title')}</p>
-            <p className="mt-0.5 text-sm text-blue-800">{t('renewal.pending_message')}</p>
+            <p className="text-sm font-semibold text-charcoal-900 dark:text-white">
+              {t('renewal.pending_title')}
+            </p>
+            <p className="mt-0.5 text-sm text-charcoal-700 dark:text-white/70">
+              {t('renewal.pending_message')}
+            </p>
             {pendingRenewal!.lease_end && (
-              <p className="mt-1 text-xs text-blue-600">
+              <p className="mt-1 text-xs text-saffron-700 dark:text-saffron-400">
                 {t('renewal.new_lease_end')}: {pendingRenewal!.lease_end}
                 {pendingRenewal!.monthly_rent &&
                   ` · ฿${pendingRenewal!.monthly_rent.toLocaleString()}/mo`}
@@ -130,7 +134,7 @@ export function RenewalBanner({ contract, pendingRenewal, onRenewed }: RenewalBa
             type="button"
             onClick={handleWithdraw}
             disabled={withdrawing}
-            className="min-h-[44px] inline-flex items-center rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+            className="min-h-[44px] inline-flex items-center rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-500/30 dark:bg-charcoal-800 dark:text-red-400 dark:hover:bg-red-500/15"
           >
             {withdrawing ? t('renewal.withdrawing') : t('renewal.withdraw')}
           </button>
@@ -148,12 +152,14 @@ export function RenewalBanner({ contract, pendingRenewal, onRenewed }: RenewalBa
   const bannerMessage = t('renewal.banner_message').replace('{days}', String(daysUntil));
 
   return (
-    <div className="mb-6 rounded-lg bg-amber-50 p-4 shadow-sm ring-1 ring-amber-200">
+    <div className="mb-6 rounded-lg bg-amber-50 p-4 shadow-sm ring-1 ring-amber-200 dark:bg-amber-500/15 dark:ring-amber-500/30 dark:shadow-black/20">
       <div className="flex items-start gap-3">
         <span className="mt-0.5 text-xl leading-none">📅</span>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-amber-900">{t('renewal.banner_title')}</p>
-          <p className="mt-0.5 text-sm text-amber-800">{bannerMessage}</p>
+          <p className="text-sm font-semibold text-amber-900 dark:text-amber-400">
+            {t('renewal.banner_title')}
+          </p>
+          <p className="mt-0.5 text-sm text-amber-800 dark:text-amber-400">{bannerMessage}</p>
         </div>
         <Link
           href={`/landlord/contracts/${contract.id}/renew`}

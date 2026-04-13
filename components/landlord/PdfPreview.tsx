@@ -68,11 +68,17 @@ export function PdfPreview({ contractText, debounceMs = 800 }: PdfPreviewProps) 
   }, [contractText]);
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-3">
-        <h3 className="text-sm font-semibold text-gray-700">{t('renewal.pdf_preview')}</h3>
+    <div className="flex h-full flex-col rounded-xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 shadow-sm">
+      <div className="flex shrink-0 items-center justify-between border-b border-warm-100 dark:border-white/5 px-4 py-3">
+        <h3 className="text-sm font-semibold text-charcoal-700 dark:text-white/70">
+          {t('renewal.pdf_preview')}
+        </h3>
         <div className="flex items-center gap-2">
-          {loading && <span className="text-xs text-gray-400">{t('renewal.generating')}</span>}
+          {loading && (
+            <span className="text-xs text-charcoal-400 dark:text-white/40">
+              {t('renewal.generating')}
+            </span>
+          )}
           <button
             type="button"
             onClick={handleDownload}
@@ -83,7 +89,10 @@ export function PdfPreview({ contractText, debounceMs = 800 }: PdfPreviewProps) 
           </button>
         </div>
       </div>
-      <div className="relative flex-1 bg-gray-100 p-2" style={{ minHeight: '500px' }}>
+      <div
+        className="relative flex-1 bg-warm-100 dark:bg-white/5 p-2"
+        style={{ minHeight: '500px' }}
+      >
         {loading && !pdfUrl && (
           <div className="flex h-full items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
@@ -118,7 +127,9 @@ export function PdfPreview({ contractText, debounceMs = 800 }: PdfPreviewProps) 
                 />
                 <path d="M12.971 1.816A5.23 5.23 0 0114.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 013.434 1.279 9.768 9.768 0 00-6.963-6.963z" />
               </svg>
-              <p className="text-sm text-gray-600">{t('renewal.pdf_ready')}</p>
+              <p className="text-sm text-charcoal-600 dark:text-white/60">
+                {t('renewal.pdf_ready')}
+              </p>
               <div className="flex gap-3">
                 <a
                   href={pdfUrl}
@@ -131,7 +142,7 @@ export function PdfPreview({ contractText, debounceMs = 800 }: PdfPreviewProps) 
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5"
                 >
                   {t('renewal.download_pdf')}
                 </button>
@@ -141,7 +152,9 @@ export function PdfPreview({ contractText, debounceMs = 800 }: PdfPreviewProps) 
         )}
         {!pdfUrl && !loading && !error && (
           <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-gray-400">{t('renewal.no_preview')}</p>
+            <p className="text-sm text-charcoal-400 dark:text-white/40">
+              {t('renewal.no_preview')}
+            </p>
           </div>
         )}
       </div>

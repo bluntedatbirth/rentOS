@@ -82,10 +82,10 @@ function StatusPill({ status }: { status: ReturnType<typeof computePropertyStatu
   const { t } = useI18n();
   const labelKey = `property.status_${status}` as const;
   const styles: Record<string, string> = {
-    active: 'bg-green-100 text-green-700',
-    expiring: 'bg-amber-100 text-amber-700',
-    vacant: 'bg-gray-100 text-gray-600',
-    upcoming: 'bg-blue-100 text-blue-700',
+    active: 'bg-green-100 dark:bg-green-500/15 text-green-700 dark:text-green-400',
+    expiring: 'bg-amber-100 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400',
+    vacant: 'bg-warm-100 dark:bg-white/5 text-charcoal-600 dark:text-white/60',
+    upcoming: 'bg-saffron-100 dark:bg-saffron-500/15 text-saffron-600 dark:text-saffron-400',
   };
   return (
     <span
@@ -171,11 +171,11 @@ function PropertyQRSection({
   // If no pair_code yet — show generate button
   if (!pairCode) {
     return (
-      <div className="mt-4 rounded-xl border border-warm-200 bg-white p-5 shadow-sm">
-        <h3 className="mb-1 text-sm font-semibold text-charcoal-700">
+      <div className="mt-4 rounded-xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 p-5 shadow-sm">
+        <h3 className="mb-1 text-sm font-semibold text-charcoal-700 dark:text-white/70">
           {t('pairing.property_section_title')}
         </h3>
-        <p className="mb-4 text-xs text-charcoal-500">
+        <p className="mb-4 text-xs text-charcoal-500 dark:text-white/50">
           {t('pairing.property_section_description')}
         </p>
         <button
@@ -193,7 +193,7 @@ function PropertyQRSection({
 
   return (
     <>
-      <div className="mt-4 rounded-xl border border-warm-200 bg-white p-5 shadow-sm">
+      <div className="mt-4 rounded-xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 p-5 shadow-sm">
         {/* Header row */}
         <div className="mb-3 flex items-center gap-2">
           <h3 className="text-sm font-semibold text-charcoal-700">
@@ -208,7 +208,7 @@ function PropertyQRSection({
 
         {/* QR + code side by side on larger screens */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-          <div className="shrink-0 rounded-xl border border-warm-200 bg-white p-2 shadow-sm self-start">
+          <div className="shrink-0 rounded-xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 p-2 shadow-sm self-start">
             <QRCodeSVG value={qrUrl} size={200} />
           </div>
 
@@ -417,6 +417,32 @@ function PropertyDetailInner({
     setDeletingContractId(null);
   };
 
+  const [terminatingContractId, setTerminatingContractId] = useState<string | null>(null);
+
+  const handleTerminateContract = async (contractId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (
+      !confirm(
+        t('contract.terminate_confirm') ||
+          'Are you sure you want to terminate this contract? This action cannot be undone.'
+      )
+    )
+      return;
+    setTerminatingContractId(contractId);
+    const res = await fetch(`/api/contracts/${contractId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'terminated' }),
+    });
+    if (res.ok) {
+      setContracts((prev) =>
+        prev.map((c) => (c.id === contractId ? { ...c, status: 'terminated' } : c))
+      );
+    }
+    setTerminatingContractId(null);
+  };
+
   const handleRenewLease = async () => {
     if (!renewLeaseEnd) return;
     setRenewSaving(true);
@@ -538,11 +564,13 @@ function PropertyDetailInner({
       {/* ----------------------------------------------------------------- */}
       {/* Status header                                                       */}
       {/* ----------------------------------------------------------------- */}
-      <div className="mb-5 rounded-xl bg-white p-5 shadow-sm">
+      <div className="mb-5 rounded-xl bg-white dark:bg-charcoal-800 p-5 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             {/* Property name */}
-            <h1 className="text-xl font-bold text-charcoal-900 truncate">{property.name}</h1>
+            <h1 className="text-xl font-bold text-charcoal-900 dark:text-white truncate">
+              {property.name}
+            </h1>
 
             {/* Status pill + lease dates row */}
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
@@ -575,7 +603,7 @@ function PropertyDetailInner({
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+              className="h-8 w-8 flex items-center justify-center rounded-lg text-charcoal-400 dark:text-white/40 hover:text-charcoal-600 dark:hover:text-white/60 hover:bg-warm-100 dark:hover:bg-white/10"
               title={t('property.edit')}
             >
               <svg
@@ -592,7 +620,7 @@ function PropertyDetailInner({
               type="button"
               onClick={handleDelete}
               disabled={deleting}
-              className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-50"
+              className="h-8 w-8 flex items-center justify-center rounded-lg text-charcoal-400 dark:text-white/40 hover:text-red-500 hover:bg-red-50 disabled:opacity-50"
               title={t('property.delete')}
             >
               <svg
@@ -628,7 +656,7 @@ function PropertyDetailInner({
                     value={renewLeaseEnd}
                     onChange={(e) => setRenewLeaseEnd(e.target.value)}
                     min={property.lease_end ?? undefined}
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                    className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 dark:text-white px-3 py-2 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                   />
                 </div>
                 {renewError && <p className="text-xs text-red-600">{renewError}</p>}
@@ -644,7 +672,7 @@ function PropertyDetailInner({
                   <button
                     type="button"
                     onClick={() => setShowRenewForm(false)}
-                    className="min-h-[36px] rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="min-h-[36px] rounded-lg border border-warm-300 dark:border-white/15 px-4 py-1.5 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5"
                   >
                     {t('common.cancel')}
                   </button>
@@ -690,14 +718,14 @@ function PropertyDetailInner({
       {/* Edit form (replaces status header when editing)                    */}
       {/* ----------------------------------------------------------------- */}
       {editing && (
-        <div className="mb-5 rounded-xl bg-white p-5 shadow-sm space-y-3">
+        <div className="mb-5 rounded-xl bg-white dark:bg-charcoal-800 p-5 shadow-sm space-y-3">
           {/* Cover image picker */}
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">
+            <label className="mb-1 block text-xs font-medium text-charcoal-500 dark:text-white/50">
               {t('property.cover_image_label')}
             </label>
             <div className="flex items-start gap-3">
-              <div className="h-[120px] w-[120px] shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+              <div className="h-[120px] w-[120px] shrink-0 overflow-hidden rounded-lg border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-charcoal-900">
                 {coverUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -706,7 +734,7 @@ function PropertyDetailInner({
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-gray-300">
+                  <div className="flex h-full w-full items-center justify-center text-charcoal-300 dark:text-white/30">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"
@@ -725,7 +753,7 @@ function PropertyDetailInner({
               <div className="flex flex-col gap-2">
                 <label
                   htmlFor="cover-image-input"
-                  className={`inline-flex min-h-[36px] cursor-pointer items-center rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 ${coverUploading ? 'pointer-events-none opacity-50' : ''}`}
+                  className={`inline-flex min-h-[36px] cursor-pointer items-center rounded-lg border border-warm-300 dark:border-white/15 px-3 py-1.5 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5 ${coverUploading ? 'pointer-events-none opacity-50' : ''}`}
                 >
                   {coverUploading
                     ? t('property.cover_image_uploading')
@@ -744,7 +772,7 @@ function PropertyDetailInner({
                     type="button"
                     onClick={handleCoverRemove}
                     disabled={coverUploading}
-                    className="inline-flex min-h-[36px] items-center rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                    className="inline-flex min-h-[36px] items-center rounded-lg border border-warm-300 dark:border-white/15 px-3 py-1.5 text-sm font-medium text-charcoal-500 dark:text-white/50 hover:bg-warm-50 dark:hover:bg-white/5 disabled:opacity-50"
                   >
                     {t('property.cover_image_remove')}
                   </button>
@@ -755,7 +783,10 @@ function PropertyDetailInner({
           </div>
 
           <div>
-            <label htmlFor="edit-name" className="mb-1 block text-xs font-medium text-gray-500">
+            <label
+              htmlFor="edit-name"
+              className="mb-1 block text-xs font-medium text-charcoal-500 dark:text-white/50"
+            >
               {t('property.name')}
             </label>
             <input
@@ -763,11 +794,14 @@ function PropertyDetailInner({
               type="text"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+              className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
             />
           </div>
           <div>
-            <label htmlFor="edit-address" className="mb-1 block text-xs font-medium text-gray-500">
+            <label
+              htmlFor="edit-address"
+              className="mb-1 block text-xs font-medium text-charcoal-500 dark:text-white/50"
+            >
               {t('property.address')}
             </label>
             <input
@@ -775,11 +809,14 @@ function PropertyDetailInner({
               type="text"
               value={editAddress}
               onChange={(e) => setEditAddress(e.target.value)}
-              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+              className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
             />
           </div>
           <div>
-            <label htmlFor="edit-unit" className="mb-1 block text-xs font-medium text-gray-500">
+            <label
+              htmlFor="edit-unit"
+              className="mb-1 block text-xs font-medium text-charcoal-500 dark:text-white/50"
+            >
               {t('property.unit')}
             </label>
             <input
@@ -787,7 +824,7 @@ function PropertyDetailInner({
               type="text"
               value={editUnit}
               onChange={(e) => setEditUnit(e.target.value)}
-              className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+              className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
             />
           </div>
           <div className="flex gap-2 pt-1">
@@ -807,7 +844,7 @@ function PropertyDetailInner({
                 setEditAddress(property.address ?? '');
                 setEditUnit(property.unit_number ?? '');
               }}
-              className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5"
             >
               {t('common.cancel')}
             </button>
@@ -851,10 +888,10 @@ function PropertyDetailInner({
               onClick={() => setTab(tb.key)}
               className={`min-h-[32px] rounded-full px-3.5 py-1 text-xs font-medium transition-colors ${
                 active
-                  ? 'bg-gray-900 text-white'
+                  ? 'bg-charcoal-900 dark:bg-white/10 text-white'
                   : tb.alert
-                    ? 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-200 hover:bg-amber-100'
+                    : 'bg-warm-100 dark:bg-white/5 text-charcoal-600 dark:text-white/60 hover:bg-warm-200 dark:hover:bg-white/10'
               }`}
             >
               {tb.alert && !active && (
@@ -874,38 +911,50 @@ function PropertyDetailInner({
       {/* ----------------------------------------------------------------- */}
       {(tab ?? defaultTab) === 'contracts' && (
         <>
-          <div className="mb-3 flex gap-2">
-            <Link
-              href={`/landlord/contracts/create?property_id=${property.id}`}
-              className="min-h-[36px] flex items-center rounded-lg bg-saffron-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-saffron-600"
-            >
-              {t('nav.create_contract')}
-            </Link>
-            <Link
-              href={`/landlord/contracts/upload?property_id=${property.id}`}
-              className="min-h-[36px] flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
-            >
-              {t('contract.upload_new')}
-            </Link>
-          </div>
+          {/* Hide contract creation buttons when an active, pending, or scheduled contract already exists */}
+          {!contracts.some((c) => ['active', 'pending', 'scheduled'].includes(c.status)) && (
+            <div className="mb-3 flex gap-2">
+              <Link
+                href={`/landlord/contracts/create?property_id=${property.id}`}
+                className="min-h-[36px] flex items-center rounded-lg bg-saffron-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-saffron-600"
+              >
+                {t('nav.create_contract')}
+              </Link>
+              <Link
+                href={`/landlord/contracts/upload?property_id=${property.id}`}
+                className="min-h-[36px] flex items-center rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-1.5 text-xs font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5"
+              >
+                {t('contract.upload_new')}
+              </Link>
+            </div>
+          )}
 
           {contracts.length === 0 ? (
-            <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-              <p className="text-sm text-gray-500">{t('property.no_contracts')}</p>
+            <div className="rounded-lg bg-white dark:bg-charcoal-800 p-8 text-center shadow-sm">
+              <p className="text-sm text-charcoal-500 dark:text-white/50">
+                {t('property.no_contracts')}
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
               {contracts.map((c) => {
                 const tenant = c.tenant_id ? tenants[c.tenant_id] : null;
-                const canDelete = c.status === 'pending' || c.status === 'draft';
+                const canDelete = [
+                  'pending',
+                  'draft',
+                  'expired',
+                  'parse_failed',
+                  'terminated',
+                ].includes(c.status);
+                const canTerminate = c.status === 'active' || c.status === 'scheduled';
                 return (
                   <Link key={c.id} href={`/landlord/contracts/${c.id}`}>
-                    <div className="group rounded-lg bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+                    <div className="group rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm transition-shadow hover:shadow-md">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <StatusBadge status={c.status} />
                           {c.monthly_rent && (
-                            <span className="text-sm font-semibold text-gray-900">
+                            <span className="text-sm font-semibold text-charcoal-900 dark:text-white">
                               {c.monthly_rent.toLocaleString()}/
                               {t('contract.monthly_rent').toLowerCase().includes('month')
                                 ? 'mo'
@@ -914,12 +963,24 @@ function PropertyDetailInner({
                           )}
                         </div>
                         <div className="flex items-center gap-1">
+                          {canTerminate && (
+                            <button
+                              type="button"
+                              onClick={(e) => handleTerminateContract(c.id, e)}
+                              disabled={terminatingContractId === c.id}
+                              className="rounded-lg border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all disabled:opacity-50"
+                            >
+                              {terminatingContractId === c.id
+                                ? '...'
+                                : t('contract.terminate') || 'Terminate'}
+                            </button>
+                          )}
                           {canDelete && (
                             <button
                               type="button"
                               onClick={(e) => handleDeleteContract(c.id, e)}
                               disabled={deletingContractId === c.id}
-                              className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all disabled:opacity-50"
+                              className="h-8 w-8 flex items-center justify-center rounded-lg text-charcoal-300 dark:text-white/30 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all disabled:opacity-50"
                               title={t('contract.delete') || 'Delete'}
                             >
                               {deletingContractId === c.id ? (
@@ -963,7 +1024,7 @@ function PropertyDetailInner({
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 20 20"
                             fill="currentColor"
-                            className="h-4 w-4 text-gray-300"
+                            className="h-4 w-4 text-charcoal-300 dark:text-white/30"
                           >
                             <path
                               fillRule="evenodd"
@@ -974,19 +1035,19 @@ function PropertyDetailInner({
                         </div>
                       </div>
                       {(c.lease_start || c.lease_end) && (
-                        <p className="mt-1.5 text-xs text-gray-500">
+                        <p className="mt-1.5 text-xs text-charcoal-500 dark:text-white/50">
                           {formatDisplayDate(c.lease_start) || '\u2014'} &rarr;{' '}
                           {formatDisplayDate(c.lease_end) || '\u2014'}
                         </p>
                       )}
                       {tenant && (
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-xs text-charcoal-500 dark:text-white/50">
                           {tenant.full_name ?? '\u2014'}
                           {tenant.phone ? ` \u00B7 ${formatPhone(tenant.phone)}` : ''}
                         </p>
                       )}
                       {!c.tenant_id && (
-                        <p className="mt-1 text-xs italic text-gray-400">
+                        <p className="mt-1 text-xs italic text-charcoal-400 dark:text-white/40">
                           {t('property.no_tenant')}
                         </p>
                       )}
@@ -1016,19 +1077,25 @@ function PropertyDetailInner({
       {FEATURE_MAINTENANCE && (tab ?? defaultTab) === 'maintenance' && (
         <>
           {maintenance.length === 0 ? (
-            <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-              <p className="text-sm text-gray-500">{t('maintenance.no_requests')}</p>
+            <div className="rounded-lg bg-white dark:bg-charcoal-800 p-8 text-center shadow-sm">
+              <p className="text-sm text-charcoal-500 dark:text-white/50">
+                {t('maintenance.no_requests')}
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
               {maintenance.map((m) => (
                 <Link key={m.id} href="/landlord/maintenance">
-                  <div className="rounded-lg bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+                  <div className="rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm transition-shadow hover:shadow-md">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-900">{m.title}</p>
+                      <p className="text-sm font-medium text-charcoal-900 dark:text-white">
+                        {m.title}
+                      </p>
                       <StatusBadge status={m.status} />
                     </div>
-                    <p className="mt-1.5 text-xs text-gray-500">{formatDate(m.created_at)}</p>
+                    <p className="mt-1.5 text-xs text-charcoal-500 dark:text-white/50">
+                      {formatDate(m.created_at)}
+                    </p>
                   </div>
                 </Link>
               ))}
@@ -1041,7 +1108,7 @@ function PropertyDetailInner({
       {/* Tab: Send Notification                                              */}
       {/* ----------------------------------------------------------------- */}
       {(tab ?? defaultTab) === 'notify' && uniqueTenantIds.length > 0 && (
-        <div className="rounded-lg bg-white p-5 shadow-sm">
+        <div className="rounded-lg bg-white dark:bg-charcoal-800 p-5 shadow-sm">
           <textarea
             value={notifMessage}
             onChange={(e) => setNotifMessage(e.target.value)}

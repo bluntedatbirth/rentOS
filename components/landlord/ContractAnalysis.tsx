@@ -43,8 +43,9 @@ const SEVERITY_STYLES: Record<string, { badge: string; dot: string } | undefined
   low: { badge: 'bg-green-100 text-green-800 border border-green-200', dot: 'bg-green-500' },
 };
 const DEFAULT_SEVERITY_STYLE = {
-  badge: 'bg-gray-100 text-gray-700 border border-gray-200',
-  dot: 'bg-gray-400',
+  badge:
+    'bg-warm-100 dark:bg-white/5 text-charcoal-700 dark:text-white/70 border border-warm-200 dark:border-white/10',
+  dot: 'bg-charcoal-400 dark:bg-white/40',
 };
 
 const RATING_STYLES: Record<string, string> = {
@@ -85,18 +86,20 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
   const lowCount = analysis?.risks.filter((r) => r.severity === 'low').length ?? 0;
 
   return (
-    <div className="rounded-xl border border-purple-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-purple-200 bg-white dark:bg-charcoal-800 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between rounded-t-xl border-b border-purple-100 bg-purple-50 px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="text-lg">🤖</span>
-          <h3 className="font-semibold text-gray-900">{t('ai_analysis.title')}</h3>
+          <h3 className="font-semibold text-charcoal-900 dark:text-white">
+            {t('ai_analysis.title')}
+          </h3>
           <span className="rounded-full bg-purple-600 px-2 py-0.5 text-xs font-bold text-white">
             PRO
           </span>
         </div>
         {analysis && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-charcoal-500 dark:text-white/50">
             {analysis.from_cache ? t('ai_analysis.from_cache') : t('ai_analysis.fresh')}
           </span>
         )}
@@ -106,7 +109,9 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
         {/* Not yet run */}
         {!ran && !loading && (
           <div className="flex flex-col items-center gap-3 py-6 text-center">
-            <p className="max-w-xs text-sm text-gray-500">{t('ai_analysis.description')}</p>
+            <p className="max-w-xs text-sm text-charcoal-500 dark:text-white/50">
+              {t('ai_analysis.description')}
+            </p>
             <button
               type="button"
               onClick={runAnalysis}
@@ -121,7 +126,9 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
         {loading && (
           <div className="flex flex-col items-center gap-3 py-8 text-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600" />
-            <p className="text-sm text-gray-500">{t('ai_analysis.analyzing')}</p>
+            <p className="text-sm text-charcoal-500 dark:text-white/50">
+              {t('ai_analysis.analyzing')}
+            </p>
           </div>
         )}
 
@@ -132,7 +139,7 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
             <button
               type="button"
               onClick={runAnalysis}
-              className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5"
             >
               {t('ai_analysis.retry')}
             </button>
@@ -171,7 +178,7 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
             {/* Risk cards */}
             {analysis.risks.length > 0 && (
               <div>
-                <h4 className="mb-2 text-sm font-semibold text-gray-700">
+                <h4 className="mb-2 text-sm font-semibold text-charcoal-700 dark:text-white/70">
                   {t('ai_analysis.risks_title')}
                 </h4>
                 <div className="space-y-2">
@@ -180,7 +187,7 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
                     return (
                       <div
                         key={idx}
-                        className="flex items-start gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3"
+                        className="flex items-start gap-3 rounded-lg border border-warm-100 dark:border-white/5 bg-warm-50 dark:bg-charcoal-900 p-3"
                       >
                         <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${styles.dot}`} />
                         <div className="min-w-0 flex-1">
@@ -191,12 +198,12 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
                               {risk.severity.toUpperCase()}
                             </span>
                             {risk.clause_id && risk.clause_id !== 'general' && (
-                              <span className="text-xs text-gray-400">
+                              <span className="text-xs text-charcoal-400 dark:text-white/40">
                                 {t('ai_analysis.clause_ref')} {risk.clause_id}
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-700">
+                          <p className="text-sm text-charcoal-700 dark:text-white/70">
                             {showLang === 'th' ? risk.description_th : risk.description_en}
                           </p>
                         </div>
@@ -210,7 +217,7 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
             {/* Missing clauses */}
             {analysis.missing_clauses.length > 0 && (
               <div>
-                <h4 className="mb-2 text-sm font-semibold text-gray-700">
+                <h4 className="mb-2 text-sm font-semibold text-charcoal-700 dark:text-white/70">
                   {t('ai_analysis.missing_title')}
                 </h4>
                 <div className="space-y-2">
@@ -231,14 +238,14 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
             {/* Clause ratings */}
             {analysis.clause_ratings.length > 0 && (
               <div>
-                <h4 className="mb-2 text-sm font-semibold text-gray-700">
+                <h4 className="mb-2 text-sm font-semibold text-charcoal-700 dark:text-white/70">
                   {t('ai_analysis.ratings_title')}
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {analysis.clause_ratings.map((cr, idx) => (
                     <span
                       key={idx}
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${RATING_STYLES[cr.rating] ?? 'bg-gray-100 text-gray-600'}`}
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${RATING_STYLES[cr.rating] ?? 'bg-warm-100 dark:bg-white/5 text-charcoal-600 dark:text-white/60'}`}
                     >
                       {cr.clause_id}: {t(`ai_analysis.rating_${cr.rating}`) || cr.rating}
                     </span>
@@ -248,11 +255,11 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
             )}
 
             {/* Re-run */}
-            <div className="flex justify-end border-t border-gray-100 pt-3">
+            <div className="flex justify-end border-t border-warm-100 dark:border-white/5 pt-3">
               <button
                 type="button"
                 onClick={runAnalysis}
-                className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2 text-sm font-medium text-charcoal-600 dark:text-white/60 hover:bg-warm-50 dark:hover:bg-white/5"
               >
                 {t('ai_analysis.re_run')}
               </button>

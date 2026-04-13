@@ -72,7 +72,9 @@ export function TenantMaintenanceClient({
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-charcoal-900">{t('tenant.maintenance_title')}</h2>
+        <h2 className="text-xl font-bold text-charcoal-900 dark:text-white">
+          {t('tenant.maintenance_title')}
+        </h2>
         {contractId && (
           <button
             type="button"
@@ -84,15 +86,20 @@ export function TenantMaintenanceClient({
         )}
       </div>
 
-      {!contractId && <p className="text-sm text-charcoal-500">{t('tenant.no_contract')}</p>}
+      {!contractId && (
+        <p className="text-sm text-charcoal-500 dark:text-white/50">{t('tenant.no_contract')}</p>
+      )}
 
       {/* Submit form */}
       {showForm && contractId && (
-        <form onSubmit={handleSubmit} className="mb-6 rounded-lg bg-white p-4 shadow-sm">
+        <form
+          onSubmit={handleSubmit}
+          className="mb-6 rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm"
+        >
           <div className="mb-4">
             <label
               htmlFor="maint-title"
-              className="mb-1 block text-sm font-medium text-charcoal-700"
+              className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
             >
               {t('tenant.request_title')}
             </label>
@@ -104,13 +111,13 @@ export function TenantMaintenanceClient({
               onChange={(e) => setTitle(e.target.value)}
               maxLength={200}
               placeholder={t('tenant.request_title_placeholder')}
-              className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+              className="block w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/40 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
             />
           </div>
           <div className="mb-4">
             <label
               htmlFor="maint-desc"
-              className="mb-1 block text-sm font-medium text-charcoal-700"
+              className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
             >
               {t('tenant.request_description')}
             </label>
@@ -121,7 +128,7 @@ export function TenantMaintenanceClient({
               maxLength={2000}
               rows={3}
               placeholder={t('tenant.request_description_placeholder')}
-              className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+              className="block w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/40 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
             />
           </div>
           {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
@@ -137,7 +144,7 @@ export function TenantMaintenanceClient({
 
       {/* Requests list */}
       {requests.length === 0 ? (
-        <div className="rounded-lg bg-warm-50 p-8 text-center text-sm text-charcoal-500">
+        <div className="rounded-lg bg-warm-50 dark:bg-charcoal-900 p-8 text-center text-sm text-charcoal-500 dark:text-white/50">
           {t('tenant.no_maintenance')}
         </div>
       ) : (
@@ -147,16 +154,22 @@ export function TenantMaintenanceClient({
               key={req.id}
               type="button"
               onClick={() => setSelectedId(req.id)}
-              className="w-full cursor-pointer rounded-lg bg-white p-4 text-left shadow-sm transition-shadow hover:shadow-md"
+              className="w-full cursor-pointer rounded-lg bg-white dark:bg-charcoal-800 p-4 text-left shadow-sm transition-shadow hover:shadow-md"
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-charcoal-900">{req.title}</h3>
+                <h3 className="text-sm font-semibold text-charcoal-900 dark:text-white">
+                  {req.title}
+                </h3>
                 <StatusBadge status={req.status} />
               </div>
               {req.description && (
-                <p className="mt-2 text-sm text-charcoal-700">{req.description}</p>
+                <p className="mt-2 text-sm text-charcoal-700 dark:text-white/70">
+                  {req.description}
+                </p>
               )}
-              <p className="mt-2 text-xs text-charcoal-400">{formatDate(req.created_at)}</p>
+              <p className="mt-2 text-xs text-charcoal-400 dark:text-white/40">
+                {formatDate(req.created_at)}
+              </p>
             </button>
           ))}
         </div>
@@ -165,37 +178,45 @@ export function TenantMaintenanceClient({
       {/* Read-only detail modal */}
       {selectedRequest && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-xl bg-white dark:bg-charcoal-800 p-6 shadow-xl">
             <div className="mb-4 flex items-start justify-between gap-3">
-              <h3 className="text-base font-bold text-charcoal-900">
+              <h3 className="text-base font-bold text-charcoal-900 dark:text-white">
                 {t('tenant.maintenance_detail_title')}
               </h3>
               <StatusBadge status={selectedRequest.status} />
             </div>
 
-            <p className="mb-1 text-sm font-semibold text-charcoal-900">{selectedRequest.title}</p>
-            <p className="mb-4 text-xs text-charcoal-400">
+            <p className="mb-1 text-sm font-semibold text-charcoal-900 dark:text-white">
+              {selectedRequest.title}
+            </p>
+            <p className="mb-4 text-xs text-charcoal-400 dark:text-white/40">
               {formatDate(selectedRequest.created_at)}
             </p>
 
             {selectedRequest.description && (
-              <p className="mb-4 text-sm text-charcoal-700">{selectedRequest.description}</p>
+              <p className="mb-4 text-sm text-charcoal-700 dark:text-white/70">
+                {selectedRequest.description}
+              </p>
             )}
 
             <div className="mb-4 space-y-2 text-sm">
               {selectedRequest.assigned_to && (
                 <div className="flex justify-between">
-                  <span className="text-charcoal-500">{t('tenant.maintenance_assigned_to')}</span>
-                  <span className="text-charcoal-700">{selectedRequest.assigned_to}</span>
+                  <span className="text-charcoal-500 dark:text-white/50">
+                    {t('tenant.maintenance_assigned_to')}
+                  </span>
+                  <span className="text-charcoal-700 dark:text-white/70">
+                    {selectedRequest.assigned_to}
+                  </span>
                 </div>
               )}
 
               {selectedRequest.estimated_cost !== null && (
                 <div className="flex justify-between">
-                  <span className="text-charcoal-500">
+                  <span className="text-charcoal-500 dark:text-white/50">
                     {t('tenant.maintenance_estimated_cost')}
                   </span>
-                  <span className="text-charcoal-700">
+                  <span className="text-charcoal-700 dark:text-white/70">
                     ฿{selectedRequest.estimated_cost.toLocaleString('en-US')}
                   </span>
                 </div>
@@ -203,8 +224,10 @@ export function TenantMaintenanceClient({
 
               {selectedRequest.actual_cost !== null && (
                 <div className="flex justify-between">
-                  <span className="text-charcoal-500">{t('tenant.maintenance_actual_cost')}</span>
-                  <span className="text-charcoal-700">
+                  <span className="text-charcoal-500 dark:text-white/50">
+                    {t('tenant.maintenance_actual_cost')}
+                  </span>
+                  <span className="text-charcoal-700 dark:text-white/70">
                     ฿{selectedRequest.actual_cost.toLocaleString('en-US')}
                   </span>
                 </div>
@@ -212,8 +235,10 @@ export function TenantMaintenanceClient({
 
               {selectedRequest.completed_at && (
                 <div className="flex justify-between">
-                  <span className="text-charcoal-500">{t('tenant.maintenance_completed_at')}</span>
-                  <span className="text-charcoal-700">
+                  <span className="text-charcoal-500 dark:text-white/50">
+                    {t('tenant.maintenance_completed_at')}
+                  </span>
+                  <span className="text-charcoal-700 dark:text-white/70">
                     {formatDate(selectedRequest.completed_at)}
                   </span>
                 </div>
@@ -238,7 +263,7 @@ export function TenantMaintenanceClient({
             <button
               type="button"
               onClick={() => setSelectedId(null)}
-              className="min-h-[44px] w-full rounded-lg border border-warm-200 text-sm font-medium text-charcoal-700 hover:bg-warm-50"
+              className="min-h-[44px] w-full rounded-lg border border-warm-200 dark:border-white/10 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5"
             >
               {t('tenant.maintenance_close')}
             </button>

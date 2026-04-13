@@ -108,7 +108,7 @@ export default function LandingPage() {
     <div className="font-[var(--font-plus-jakarta)] bg-warm-50 dark:bg-charcoal-900 text-charcoal-800 dark:text-warm-100 min-h-screen">
       <AuroraBackground className="!h-auto !bg-warm-50 dark:!bg-charcoal-900">
         <div className="w-full">
-          <LandingNav t={t} />
+          <LandingNav />
           <LandingHero t={t} />
         </div>
       </AuroraBackground>

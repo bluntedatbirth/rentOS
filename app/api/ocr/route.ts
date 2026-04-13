@@ -3,6 +3,16 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getAuthenticatedUser, unauthorized, badRequest, forbidden } from '@/lib/supabase/api';
 import { extractContractWithProgress, ContractValidationError } from '@/lib/claude/extractContract';
 import { checkRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
+import { sendNotification } from '@/lib/notifications/send';
+
+/** Fire-and-forget notification — NEVER crashes the caller */
+function safeNotify(params: Parameters<typeof sendNotification>[0]) {
+  setTimeout(() => {
+    sendNotification(params).catch((err) =>
+      console.error('[OCR] Notification send failed (non-blocking):', err)
+    );
+  }, 0);
+}
 
 const ocrRequestSchema = z.object({
   contract_id: z.string().uuid(),
@@ -95,13 +105,47 @@ export async function POST(request: Request) {
           .download(storagePath);
 
         if (downloadError || !fileData) {
+          await adminClient
+            .from('contracts')
+            .update({ status: 'parse_failed' })
+            .eq('id', contract_id);
           send({ step: 'error', error: 'Failed to download file' });
+          try {
+            safeNotify({
+              recipientId: user.id,
+              type: 'custom',
+              titleEn: 'Contract parsing failed',
+              titleTh: 'วิเคราะห์สัญญาล้มเหลว',
+              bodyEn: 'There was an error parsing your contract. Please try again.',
+              bodyTh: 'เกิดข้อผิดพลาดในการวิเคราะห์สัญญา กรุณาลองอีกครั้ง',
+              url: `/landlord/contracts/upload`,
+            });
+          } catch (notifErr) {
+            console.error('[OCR] Failed to send error notification (non-blocking):', notifErr);
+          }
           controller.close();
           return;
         }
 
         if (fileData.size > 20 * 1024 * 1024) {
+          await adminClient
+            .from('contracts')
+            .update({ status: 'parse_failed' })
+            .eq('id', contract_id);
           send({ step: 'error', error: 'File too large' });
+          try {
+            safeNotify({
+              recipientId: user.id,
+              type: 'custom',
+              titleEn: 'Contract parsing failed',
+              titleTh: 'วิเคราะห์สัญญาล้มเหลว',
+              bodyEn: 'There was an error parsing your contract. Please try again.',
+              bodyTh: 'เกิดข้อผิดพลาดในการวิเคราะห์สัญญา กรุณาลองอีกครั้ง',
+              url: `/landlord/contracts/upload`,
+            });
+          } catch (notifErr) {
+            console.error('[OCR] Failed to send error notification (non-blocking):', notifErr);
+          }
           controller.close();
           return;
         }
@@ -129,6 +173,29 @@ export async function POST(request: Request) {
             void logAISpend(user.id, 'ocr', usage.input_tokens, usage.output_tokens);
           }
         );
+
+        // Gate: if extraction returned 0 clauses, treat as parse failure
+        if (extracted.clauses.length === 0) {
+          await adminClient
+            .from('contracts')
+            .update({ status: 'parse_failed' })
+            .eq('id', contract_id);
+          const failReason = extracted.warnings?.length
+            ? extracted.warnings[0]
+            : 'No contract clauses could be extracted. Please upload a valid rental contract.';
+          send({ step: 'error', error: failReason });
+          safeNotify({
+            recipientId: user.id,
+            type: 'custom',
+            titleEn: 'Wrong format detected',
+            titleTh: 'รูปแบบไฟล์ไม่ถูกต้อง',
+            bodyEn: 'No contract clauses were found. Please upload a valid rental contract.',
+            bodyTh: 'ไม่พบข้อสัญญา กรุณาอัปโหลดสัญญาเช่าที่ถูกต้อง',
+            url: `/landlord/contracts/upload`,
+          });
+          controller.close();
+          return;
+        }
 
         // Step 4: Update property name if auto-detected
         if (extracted.property && contract.property_id) {
@@ -217,7 +284,24 @@ export async function POST(request: Request) {
           .eq('id', contract_id);
 
         if (updateError) {
+          await adminClient
+            .from('contracts')
+            .update({ status: 'parse_failed' })
+            .eq('id', contract_id);
           send({ step: 'error', error: 'Failed to save: ' + updateError.message });
+          try {
+            safeNotify({
+              recipientId: user.id,
+              type: 'custom',
+              titleEn: 'Contract parsing failed',
+              titleTh: 'วิเคราะห์สัญญาล้มเหลว',
+              bodyEn: 'There was an error parsing your contract. Please try again.',
+              bodyTh: 'เกิดข้อผิดพลาดในการวิเคราะห์สัญญา กรุณาลองอีกครั้ง',
+              url: `/landlord/contracts/upload`,
+            });
+          } catch (notifErr) {
+            console.error('[OCR] Failed to send error notification (non-blocking):', notifErr);
+          }
           controller.close();
           return;
         }
@@ -230,13 +314,55 @@ export async function POST(request: Request) {
           clauses_count: extracted.clauses.length,
           property_detected: extracted.property?.name_en || extracted.property?.name_th || null,
         });
+
+        try {
+          safeNotify({
+            recipientId: user.id,
+            type: 'custom',
+            titleEn: 'Contract parsed successfully',
+            titleTh: 'วิเคราะห์สัญญาสำเร็จ',
+            bodyEn: `${extracted.clauses.length} clauses extracted from your contract.`,
+            bodyTh: `สกัดได้ ${extracted.clauses.length} ข้อจากสัญญาของคุณ`,
+            url: `/landlord/contracts/${contract_id}`,
+          });
+        } catch (notifErr) {
+          console.error('[OCR] Failed to send success notification (non-blocking):', notifErr);
+        }
       } catch (err) {
-        if (err instanceof ContractValidationError) {
+        await adminClient
+          .from('contracts')
+          .update({ status: 'parse_failed' })
+          .eq('id', contract_id);
+        const isValidationErr = err instanceof ContractValidationError;
+        if (isValidationErr) {
           send({ step: 'error', error: err.code });
         } else {
           send({
             step: 'error',
             error: err instanceof Error ? err.message : 'OCR processing failed',
+          });
+        }
+        // Use "wrong format" messaging for validation errors, generic for others
+        if (isValidationErr) {
+          safeNotify({
+            recipientId: user.id,
+            type: 'custom',
+            titleEn: 'Wrong format detected',
+            titleTh: 'รูปแบบไฟล์ไม่ถูกต้อง',
+            bodyEn:
+              'The uploaded file does not appear to be a rental contract. Please upload again.',
+            bodyTh: 'ไฟล์ที่อัปโหลดไม่ใช่สัญญาเช่า กรุณาอัปโหลดใหม่',
+            url: `/landlord/contracts/upload`,
+          });
+        } else {
+          safeNotify({
+            recipientId: user.id,
+            type: 'custom',
+            titleEn: 'Contract parsing failed',
+            titleTh: 'วิเคราะห์สัญญาล้มเหลว',
+            bodyEn: 'There was an error parsing your contract. Please try again.',
+            bodyTh: 'เกิดข้อผิดพลาดในการวิเคราะห์สัญญา กรุณาลองอีกครั้ง',
+            url: `/landlord/contracts/upload`,
           });
         }
       } finally {

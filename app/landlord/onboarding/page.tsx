@@ -110,7 +110,7 @@ export default function OnboardingPage() {
       {/* Step indicator */}
       {step !== 'welcome' && step !== 'done' && (
         <div className="mb-6">
-          <p className="mb-2 text-center text-xs text-charcoal-500">
+          <p className="mb-2 text-center text-xs text-charcoal-500 dark:text-white/50">
             {t('onboarding.step_of')
               .replace('{}', String(stepIndex))
               .replace('{}', String(STEPS.length - 2))}
@@ -124,7 +124,7 @@ export default function OnboardingPage() {
                     ? 'bg-saffron-500'
                     : i === stepIndex - 1
                       ? 'bg-saffron-500'
-                      : 'bg-warm-200'
+                      : 'bg-warm-200 dark:bg-charcoal-700'
                 }`}
               />
             ))}
@@ -136,7 +136,7 @@ export default function OnboardingPage() {
       {step === 'welcome' && (
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-saffron-100 text-4xl text-saffron-600">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-saffron-100 text-4xl text-saffron-600 dark:bg-saffron-500/15">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -148,18 +148,23 @@ export default function OnboardingPage() {
               </svg>
             </div>
           </div>
-          <h1 className="mb-2 text-2xl font-bold text-charcoal-900">
+          <h1 className="mb-2 text-2xl font-bold text-charcoal-900 dark:text-white">
             {t('onboarding.welcome_title')}
           </h1>
-          <p className="mb-8 text-sm text-charcoal-500">{t('onboarding.welcome_subtitle')}</p>
+          <p className="mb-8 text-sm text-charcoal-500 dark:text-white/50">
+            {t('onboarding.welcome_subtitle')}
+          </p>
           <ul className="mb-8 space-y-3 text-left">
             {[
               t('onboarding.welcome_feature_1'),
               t('onboarding.welcome_feature_2'),
               t('onboarding.welcome_feature_3'),
             ].map((feature) => (
-              <li key={feature} className="flex items-start gap-3 text-sm text-charcoal-700">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-saffron-100 text-xs text-saffron-600">
+              <li
+                key={feature}
+                className="flex items-start gap-3 text-sm text-charcoal-700 dark:text-white/70"
+              >
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-saffron-100 text-xs text-saffron-600 dark:bg-saffron-500/15">
                   &#10003;
                 </span>
                 {feature}
@@ -179,16 +184,18 @@ export default function OnboardingPage() {
       {/* Step: Add Property */}
       {step === 'property' && (
         <div>
-          <h2 className="mb-1 text-xl font-bold text-charcoal-900">
+          <h2 className="mb-1 text-xl font-bold text-charcoal-900 dark:text-white">
             {t('onboarding.step_property_title')}
           </h2>
-          <p className="mb-6 text-sm text-charcoal-500">{t('onboarding.step_property_subtitle')}</p>
+          <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
+            {t('onboarding.step_property_subtitle')}
+          </p>
 
           <div className="space-y-4">
             <div>
               <label
                 htmlFor="prop-name"
-                className="mb-1 block text-sm font-medium text-charcoal-700"
+                className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
               >
                 {t('onboarding.property_name')} *
               </label>
@@ -198,14 +205,14 @@ export default function OnboardingPage() {
                 value={propertyName}
                 onChange={(e) => setPropertyName(e.target.value)}
                 placeholder={t('onboarding.property_name_placeholder')}
-                className="block w-full rounded-lg border border-warm-300 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                className="block w-full rounded-lg border border-warm-300 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400 dark:border-white/15 dark:bg-charcoal-800 dark:text-white dark:placeholder:text-white/40"
               />
             </div>
 
             <div>
               <label
                 htmlFor="prop-address"
-                className="mb-1 block text-sm font-medium text-charcoal-700"
+                className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
               >
                 {t('onboarding.property_address')}
               </label>
@@ -215,14 +222,14 @@ export default function OnboardingPage() {
                 value={propertyAddress}
                 onChange={(e) => setPropertyAddress(e.target.value)}
                 placeholder={t('onboarding.property_address_placeholder')}
-                className="block w-full rounded-lg border border-warm-300 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                className="block w-full rounded-lg border border-warm-300 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400 dark:border-white/15 dark:bg-charcoal-800 dark:text-white dark:placeholder:text-white/40"
               />
             </div>
 
             <div>
               <label
                 htmlFor="prop-units"
-                className="mb-1 block text-sm font-medium text-charcoal-700"
+                className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
               >
                 {t('onboarding.property_units')}
               </label>
@@ -232,7 +239,7 @@ export default function OnboardingPage() {
                 value={propertyUnits}
                 onChange={(e) => setPropertyUnits(e.target.value)}
                 placeholder={t('onboarding.property_units_placeholder')}
-                className="block w-full rounded-lg border border-warm-300 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400"
+                className="block w-full rounded-lg border border-warm-300 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-400 focus:outline-none focus:ring-1 focus:ring-saffron-400 dark:border-white/15 dark:bg-charcoal-800 dark:text-white dark:placeholder:text-white/40"
               />
             </div>
           </div>
@@ -241,7 +248,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={goBack}
-              className="min-h-[44px] flex-1 rounded-lg border border-warm-300 px-4 py-2.5 text-sm font-medium text-charcoal-700 hover:bg-warm-50"
+              className="min-h-[44px] flex-1 rounded-lg border border-warm-300 px-4 py-2.5 text-sm font-medium text-charcoal-700 hover:bg-warm-50 dark:border-white/15 dark:text-white/70 dark:hover:bg-white/5"
             >
               {t('onboarding.back')}
             </button>
@@ -261,7 +268,7 @@ export default function OnboardingPage() {
       {step === 'contract' && (
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-saffron-100 text-saffron-600">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-saffron-100 text-saffron-600 dark:bg-saffron-500/15">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -277,10 +284,12 @@ export default function OnboardingPage() {
               </svg>
             </div>
           </div>
-          <h2 className="mb-1 text-xl font-bold text-charcoal-900">
+          <h2 className="mb-1 text-xl font-bold text-charcoal-900 dark:text-white">
             {t('onboarding.step_contract_title')}
           </h2>
-          <p className="mb-8 text-sm text-charcoal-500">{t('onboarding.step_contract_subtitle')}</p>
+          <p className="mb-8 text-sm text-charcoal-500 dark:text-white/50">
+            {t('onboarding.step_contract_subtitle')}
+          </p>
 
           <div className="space-y-3">
             <button
@@ -293,7 +302,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={goNext}
-              className="min-h-[44px] w-full rounded-lg border border-warm-300 px-4 py-2.5 text-sm font-medium text-charcoal-700 hover:bg-warm-50"
+              className="min-h-[44px] w-full rounded-lg border border-warm-300 px-4 py-2.5 text-sm font-medium text-charcoal-700 hover:bg-warm-50 dark:border-white/15 dark:text-white/70 dark:hover:bg-white/5"
             >
               {t('onboarding.skip_step')}
             </button>
@@ -303,7 +312,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={goBack}
-              className="text-sm text-charcoal-500 hover:text-charcoal-700"
+              className="text-sm text-charcoal-500 hover:text-charcoal-700 dark:text-white/50 dark:hover:text-white/70"
             >
               {t('onboarding.back')}
             </button>
@@ -315,7 +324,7 @@ export default function OnboardingPage() {
       {step === 'tenant' && (
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-saffron-100 text-saffron-600">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-saffron-100 text-saffron-600 dark:bg-saffron-500/15">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -326,10 +335,12 @@ export default function OnboardingPage() {
               </svg>
             </div>
           </div>
-          <h2 className="mb-1 text-xl font-bold text-charcoal-900">
+          <h2 className="mb-1 text-xl font-bold text-charcoal-900 dark:text-white">
             {t('onboarding.step_tenant_title')}
           </h2>
-          <p className="mb-8 text-sm text-charcoal-500">{t('onboarding.step_tenant_subtitle')}</p>
+          <p className="mb-8 text-sm text-charcoal-500 dark:text-white/50">
+            {t('onboarding.step_tenant_subtitle')}
+          </p>
 
           <div className="space-y-3">
             <button
@@ -346,7 +357,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={goNext}
-              className="min-h-[44px] w-full rounded-lg border border-warm-300 px-4 py-2.5 text-sm font-medium text-charcoal-700 hover:bg-warm-50"
+              className="min-h-[44px] w-full rounded-lg border border-warm-300 px-4 py-2.5 text-sm font-medium text-charcoal-700 hover:bg-warm-50 dark:border-white/15 dark:text-white/70 dark:hover:bg-white/5"
             >
               {t('onboarding.skip_step')}
             </button>
@@ -356,7 +367,7 @@ export default function OnboardingPage() {
             <button
               type="button"
               onClick={goBack}
-              className="text-sm text-charcoal-500 hover:text-charcoal-700"
+              className="text-sm text-charcoal-500 hover:text-charcoal-700 dark:text-white/50 dark:hover:text-white/70"
             >
               {t('onboarding.back')}
             </button>
@@ -368,7 +379,7 @@ export default function OnboardingPage() {
       {step === 'done' && (
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-success-100 text-success-600">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-success-100 text-success-600 dark:bg-green-500/15 dark:text-green-400">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -383,10 +394,12 @@ export default function OnboardingPage() {
               </svg>
             </div>
           </div>
-          <h2 className="mb-2 text-2xl font-bold text-charcoal-900">
+          <h2 className="mb-2 text-2xl font-bold text-charcoal-900 dark:text-white">
             {t('onboarding.done_title')}
           </h2>
-          <p className="mb-8 text-sm text-charcoal-500">{t('onboarding.done_subtitle')}</p>
+          <p className="mb-8 text-sm text-charcoal-500 dark:text-white/50">
+            {t('onboarding.done_subtitle')}
+          </p>
           <button
             type="button"
             onClick={() => router.push('/landlord/dashboard')}

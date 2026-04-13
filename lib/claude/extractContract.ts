@@ -98,16 +98,16 @@ interface Pass1Refusal {
   reason: string;
 }
 
-// ─── Pass 1: Structural Analysis ────────────────────────────────────────────
+// ─── Pre-screen: Cheap Haiku gate (prevents wasting Sonnet tokens) ──────────
 
-async function runPass1(
+async function preScreenDocument(
   contentBlock: Anthropic.ContentBlockParam,
   onUsage?: (usage: { input_tokens: number; output_tokens: number }) => void
-): Promise<Pass1Result | Pass1Refusal> {
-  const response = await withRetry(() =>
-    client.messages.create({
+): Promise<boolean> {
+  const response = await client.messages.create(
+    {
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 8192,
+      max_tokens: 20,
       messages: [
         {
           role: 'user',
@@ -115,7 +115,50 @@ async function runPass1(
             contentBlock,
             {
               type: 'text',
-              text: `You are a Thai rental contract OCR specialist.
+              text: 'Is this document a residential rental/lease contract or agreement? Reply with ONLY "yes" or "no".',
+            },
+          ],
+        },
+      ],
+    },
+    { timeout: 15_000 }
+  );
+
+  if (response.usage) {
+    trackTokenUsage('extractContract:prescreen', {
+      input_tokens: response.usage.input_tokens,
+      output_tokens: response.usage.output_tokens,
+    });
+    onUsage?.({
+      input_tokens: response.usage.input_tokens,
+      output_tokens: response.usage.output_tokens,
+    });
+  }
+
+  const text = response.content.find((b) => b.type === 'text');
+  const answer = text && 'text' in text ? text.text.trim().toLowerCase() : '';
+  return answer.startsWith('yes');
+}
+
+// ─── Pass 1: Structural Analysis ────────────────────────────────────────────
+
+async function runPass1(
+  contentBlock: Anthropic.ContentBlockParam,
+  onUsage?: (usage: { input_tokens: number; output_tokens: number }) => void
+): Promise<Pass1Result | Pass1Refusal> {
+  const response = await withRetry(() =>
+    client.messages.create(
+      {
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 8192,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              contentBlock,
+              {
+                type: 'text',
+                text: `You are a Thai rental contract OCR specialist.
 
 BEFORE doing anything else: verify this document is an actual Thai residential rental contract.
 If the document is blank, contains no meaningful text, is random noise, is a receipt, ID card, menu,
@@ -141,11 +184,13 @@ Return ONLY valid JSON — no markdown, no preamble:
   "estimated_clause_count": <number>,
   "image_quality": "good" | "fair" | "poor"
 }`,
-            },
-          ],
-        },
-      ],
-    })
+              },
+            ],
+          },
+        ],
+      },
+      { timeout: 90_000 }
+    )
   );
 
   if (response.usage) {
@@ -226,17 +271,18 @@ Add to the top-level JSON:
       : '';
 
   const response = await withRetry(() =>
-    client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 16384,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            contentBlock,
-            {
-              type: 'text',
-              text: `You are a Thai rental contract specialist and legal translator.
+    client.messages.create(
+      {
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 16384,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              contentBlock,
+              {
+                type: 'text',
+                text: `You are a Thai rental contract specialist and legal translator.
 
 PASS 2 — FULL EXTRACTION WITH CONTEXT
 
@@ -287,11 +333,13 @@ Return ONLY valid JSON — no markdown, no preamble:
   },
   "clauses": [...]${pass1.image_quality === 'poor' ? ',\n  "field_confidence": {...}' : ''}
 }`,
-            },
-          ],
-        },
-      ],
-    })
+              },
+            ],
+          },
+        ],
+      },
+      { timeout: 180_000 }
+    )
   );
 
   if (response.usage) {
@@ -352,6 +400,19 @@ export async function extractContractWithProgress(
             data: fileBase64,
           },
         };
+
+  // ── Pre-screen: cheap Haiku gate ─────────────────────────────────────────
+  try {
+    const isContract = await preScreenDocument(contentBlock, onUsage);
+    if (!isContract) {
+      console.warn('[extractContract] Haiku pre-screen rejected document as non-contract');
+      throw new ContractValidationError('not_a_contract');
+    }
+  } catch (error) {
+    if (error instanceof ContractValidationError) throw error;
+    // If pre-screen fails (timeout, network), proceed to Pass 1 anyway — don't block
+    console.warn('[extractContract] Pre-screen failed, proceeding to Pass 1:', error);
+  }
 
   // ── Pass 1: structural analysis ──────────────────────────────────────────
   let pass1: Pass1Result;
@@ -473,13 +534,14 @@ export async function reparseContractText(
   onUsage?: (usage: { input_tokens: number; output_tokens: number }) => void
 ): Promise<ExtractedContract['clauses']> {
   const response = await withRetry(() =>
-    client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 16384,
-      messages: [
-        {
-          role: 'user',
-          content: `You are a Thai rental contract specialist and legal translator.
+    client.messages.create(
+      {
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 16384,
+        messages: [
+          {
+            role: 'user',
+            content: `You are a Thai rental contract specialist and legal translator.
 
 Given the following Thai rental contract text, parse it into structured clauses.
 
@@ -504,9 +566,11 @@ Return ONLY valid JSON — no markdown, no preamble:
 {
   "clauses": [...]
 }`,
-        },
-      ],
-    })
+          },
+        ],
+      },
+      { timeout: 180_000 }
+    )
   );
 
   if (response.usage) {

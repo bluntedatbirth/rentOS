@@ -460,7 +460,11 @@ export default function ContractRenewPage() {
   if (loading) return <LoadingSkeleton count={6} />;
 
   if (!contract) {
-    return <div className="py-12 text-center text-gray-500">{t('contract.not_found')}</div>;
+    return (
+      <div className="py-12 text-center text-charcoal-500 dark:text-white/50">
+        {t('contract.not_found')}
+      </div>
+    );
   }
 
   return (
@@ -469,7 +473,7 @@ export default function ContractRenewPage() {
       <div className="mb-6">
         <Link
           href={`/landlord/contracts/${id}`}
-          className="mb-2 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+          className="mb-2 inline-flex items-center gap-1 text-sm text-charcoal-500 dark:text-white/50 hover:text-charcoal-700 dark:hover:text-white/70"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -485,10 +489,10 @@ export default function ContractRenewPage() {
           </svg>
           {t('nav.contracts')}
         </Link>
-        <h1 className="text-xl font-bold text-gray-900">
+        <h1 className="text-xl font-bold text-charcoal-900 dark:text-white">
           {t('renewal.editor_title')}
           {contract.properties?.name && (
-            <span className="ml-2 text-base font-normal text-gray-500">
+            <span className="ml-2 text-base font-normal text-charcoal-500 dark:text-white/50">
               — {contract.properties.name}
             </span>
           )}
@@ -500,9 +504,11 @@ export default function ContractRenewPage() {
         {/* ── Editor panel ── */}
         <div className="min-w-0 space-y-6">
           {/* Terms section — summary by default, expandable to edit */}
-          <div className="rounded-xl bg-white p-5 shadow-sm">
+          <div className="rounded-xl bg-white dark:bg-charcoal-800 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-gray-800">{t('renewal.lease_period')}</h2>
+              <h2 className="text-sm font-semibold text-charcoal-800 dark:text-white/90">
+                {t('renewal.lease_period')}
+              </h2>
               <button
                 type="button"
                 onClick={() => setEditingTerms(!editingTerms)}
@@ -516,22 +522,32 @@ export default function ContractRenewPage() {
             {!editingTerms && (
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-xs text-gray-500">{t('renewal.new_lease_start')}</p>
-                  <p className="font-medium text-gray-900">{leaseStart || '—'}</p>
+                  <p className="text-xs text-charcoal-500 dark:text-white/50">
+                    {t('renewal.new_lease_start')}
+                  </p>
+                  <p className="font-medium text-charcoal-900 dark:text-white">
+                    {leaseStart || '—'}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">{t('renewal.new_lease_end')}</p>
-                  <p className="font-medium text-gray-900">{leaseEnd || '—'}</p>
+                  <p className="text-xs text-charcoal-500 dark:text-white/50">
+                    {t('renewal.new_lease_end')}
+                  </p>
+                  <p className="font-medium text-charcoal-900 dark:text-white">{leaseEnd || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">{t('renewal.new_rent')}</p>
-                  <p className="font-medium text-gray-900">
+                  <p className="text-xs text-charcoal-500 dark:text-white/50">
+                    {t('renewal.new_rent')}
+                  </p>
+                  <p className="font-medium text-charcoal-900 dark:text-white">
                     {monthlyRent ? `฿${Number(monthlyRent).toLocaleString()}` : '—'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">{t('renewal.new_deposit')}</p>
-                  <p className="font-medium text-gray-900">
+                  <p className="text-xs text-charcoal-500 dark:text-white/50">
+                    {t('renewal.new_deposit')}
+                  </p>
+                  <p className="font-medium text-charcoal-900 dark:text-white">
                     {securityDeposit ? `฿${Number(securityDeposit).toLocaleString()}` : '—'}
                   </p>
                 </div>
@@ -542,33 +558,33 @@ export default function ContractRenewPage() {
             {editingTerms && (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                  <label className="mb-1 block text-xs font-medium text-charcoal-600 dark:text-white/60">
                     {t('renewal.new_lease_start')}
                   </label>
                   <input
                     type="date"
                     value={leaseStart}
                     onChange={(e) => setLeaseStart(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                    className="w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 dark:text-white px-3 py-2 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                  <label className="mb-1 block text-xs font-medium text-charcoal-600 dark:text-white/60">
                     {t('renewal.new_lease_end')}
                   </label>
                   <input
                     type="date"
                     value={leaseEnd}
                     onChange={(e) => setLeaseEnd(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                    className="w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 dark:text-white px-3 py-2 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                  <label className="mb-1 block text-xs font-medium text-charcoal-600 dark:text-white/60">
                     {t('renewal.new_rent')}
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-charcoal-500 dark:text-white/50">
                       ฿
                     </span>
                     <input
@@ -576,16 +592,16 @@ export default function ContractRenewPage() {
                       value={monthlyRent}
                       onChange={(e) => setMonthlyRent(e.target.value)}
                       min="0"
-                      className="w-full rounded-lg border border-gray-300 py-2 pl-7 pr-3 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                      className="w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 dark:text-white py-2 pl-7 pr-3 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-gray-600">
+                  <label className="mb-1 block text-xs font-medium text-charcoal-600 dark:text-white/60">
                     {t('renewal.new_deposit')}
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-charcoal-500 dark:text-white/50">
                       ฿
                     </span>
                     <input
@@ -593,7 +609,7 @@ export default function ContractRenewPage() {
                       value={securityDeposit}
                       onChange={(e) => setSecurityDeposit(e.target.value)}
                       min="0"
-                      className="w-full rounded-lg border border-gray-300 py-2 pl-7 pr-3 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                      className="w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 dark:text-white py-2 pl-7 pr-3 text-sm focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                     />
                   </div>
                 </div>
@@ -602,9 +618,11 @@ export default function ContractRenewPage() {
           </div>
 
           {/* AI Analysis section */}
-          <div className="rounded-xl bg-white shadow-sm">
-            <div className="flex items-center justify-between rounded-t-xl border-b border-gray-100 px-5 py-3">
-              <h2 className="text-sm font-semibold text-gray-800">{t('renewal.risks_title')}</h2>
+          <div className="rounded-xl bg-white dark:bg-charcoal-800 shadow-sm">
+            <div className="flex items-center justify-between rounded-t-xl border-b border-warm-100 dark:border-white/5 px-5 py-3">
+              <h2 className="text-sm font-semibold text-charcoal-800 dark:text-white/90">
+                {t('renewal.risks_title')}
+              </h2>
               <button
                 type="button"
                 onClick={() => {
@@ -627,7 +645,9 @@ export default function ContractRenewPage() {
               {analysisLoading && (
                 <div className="flex flex-col items-center gap-3 py-8 text-center">
                   <div className="h-7 w-7 animate-spin rounded-full border-4 border-saffron-200 border-t-blue-600" />
-                  <p className="text-sm text-gray-500">{t('renewal.analysis_loading')}</p>
+                  <p className="text-sm text-charcoal-500 dark:text-white/50">
+                    {t('renewal.analysis_loading')}
+                  </p>
                 </div>
               )}
 
@@ -638,7 +658,9 @@ export default function ContractRenewPage() {
 
               {/* Idle placeholder */}
               {!analysis && !analysisLoading && !analysisError && (
-                <p className="text-sm text-gray-400">{t('renewal.analysis_hint')}</p>
+                <p className="text-sm text-charcoal-400 dark:text-white/40">
+                  {t('renewal.analysis_hint')}
+                </p>
               )}
 
               {/* Results */}
@@ -657,7 +679,7 @@ export default function ContractRenewPage() {
                   {/* Risks */}
                   {analysis.risks.length > 0 && (
                     <div>
-                      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-charcoal-600 dark:text-white/60">
                         {t('renewal.risks_title')}
                       </h3>
                       <div className="space-y-3">
@@ -687,7 +709,7 @@ export default function ContractRenewPage() {
                                     <button
                                       type="button"
                                       onClick={() => scrollToClause(risk.clause_id)}
-                                      className={`rounded-full px-2 py-0.5 text-xs font-semibold transition-all duration-150 bg-gray-100 text-gray-700 ${isClauseFlashing ? 'scale-110 ring-2 ring-offset-1 ring-current' : ''}`}
+                                      className={`rounded-full px-2 py-0.5 text-xs font-semibold transition-all duration-150 bg-warm-100 dark:bg-white/5 text-charcoal-700 dark:text-white/70 ${isClauseFlashing ? 'scale-110 ring-2 ring-offset-1 ring-current' : ''}`}
                                     >
                                       {risk.clause_id}
                                     </button>
@@ -697,7 +719,7 @@ export default function ContractRenewPage() {
                                       {severityLabel}
                                     </span>
                                   </div>
-                                  <p className="text-sm text-gray-700">
+                                  <p className="text-sm text-charcoal-700 dark:text-white/70">
                                     {locale === 'th' ? risk.description_th : risk.description_en}
                                   </p>
                                 </div>
@@ -705,11 +727,11 @@ export default function ContractRenewPage() {
                               {/* Suggested fix */}
                               {hasSuggestion && risk.clause_id !== 'general' && (
                                 <div className="mt-2 ml-5">
-                                  <div className="rounded-md border border-gray-200 bg-white p-2.5">
-                                    <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                                  <div className="rounded-md border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 p-2.5">
+                                    <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-charcoal-400 dark:text-white/40">
                                       {t('renewal.suggested_fix')}
                                     </p>
-                                    <p className="whitespace-pre-wrap text-xs leading-relaxed text-gray-700">
+                                    <p className="whitespace-pre-wrap text-xs leading-relaxed text-charcoal-700 dark:text-white/70">
                                       {suggestedPreview.slice(0, 200)}
                                       {suggestedPreview.length > 200 ? '…' : ''}
                                     </p>
@@ -723,7 +745,7 @@ export default function ContractRenewPage() {
                                         <button
                                           type="button"
                                           onClick={() => undoRiskFix(risk, idx)}
-                                          className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100"
+                                          className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-1.5 text-xs font-medium text-charcoal-600 dark:text-white/60 hover:bg-warm-100 dark:hover:bg-white/10"
                                         >
                                           {t('renewal.undo')}
                                         </button>
@@ -750,7 +772,7 @@ export default function ContractRenewPage() {
                   {/* Missing clauses */}
                   {analysis.missing_clauses.length > 0 && (
                     <div>
-                      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-charcoal-600 dark:text-white/60">
                         {t('renewal.missing_title')}
                       </h3>
                       <div className="space-y-3">
@@ -772,10 +794,10 @@ export default function ContractRenewPage() {
                             </p>
                             {/* Preview of actual clause text that will be inserted */}
                             <div className="mb-2 rounded-md border border-orange-200 bg-white p-2.5">
-                              <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-gray-400">
+                              <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-charcoal-400 dark:text-white/40">
                                 {t('renewal.clause_preview')}
                               </p>
-                              <p className="whitespace-pre-wrap text-xs leading-relaxed text-gray-700">
+                              <p className="whitespace-pre-wrap text-xs leading-relaxed text-charcoal-700 dark:text-white/70">
                                 {(locale === 'th' ? mc.clause_text_th : mc.clause_text_en)?.slice(
                                   0,
                                   200
@@ -795,7 +817,7 @@ export default function ContractRenewPage() {
                                   <button
                                     type="button"
                                     onClick={() => undoClause(idx)}
-                                    className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100"
+                                    className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-1.5 text-xs font-medium text-charcoal-600 dark:text-white/60 hover:bg-warm-100 dark:hover:bg-white/10"
                                   >
                                     {t('renewal.undo')}
                                   </button>
@@ -821,9 +843,11 @@ export default function ContractRenewPage() {
           </div>
 
           {/* Contract text editor */}
-          <div className="rounded-xl bg-white shadow-sm">
-            <div className="border-b border-gray-100 px-5 py-3">
-              <h2 className="text-sm font-semibold text-gray-800">{t('renewal.contract_text')}</h2>
+          <div className="rounded-xl bg-white dark:bg-charcoal-800 shadow-sm">
+            <div className="border-b border-warm-100 dark:border-white/5 px-5 py-3">
+              <h2 className="text-sm font-semibold text-charcoal-800 dark:text-white/90">
+                {t('renewal.contract_text')}
+              </h2>
             </div>
             <div className="p-5">
               <textarea
@@ -831,14 +855,14 @@ export default function ContractRenewPage() {
                 value={contractText}
                 onChange={(e) => setContractText(e.target.value)}
                 rows={20}
-                className="w-full resize-y rounded-lg border border-gray-300 p-3 font-mono text-sm leading-relaxed text-gray-800 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                className="w-full resize-y rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 p-3 font-mono text-sm leading-relaxed text-charcoal-800 dark:text-white/90 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                 spellCheck={false}
               />
             </div>
           </div>
 
           {/* Send to Tenant */}
-          <div className="rounded-xl bg-white p-5 shadow-sm">
+          <div className="rounded-xl bg-white dark:bg-charcoal-800 p-5 shadow-sm">
             {sendError && <p className="mb-3 text-sm text-red-600">{sendError}</p>}
             {sentSuccess && (
               <p className="mb-3 text-sm font-medium text-green-700">{t('renewal.sent_success')}</p>
@@ -865,7 +889,7 @@ export default function ContractRenewPage() {
         <button
           type="button"
           onClick={() => setShowPreview((v) => !v)}
-          className="min-h-[44px] w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          className="min-h-[44px] w-full rounded-xl border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5"
         >
           {showPreview ? t('renewal.hide_preview') : t('renewal.show_preview')}
         </button>

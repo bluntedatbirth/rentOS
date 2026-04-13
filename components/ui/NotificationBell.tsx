@@ -178,7 +178,7 @@ export function NotificationBell({ role }: NotificationBellProps) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-warm-200 text-charcoal-600 hover:text-charcoal-900 hover:bg-warm-100"
+        className="relative min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-warm-200 dark:border-white/10 text-charcoal-600 dark:text-white/60 hover:text-charcoal-900 dark:hover:text-white hover:bg-warm-100 dark:hover:bg-white/10"
         aria-label={t('nav.notifications')}
         aria-expanded={open}
         aria-haspopup="dialog"
@@ -202,17 +202,17 @@ export function NotificationBell({ role }: NotificationBellProps) {
         <div
           role="dialog"
           aria-label={t('notifications.inbox_title')}
-          className="absolute right-0 top-full z-50 mt-2 flex max-h-[70vh] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border border-warm-200 bg-warm-50 shadow-2xl"
+          className="absolute right-0 top-full z-50 mt-2 flex max-h-[70vh] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-charcoal-900 shadow-2xl dark:shadow-black/40"
         >
-          <div className="flex items-center justify-between border-b border-warm-200 bg-warm-100 px-4 py-3">
-            <h3 className="text-sm font-semibold text-charcoal-900">
+          <div className="flex items-center justify-between border-b border-warm-200 dark:border-white/10 bg-warm-100 dark:bg-charcoal-800 px-4 py-3">
+            <h3 className="text-sm font-semibold text-charcoal-900 dark:text-white">
               {t('notifications.inbox_title')}
             </h3>
             {notifications.length > 0 && (
               <button
                 type="button"
                 onClick={dismissAll}
-                className="rounded-md px-2 py-1 text-xs font-medium text-charcoal-600 hover:bg-warm-200 hover:text-charcoal-900"
+                className="rounded-md px-2 py-1 text-xs font-medium text-charcoal-600 dark:text-white/60 hover:bg-warm-200 dark:hover:bg-white/10 hover:text-charcoal-900 dark:hover:text-white"
               >
                 {t('notifications.clear_all')}
               </button>
@@ -220,10 +220,14 @@ export function NotificationBell({ role }: NotificationBellProps) {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {loadingList && <p className="px-4 py-8 text-center text-sm text-gray-500">...</p>}
+            {loadingList && (
+              <p className="px-4 py-8 text-center text-sm text-charcoal-500 dark:text-white/50">
+                ...
+              </p>
+            )}
 
             {!loadingList && notifications.length === 0 && (
-              <p className="px-4 py-8 text-center text-sm text-gray-500">
+              <p className="px-4 py-8 text-center text-sm text-charcoal-500 dark:text-white/50">
                 {t('notifications.no_notifications')}
               </p>
             )}
@@ -232,8 +236,8 @@ export function NotificationBell({ role }: NotificationBellProps) {
               notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`flex items-start gap-0 border-b border-warm-100 last:border-b-0 transition-colors hover:bg-warm-100 ${
-                    !notification.read_at ? 'bg-saffron-50/40' : ''
+                  className={`flex items-start gap-0 border-b border-warm-100 dark:border-white/5 last:border-b-0 transition-colors hover:bg-warm-100 dark:hover:bg-white/5 ${
+                    !notification.read_at ? 'bg-saffron-50/40 dark:bg-saffron-500/10' : ''
                   }`}
                 >
                   <button
@@ -254,8 +258,8 @@ export function NotificationBell({ role }: NotificationBellProps) {
                           <p
                             className={`truncate text-sm ${
                               !notification.read_at
-                                ? 'font-semibold text-gray-900'
-                                : 'font-medium text-gray-700'
+                                ? 'font-semibold text-charcoal-900 dark:text-white'
+                                : 'font-medium text-charcoal-700 dark:text-white/70'
                             }`}
                           >
                             {locale === 'en'
@@ -268,21 +272,21 @@ export function NotificationBell({ role }: NotificationBellProps) {
                           {NOTIFICATION_MODE[notification.type] &&
                             NOTIFICATION_MODE[notification.type] !== role &&
                             (NOTIFICATION_MODE[notification.type] === 'landlord' ? (
-                              <span className="inline-flex items-center rounded px-1 py-0.5 text-[9px] font-medium bg-saffron-100 text-saffron-700 shrink-0">
+                              <span className="inline-flex items-center rounded px-1 py-0.5 text-[9px] font-medium bg-saffron-100 dark:bg-saffron-500/20 text-saffron-700 dark:text-saffron-300 shrink-0">
                                 {t('notifications.mode_landlord')}
                               </span>
                             ) : (
-                              <span className="inline-flex items-center rounded px-1 py-0.5 text-[9px] font-medium bg-teal-100 text-teal-700 shrink-0">
+                              <span className="inline-flex items-center rounded px-1 py-0.5 text-[9px] font-medium bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 shrink-0">
                                 {t('notifications.mode_tenant')}
                               </span>
                             ))}
                         </div>
-                        <p className="mt-0.5 line-clamp-2 text-xs text-gray-500">
+                        <p className="mt-0.5 line-clamp-2 text-xs text-charcoal-500 dark:text-white/50">
                           {locale === 'en'
                             ? (notification.body_en ?? notification.body)
                             : (notification.body_th ?? notification.body)}
                         </p>
-                        <p className="mt-1 text-[10px] text-gray-400">
+                        <p className="mt-1 text-[10px] text-charcoal-400 dark:text-white/30">
                           {timeAgo(notification.sent_at, t)}
                         </p>
                       </div>
@@ -291,7 +295,7 @@ export function NotificationBell({ role }: NotificationBellProps) {
                   <button
                     type="button"
                     onClick={() => dismiss(notification.id)}
-                    className="mr-1 mt-2 shrink-0 rounded-md p-1.5 text-gray-300 hover:bg-gray-100 hover:text-gray-500"
+                    className="mr-1 mt-2 shrink-0 rounded-md p-1.5 text-charcoal-300 dark:text-white/20 hover:bg-warm-100 dark:hover:bg-white/10 hover:text-charcoal-500 dark:hover:text-white/50"
                     title={t('notifications.dismiss')}
                     aria-label={t('notifications.dismiss')}
                   >
@@ -308,7 +312,7 @@ export function NotificationBell({ role }: NotificationBellProps) {
               ))}
           </div>
 
-          <div className="border-t border-warm-200 bg-warm-100 px-4 py-2 text-center">
+          <div className="border-t border-warm-200 dark:border-white/10 bg-warm-100 dark:bg-charcoal-800 px-4 py-2 text-center">
             <Link
               href={inboxHref}
               onClick={() => setOpen(false)}

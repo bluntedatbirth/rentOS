@@ -58,13 +58,17 @@ export default function TenantShellPropertyNewPage() {
     <div className="mx-auto max-w-lg">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-charcoal-900">{t('tenant.add_lease_title')}</h2>
-        <p className="mt-1 text-sm text-charcoal-500">{t('tenant.shell_property_subtitle')}</p>
+        <h2 className="text-xl font-bold text-charcoal-900 dark:text-white">
+          {t('tenant.add_lease_title')}
+        </h2>
+        <p className="mt-1 text-sm text-charcoal-500 dark:text-white/50">
+          {t('tenant.shell_property_subtitle')}
+        </p>
       </div>
 
       {/* Error */}
       {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-100 dark:bg-red-500/15 px-4 py-3 text-sm text-red-700 dark:text-red-400">
           {error}
         </div>
       )}
@@ -72,7 +76,10 @@ export default function TenantShellPropertyNewPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Name (required) */}
         <div>
-          <label htmlFor="name" className="mb-1 block text-sm font-medium text-charcoal-700">
+          <label
+            htmlFor="name"
+            className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
+          >
             {t('tenant.add_lease_property_name')}
             <span className="ml-1 text-red-500" aria-hidden="true">
               *
@@ -85,7 +92,7 @@ export default function TenantShellPropertyNewPage() {
             onChange={(e) => setName(e.target.value)}
             required
             placeholder="e.g. Sukhumvit Condo"
-            className="w-full rounded-lg border border-warm-200 bg-white px-3 py-2.5 text-sm text-charcoal-900 placeholder-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+            className="w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
           />
         </div>
 
@@ -93,7 +100,9 @@ export default function TenantShellPropertyNewPage() {
         <div>
           <label htmlFor="address" className="mb-1 block text-sm font-medium text-charcoal-700">
             {t('property.address')}
-            <span className="ml-1 text-xs text-charcoal-400">({t('common.optional')})</span>
+            <span className="ml-1 text-xs text-charcoal-400 dark:text-white/40">
+              ({t('common.optional')})
+            </span>
           </label>
           <input
             id="address"
@@ -101,7 +110,7 @@ export default function TenantShellPropertyNewPage() {
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             placeholder="e.g. 123 Sukhumvit Rd, Bangkok"
-            className="w-full rounded-lg border border-warm-200 bg-white px-3 py-2.5 text-sm text-charcoal-900 placeholder-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+            className="w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
           />
         </div>
 
@@ -112,10 +121,12 @@ export default function TenantShellPropertyNewPage() {
             className="mb-1 block text-sm font-medium text-charcoal-700"
           >
             {t('tenant.add_lease_rent')}
-            <span className="ml-1 text-xs text-charcoal-400">({t('common.optional')})</span>
+            <span className="ml-1 text-xs text-charcoal-400 dark:text-white/40">
+              ({t('common.optional')})
+            </span>
           </label>
           <div className="relative">
-            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-medium text-charcoal-400">
+            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-medium text-charcoal-400 dark:text-white/40">
               ฿
             </span>
             <input
@@ -126,7 +137,7 @@ export default function TenantShellPropertyNewPage() {
               value={monthlyRent}
               onChange={(e) => setMonthlyRent(e.target.value)}
               placeholder="15000"
-              className="w-full rounded-lg border border-warm-200 bg-white py-2.5 pl-7 pr-3 text-sm text-charcoal-900 placeholder-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+              className="w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 py-2.5 pl-7 pr-3 text-sm text-charcoal-900 dark:text-white placeholder-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
             />
           </div>
         </div>
@@ -139,20 +150,24 @@ export default function TenantShellPropertyNewPage() {
               className="mb-1 block text-sm font-medium text-charcoal-700"
             >
               {t('tenant.add_lease_start')}
-              <span className="ml-1 text-xs text-charcoal-400">({t('common.optional')})</span>
+              <span className="ml-1 text-xs text-charcoal-400 dark:text-white/40">
+                ({t('common.optional')})
+              </span>
             </label>
             <input
               id="lease_start"
               type="date"
               value={leaseStart}
               onChange={(e) => setLeaseStart(e.target.value)}
-              className="w-full rounded-lg border border-warm-200 bg-white px-3 py-2.5 text-sm text-charcoal-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+              className="w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
             />
           </div>
           <div>
             <label htmlFor="lease_end" className="mb-1 block text-sm font-medium text-charcoal-700">
               {t('tenant.add_lease_end')}
-              <span className="ml-1 text-xs text-charcoal-400">({t('common.optional')})</span>
+              <span className="ml-1 text-xs text-charcoal-400 dark:text-white/40">
+                ({t('common.optional')})
+              </span>
             </label>
             <input
               id="lease_end"
@@ -160,7 +175,7 @@ export default function TenantShellPropertyNewPage() {
               value={leaseEnd}
               onChange={(e) => setLeaseEnd(e.target.value)}
               min={leaseStart || undefined}
-              className="w-full rounded-lg border border-warm-200 bg-white px-3 py-2.5 text-sm text-charcoal-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+              className="w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
             />
           </div>
         </div>
@@ -169,7 +184,9 @@ export default function TenantShellPropertyNewPage() {
         <div>
           <label htmlFor="due_day" className="mb-1 block text-sm font-medium text-charcoal-700">
             {t('tenant.add_lease_due_day')}
-            <span className="ml-1 text-xs text-charcoal-400">({t('common.optional')})</span>
+            <span className="ml-1 text-xs text-charcoal-400 dark:text-white/40">
+              ({t('common.optional')})
+            </span>
           </label>
           <input
             id="due_day"
@@ -179,13 +196,16 @@ export default function TenantShellPropertyNewPage() {
             value={dueDay}
             onChange={(e) => setDueDay(e.target.value)}
             placeholder="1–31"
-            className="w-full rounded-lg border border-warm-200 bg-white px-3 py-2.5 text-sm text-charcoal-900 placeholder-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+            className="w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
           />
         </div>
 
         {/* Notes (optional) */}
         <div>
-          <label htmlFor="notes" className="mb-1 block text-sm font-medium text-charcoal-700">
+          <label
+            htmlFor="notes"
+            className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
+          >
             {t('tenant.add_lease_notes')}
           </label>
           <textarea
@@ -194,7 +214,7 @@ export default function TenantShellPropertyNewPage() {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Any reminders or notes about this lease..."
-            className="w-full resize-none rounded-lg border border-warm-200 bg-white px-3 py-2.5 text-sm text-charcoal-900 placeholder-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+            className="w-full resize-none rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
           />
         </div>
 
@@ -204,7 +224,7 @@ export default function TenantShellPropertyNewPage() {
             type="button"
             onClick={() => router.back()}
             disabled={submitting}
-            className="min-h-[44px] flex-1 rounded-lg border border-warm-200 px-4 py-2 text-sm font-medium text-charcoal-700 hover:bg-warm-100 disabled:opacity-50"
+            className="min-h-[44px] flex-1 rounded-lg border border-warm-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10 disabled:opacity-50"
           >
             {t('common.cancel')}
           </button>

@@ -182,7 +182,7 @@ export default function PenaltyRulesPage() {
         <div className="mb-6 flex items-center gap-3">
           <Link
             href="/landlord/penalties"
-            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+            className="inline-flex items-center gap-1 text-sm text-charcoal-500 dark:text-white/50 hover:text-charcoal-700 dark:hover:text-white/70"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -198,7 +198,9 @@ export default function PenaltyRulesPage() {
             </svg>
             {t('nav.penalties')}
           </Link>
-          <h2 className="text-xl font-bold text-gray-900">{t('penalty_rules.title')}</h2>
+          <h2 className="text-xl font-bold text-charcoal-900 dark:text-white">
+            {t('penalty_rules.title')}
+          </h2>
         </div>
         <div className="rounded-xl border border-saffron-200 bg-saffron-50 p-6 text-center">
           <p className="mb-1 text-sm font-semibold text-saffron-800">{t('upgrade_prompt.title')}</p>
@@ -226,7 +228,7 @@ export default function PenaltyRulesPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/landlord/penalties"
-            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+            className="inline-flex items-center gap-1 text-sm text-charcoal-500 dark:text-white/50 hover:text-charcoal-700 dark:hover:text-white/70"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -242,7 +244,9 @@ export default function PenaltyRulesPage() {
             </svg>
             {t('nav.penalties')}
           </Link>
-          <h2 className="text-xl font-bold text-gray-900">{t('penalty_rules.title')}</h2>
+          <h2 className="text-xl font-bold text-charcoal-900 dark:text-white">
+            {t('penalty_rules.title')}
+          </h2>
         </div>
         <button
           type="button"
@@ -258,20 +262,20 @@ export default function PenaltyRulesPage() {
       {/* Add Rule Form */}
       {showForm && (
         <div className="mb-6 rounded-xl bg-white p-5 shadow-sm">
-          <h3 className="mb-4 text-base font-semibold text-gray-900">
+          <h3 className="mb-4 text-base font-semibold text-charcoal-900 dark:text-white">
             {t('penalty_rules.add_rule')}
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Contract */}
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                 {t('payments.select_contract')}
               </label>
               <select
                 value={formContractId}
                 onChange={(e) => setFormContractId(e.target.value)}
                 required
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
               >
                 <option value="">{t('payments.select_contract')}</option>
                 {contracts.map((c) => (
@@ -284,7 +288,7 @@ export default function PenaltyRulesPage() {
 
             {/* Trigger type */}
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                 {t('penalty_rules.trigger_type')}
               </label>
               <select
@@ -294,7 +298,7 @@ export default function PenaltyRulesPage() {
                     e.target.value as 'late_payment' | 'lease_violation' | 'custom'
                   )
                 }
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
               >
                 <option value="late_payment">{t('penalty_rules.trigger_late_payment')}</option>
                 <option value="lease_violation">
@@ -306,7 +310,7 @@ export default function PenaltyRulesPage() {
 
             {/* Trigger days */}
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                 {t('penalty_rules.trigger_days')}
               </label>
               <input
@@ -315,13 +319,13 @@ export default function PenaltyRulesPage() {
                 value={formTriggerDays}
                 onChange={(e) => setFormTriggerDays(e.target.value)}
                 required
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
               />
             </div>
 
             {/* Penalty amount */}
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                 {t('penalties.amount')} (&#3647;)
               </label>
               <input
@@ -331,13 +335,13 @@ export default function PenaltyRulesPage() {
                 value={formAmount}
                 onChange={(e) => setFormAmount(e.target.value)}
                 required
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                 {t('penalty_rules.description')}
               </label>
               <input
@@ -346,7 +350,7 @@ export default function PenaltyRulesPage() {
                 onChange={(e) => setFormDescription(e.target.value)}
                 maxLength={500}
                 placeholder={t('penalty_rules.description_placeholder')}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/30 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
               />
             </div>
 
@@ -358,7 +362,7 @@ export default function PenaltyRulesPage() {
                 aria-checked={formAutoApply}
                 onClick={() => setFormAutoApply(!formAutoApply)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  formAutoApply ? 'bg-saffron-500' : 'bg-gray-200'
+                  formAutoApply ? 'bg-saffron-500' : 'bg-warm-200 dark:bg-charcoal-700'
                 }`}
               >
                 <span
@@ -367,7 +371,7 @@ export default function PenaltyRulesPage() {
                   }`}
                 />
               </button>
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-charcoal-700 dark:text-white/70">
                 {t('penalty_rules.auto_apply')}
               </span>
             </div>
@@ -392,7 +396,7 @@ export default function PenaltyRulesPage() {
                   setShowForm(false);
                   setError('');
                 }}
-                className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
               >
                 {t('common.cancel')}
               </button>
@@ -403,13 +407,13 @@ export default function PenaltyRulesPage() {
 
       {/* Rules list */}
       {rules.length === 0 ? (
-        <div className="rounded-lg bg-gray-50 p-8 text-center text-sm text-gray-500">
+        <div className="rounded-lg bg-warm-50 dark:bg-charcoal-900 p-8 text-center text-sm text-charcoal-500 dark:text-white/50">
           {t('penalty_rules.no_rules')}
         </div>
       ) : (
         <div className="space-y-3">
           {rules.map((rule) => (
-            <div key={rule.id} className="rounded-lg bg-white p-4 shadow-sm">
+            <div key={rule.id} className="rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="mb-1 flex flex-wrap items-center gap-2">
@@ -422,23 +426,25 @@ export default function PenaltyRulesPage() {
                       </span>
                     )}
                     {!rule.is_active && (
-                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
+                      <span className="inline-flex items-center rounded-full bg-warm-100 dark:bg-white/5 px-2.5 py-0.5 text-xs font-medium text-charcoal-500 dark:text-white/50">
                         {t('penalty_rules.inactive')}
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-charcoal-700 dark:text-white/70">
                     {t('penalty_rules.after_days').replace('{days}', String(rule.trigger_days))}{' '}
                     &mdash;{' '}
                     <span className="font-semibold text-red-600">
                       &#3647;{Number(rule.penalty_amount).toLocaleString()}
                     </span>
                   </p>
-                  <p className="mt-0.5 text-xs text-gray-400">
+                  <p className="mt-0.5 text-xs text-charcoal-400 dark:text-white/40">
                     {getContractName(rule.contract_id)}
                   </p>
                   {rule.penalty_description && (
-                    <p className="mt-1 text-xs text-gray-500">{rule.penalty_description}</p>
+                    <p className="mt-1 text-xs text-charcoal-500 dark:text-white/50">
+                      {rule.penalty_description}
+                    </p>
                   )}
                 </div>
 
@@ -451,7 +457,7 @@ export default function PenaltyRulesPage() {
                     aria-checked={rule.is_active}
                     onClick={() => handleToggleActive(rule)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      rule.is_active ? 'bg-saffron-500' : 'bg-gray-200'
+                      rule.is_active ? 'bg-saffron-500' : 'bg-warm-200 dark:bg-charcoal-700'
                     }`}
                     aria-label={
                       rule.is_active ? t('penalty_rules.deactivate') : t('penalty_rules.activate')
@@ -468,7 +474,7 @@ export default function PenaltyRulesPage() {
                     type="button"
                     onClick={() => handleDelete(rule.id)}
                     aria-label={t('penalty_rules.delete_rule')}
-                    className="min-h-[44px] min-w-[44px] rounded-lg text-gray-400 hover:text-red-600"
+                    className="min-h-[44px] min-w-[44px] rounded-lg text-charcoal-400 dark:text-white/40 hover:text-red-600"
                   >
                     &#10005;
                   </button>

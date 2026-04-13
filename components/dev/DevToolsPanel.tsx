@@ -54,16 +54,18 @@ export function DevToolsPanel() {
 
   return (
     <>
-      <details className="mt-12 rounded-lg border border-gray-300 bg-gray-50">
-        <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-gray-600">
+      <details className="mt-12 rounded-lg border border-gray-300 dark:border-white/10 bg-gray-50 dark:bg-charcoal-900">
+        <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-gray-600 dark:text-white/70">
           {t('dev.tools_title')}
         </summary>
-        <div className="border-t border-gray-200 p-4">
-          <p className="mb-3 text-xs text-gray-500">{t('dev.reset_confirm_body')}</p>
+        <div className="border-t border-gray-200 dark:border-white/10 p-4">
+          <p className="mb-3 text-xs text-gray-500 dark:text-white/50">
+            {t('dev.reset_confirm_body')}
+          </p>
           <button
             type="button"
             onClick={openModal}
-            className="min-h-[44px] rounded-lg border-2 border-red-500 bg-white px-4 py-2 font-semibold text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            className="min-h-[44px] rounded-lg border-2 border-red-500 bg-white dark:bg-charcoal-800 px-4 py-2 font-semibold text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
             {t('dev.reset_button')}
           </button>
@@ -77,11 +79,16 @@ export function DevToolsPanel() {
           aria-modal="true"
           aria-labelledby="dev-reset-title"
         >
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-            <h3 id="dev-reset-title" className="text-lg font-bold text-charcoal-900">
+          <div className="w-full max-w-md rounded-lg bg-white dark:bg-charcoal-800 p-6 shadow-xl">
+            <h3
+              id="dev-reset-title"
+              className="text-lg font-bold text-charcoal-900 dark:text-white"
+            >
               {t('dev.reset_confirm_title')}
             </h3>
-            <p className="mt-2 text-sm text-charcoal-700">{t('dev.reset_confirm_body')}</p>
+            <p className="mt-2 text-sm text-charcoal-700 dark:text-white/70">
+              {t('dev.reset_confirm_body')}
+            </p>
             <input
               type="text"
               value={confirmText}
@@ -91,7 +98,7 @@ export function DevToolsPanel() {
                 if (e.key === 'Escape') closeModal();
               }}
               placeholder={t('dev.reset_type_to_confirm')}
-              className="mt-4 w-full rounded border border-warm-200 px-3 py-2 text-charcoal-900 focus:outline-none focus:ring-2 focus:ring-red-400"
+              className="mt-4 w-full rounded border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2 text-charcoal-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-400"
               autoFocus
               disabled={submitting}
             />
@@ -100,7 +107,7 @@ export function DevToolsPanel() {
                 type="button"
                 onClick={closeModal}
                 disabled={submitting}
-                className="rounded px-4 py-2 text-charcoal-700 hover:bg-warm-100 disabled:opacity-50"
+                className="rounded px-4 py-2 text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/5 disabled:opacity-50"
               >
                 {t('common.cancel')}
               </button>

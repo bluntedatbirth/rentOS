@@ -445,11 +445,13 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">{t('penalties.title')}</h2>
+        <h2 className="text-xl font-bold text-charcoal-900 dark:text-white">
+          {t('penalties.title')}
+        </h2>
         <div className="flex items-center gap-2">
           <Link
             href="/landlord/penalties/rules"
-            className="min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-3 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
           >
             {t('penalty_rules.nav_label')}
           </Link>
@@ -477,15 +479,17 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
             onClick={() => setActiveFilter(tab.key)}
             className={`min-h-[36px] whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
               activeFilter === tab.key
-                ? 'bg-gray-900 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-charcoal-900 dark:bg-white/10 text-white'
+                : 'bg-warm-100 dark:bg-white/5 text-charcoal-600 dark:text-white/60 hover:bg-warm-200 dark:hover:bg-white/10'
             }`}
           >
             {tab.label}
             {statusCounts[tab.key] > 0 && (
               <span
                 className={`ml-1.5 inline-flex items-center justify-center rounded-full px-1.5 py-0.5 text-xs font-bold ${
-                  activeFilter === tab.key ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'
+                  activeFilter === tab.key
+                    ? 'bg-white/20 text-white'
+                    : 'bg-warm-200 dark:bg-white/10 text-charcoal-600 dark:text-white/60'
                 }`}
               >
                 {statusCounts[tab.key]}
@@ -498,14 +502,16 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
       {/* Modal overlay */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-lg rounded-xl bg-white dark:bg-charcoal-800 p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-gray-900">{t('penalties.raise')}</h3>
+              <h3 className="text-lg font-bold text-charcoal-900 dark:text-white">
+                {t('penalties.raise')}
+              </h3>
               <button
                 type="button"
                 onClick={resetModal}
                 aria-label={t('common.cancel')}
-                className="min-h-[44px] min-w-[44px] rounded-lg text-gray-400 hover:text-gray-600"
+                className="min-h-[44px] min-w-[44px] rounded-lg text-charcoal-400 dark:text-white/40 hover:text-charcoal-600 dark:hover:text-white/60"
               >
                 &times;
               </button>
@@ -518,7 +524,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                 <div className="mb-3">
                   <label
                     htmlFor="pen-contract"
-                    className="mb-1 block text-sm font-medium text-gray-700"
+                    className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                   >
                     {t('payments.select_contract')}
                   </label>
@@ -529,7 +535,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                       setFormContractId(e.target.value);
                       setFormClauseId('');
                     }}
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                    className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                   >
                     <option value="">{t('payments.select_contract')}</option>
                     {contracts.map((c) => (
@@ -545,7 +551,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                   <div className="mb-3">
                     <label
                       htmlFor="pen-clause"
-                      className="mb-1 block text-sm font-medium text-gray-700"
+                      className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                     >
                       {t('penalties.select_clause')}
                     </label>
@@ -553,7 +559,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                       id="pen-clause"
                       value={formClauseId}
                       onChange={(e) => setFormClauseId(e.target.value)}
-                      className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                      className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                     >
                       <option value="">{t('penalties.select_clause')}</option>
                       {/* Manual entry option — not tied to a contract clause */}
@@ -578,7 +584,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                     <div>
                       <label
                         htmlFor="pen-manual-desc"
-                        className="mb-1 block text-sm font-medium text-gray-700"
+                        className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                       >
                         {t('penalties.violation_description')}
                       </label>
@@ -589,13 +595,13 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                         rows={3}
                         maxLength={5000}
                         placeholder={t('penalties.violation_placeholder')}
-                        className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                        className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/30 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                       />
                     </div>
                     <div>
                       <label
                         htmlFor="pen-manual-amount"
-                        className="mb-1 block text-sm font-medium text-gray-700"
+                        className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                       >
                         {t('penalties.amount')} (&#3647;)
                       </label>
@@ -605,7 +611,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                         min="0"
                         value={manualAmount}
                         onChange={(e) => setManualAmount(e.target.value)}
-                        className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                        className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                         placeholder="0"
                       />
                     </div>
@@ -617,7 +623,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                   <div className="mb-4">
                     <label
                       htmlFor="pen-violation"
-                      className="mb-1 block text-sm font-medium text-gray-700"
+                      className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                     >
                       {t('penalties.violation_description')}
                     </label>
@@ -628,7 +634,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                       rows={4}
                       maxLength={5000}
                       placeholder={t('penalties.violation_placeholder')}
-                      className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                      className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/30 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                     />
                   </div>
                 )}
@@ -656,7 +662,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                   <button
                     type="button"
                     onClick={resetModal}
-                    className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                    className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
                   >
                     {t('common.cancel')}
                   </button>
@@ -668,7 +674,9 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
             {modalStep === 2 && calculating && (
               <div className="flex flex-col items-center py-8">
                 <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-saffron-200 border-t-saffron-600" />
-                <p className="text-sm text-gray-600">{t('penalties.calculating')}</p>
+                <p className="text-sm text-charcoal-600 dark:text-white/60">
+                  {t('penalties.calculating')}
+                </p>
               </div>
             )}
 
@@ -677,12 +685,13 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
               <div>
                 {/* Severity badge */}
                 <div className="mb-4 flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-charcoal-700 dark:text-white/70">
                     {t('penalties.severity')}:
                   </span>
                   <span
                     className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                      severityColors[calcResult.severity] ?? 'bg-gray-100 text-gray-800'
+                      severityColors[calcResult.severity] ??
+                      'bg-warm-100 dark:bg-white/5 text-charcoal-800 dark:text-white/90'
                     }`}
                   >
                     {calcResult.severity === 'minor'
@@ -705,10 +714,10 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
 
                 {/* Calculation basis */}
                 <div className="mb-4">
-                  <p className="mb-1 text-sm font-medium text-gray-700">
+                  <p className="mb-1 text-sm font-medium text-charcoal-700 dark:text-white/70">
                     {t('penalties.calculation_basis')}
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-charcoal-600 dark:text-white/60">
                     {locale === 'th'
                       ? calcResult.calculation_basis_th
                       : calcResult.calculation_basis_en}
@@ -719,7 +728,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                 <div className="mb-4">
                   <label
                     htmlFor="pen-edit-amount"
-                    className="mb-1 block text-sm font-medium text-gray-700"
+                    className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                   >
                     {t('penalties.edit_amount')} (&#3647;)
                   </label>
@@ -729,7 +738,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                     min="0"
                     value={editedAmount}
                     onChange={(e) => setEditedAmount(e.target.value)}
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                    className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                   />
                 </div>
 
@@ -745,7 +754,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                   <button
                     type="button"
                     onClick={() => setModalStep(1)}
-                    className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                    className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
                   >
                     {t('common.back')}
                   </button>
@@ -762,12 +771,12 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
           <button
             type="button"
             onClick={selectedIds.size > 0 ? clearSelection : selectAll}
-            className="min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-3 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
           >
             {selectedIds.size > 0 ? t('bulk.deselect_all') : t('bulk.select_all')}
           </button>
           {selectedIds.size > 0 && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-charcoal-500 dark:text-white/50">
               {t('bulk.selected_count').replace('{count}', String(selectedIds.size))}
             </span>
           )}
@@ -776,7 +785,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
 
       {/* Penalties list */}
       {filteredPenalties.length === 0 ? (
-        <div className="rounded-lg bg-gray-50 p-8 text-center text-sm text-gray-500">
+        <div className="rounded-lg bg-warm-50 dark:bg-charcoal-900 p-8 text-center text-sm text-charcoal-500 dark:text-white/50">
           {t('penalties.no_penalties')}
         </div>
       ) : (
@@ -806,7 +815,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                       className={`min-h-[24px] min-w-[24px] rounded border-2 transition-colors ${
                         isSelected
                           ? 'border-saffron-600 bg-saffron-500'
-                          : 'border-gray-300 bg-white hover:border-saffron-400'
+                          : 'border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 hover:border-saffron-400'
                       } flex items-center justify-center`}
                     >
                       {isSelected && (
@@ -828,14 +837,20 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                       </span>
                     )}
                   </div>
-                  <span className="text-xs text-gray-400">{formatDate(p.created_at)}</span>
+                  <span className="text-xs text-charcoal-400 dark:text-white/40">
+                    {formatDate(p.created_at)}
+                  </span>
                 </div>
 
-                <p className="mt-1 text-xs text-gray-500">{getPropertyName(p.contract_id)}</p>
+                <p className="mt-1 text-xs text-charcoal-500 dark:text-white/50">
+                  {getPropertyName(p.contract_id)}
+                </p>
 
-                {desc && <p className="mt-2 text-sm text-gray-600">{desc}</p>}
+                {desc && (
+                  <p className="mt-2 text-sm text-charcoal-600 dark:text-white/60">{desc}</p>
+                )}
 
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-charcoal-400 dark:text-white/40">
                   {t('contract.clause')}: {p.clause_id.toUpperCase()}
                 </p>
 
@@ -874,7 +889,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                       type="button"
                       onClick={() => handleAction(p.id, 'waive')}
                       disabled={submitting}
-                      className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                      className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10 disabled:opacity-50"
                     >
                       {t('penalties.waive')}
                     </button>
@@ -894,7 +909,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                             className={`min-h-[44px] rounded-lg px-4 py-2 text-sm font-medium ${
                               resolveAction === 'uphold'
                                 ? 'bg-green-600 text-white'
-                                : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                                : 'border border-warm-300 dark:border-white/15 text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10'
                             }`}
                           >
                             {t('penalties.uphold')}
@@ -905,7 +920,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                             className={`min-h-[44px] rounded-lg px-4 py-2 text-sm font-medium ${
                               resolveAction === 'reduce'
                                 ? 'bg-orange-600 text-white'
-                                : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                                : 'border border-warm-300 dark:border-white/15 text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10'
                             }`}
                           >
                             {t('penalties.reduce')}
@@ -916,7 +931,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                             className={`min-h-[44px] rounded-lg px-4 py-2 text-sm font-medium ${
                               resolveAction === 'waive'
                                 ? 'bg-red-600 text-white'
-                                : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                                : 'border border-warm-300 dark:border-white/15 text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10'
                             }`}
                           >
                             {t('penalties.waive')}
@@ -928,7 +943,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                           <div>
                             <label
                               htmlFor="pen-reduce-amount"
-                              className="mb-1 block text-sm font-medium text-gray-700"
+                              className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                             >
                               {t('penalties.reduce_amount')} (&#3647;)
                             </label>
@@ -938,7 +953,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                               min="0"
                               value={reduceAmount}
                               onChange={(e) => setReduceAmount(e.target.value)}
-                              className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                              className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                             />
                           </div>
                         )}
@@ -952,7 +967,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                               rows={3}
                               maxLength={2000}
                               placeholder={t('penalties.resolution_placeholder')}
-                              className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                              className="block w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/30 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                             />
                             <div className="flex gap-2">
                               <button
@@ -973,7 +988,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                                   setResolutionNote('');
                                   setReduceAmount('');
                                 }}
-                                className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                                className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
                               >
                                 {t('common.cancel')}
                               </button>
@@ -1005,9 +1020,9 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
 
       {/* Floating bulk action bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg px-4 py-3 safe-area-inset-bottom">
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-charcoal-800 border-t border-warm-200 dark:border-white/10 shadow-lg px-4 py-3 safe-area-inset-bottom">
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-charcoal-700 dark:text-white/70">
               {t('bulk.selected_count').replace('{count}', String(selectedIds.size))}
             </span>
             <div className="flex items-center gap-2">
@@ -1023,7 +1038,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                 type="button"
                 onClick={() => handleBulkAction('waive')}
                 disabled={bulkSubmitting}
-                className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10 disabled:opacity-50"
               >
                 {t('bulk.waive_selected')}
               </button>
@@ -1031,7 +1046,7 @@ export function PenaltiesClient({ initialPenalties, initialContracts }: Penaltie
                 type="button"
                 onClick={clearSelection}
                 aria-label={t('common.cancel')}
-                className="min-h-[44px] min-w-[44px] rounded-lg text-gray-400 hover:text-gray-600"
+                className="min-h-[44px] min-w-[44px] rounded-lg text-charcoal-400 dark:text-white/40 hover:text-charcoal-600 dark:hover:text-white/60"
               >
                 &times;
               </button>

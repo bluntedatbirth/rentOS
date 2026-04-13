@@ -17,14 +17,14 @@ export default function LandlordError({ error, reset }: ErrorProps) {
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4">
-      <div className="max-w-md w-full rounded-xl border border-warm-200 bg-white p-8 text-center shadow-sm">
+      <div className="max-w-md w-full rounded-xl border border-warm-200 bg-white p-8 text-center shadow-sm dark:border-white/10 dark:bg-charcoal-800 dark:shadow-black/20">
         <div className="mb-4 flex justify-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-warm-100">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-warm-100 dark:bg-white/5">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="h-7 w-7 text-charcoal-400"
+              className="h-7 w-7 text-charcoal-400 dark:text-white/40"
             >
               <path
                 fillRule="evenodd"
@@ -34,8 +34,12 @@ export default function LandlordError({ error, reset }: ErrorProps) {
             </svg>
           </span>
         </div>
-        <h1 className="mb-2 text-lg font-semibold text-charcoal-900">{t('error.title')}</h1>
-        <p className="mb-6 text-sm text-charcoal-500">{t('error.description')}</p>
+        <h1 className="mb-2 text-lg font-semibold text-charcoal-900 dark:text-white">
+          {t('error.title')}
+        </h1>
+        <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
+          {t('error.description')}
+        </p>
         <button
           onClick={reset}
           className="rounded-lg bg-saffron-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-saffron-600 focus:outline-none focus:ring-2 focus:ring-saffron-500 focus:ring-offset-2"

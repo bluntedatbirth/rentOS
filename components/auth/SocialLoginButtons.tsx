@@ -84,12 +84,12 @@ export function SocialLoginButtons({
           aria-disabled="true"
           tabIndex={-1}
           title={t('auth.apple_coming_soon_tooltip')}
-          className="flex min-h-[44px] w-full cursor-not-allowed items-center gap-3 rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-2.5 text-sm font-medium text-charcoal-900 dark:text-white opacity-60"
+          className="relative flex min-h-[44px] w-full cursor-not-allowed items-center gap-3 rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-2.5 text-sm font-medium text-charcoal-900 dark:text-white opacity-60"
           onClick={(e) => e.preventDefault()}
         >
           <SocialProviderIcon provider="apple" size={24} />
           <span className="flex-1 text-center">{t('auth.continue_with_apple')}</span>
-          <span className="ml-2 inline-flex items-center rounded-full bg-warm-100 dark:bg-white/10 px-2 py-0.5 text-xs text-charcoal-500 dark:text-white/50">
+          <span className="absolute -top-2 -right-1 inline-flex items-center rounded-full bg-saffron-500/15 dark:bg-saffron-500/25 px-2 py-0.5 text-[10px] font-medium text-saffron-600 dark:text-saffron-300 border border-saffron-500/20">
             {t('auth.apple_coming_soon')}
           </span>
         </button>
@@ -101,12 +101,12 @@ export function SocialLoginButtons({
           aria-disabled="true"
           tabIndex={-1}
           title={t('auth.line_coming_soon_tooltip')}
-          className="flex min-h-[44px] w-full cursor-not-allowed items-center gap-3 rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-2.5 text-sm font-medium text-charcoal-900 dark:text-white opacity-60"
+          className="relative flex min-h-[44px] w-full cursor-not-allowed items-center gap-3 rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-2.5 text-sm font-medium text-charcoal-900 dark:text-white opacity-60"
           onClick={(e) => e.preventDefault()}
         >
           <SocialProviderIcon provider="line" size={24} />
           <span className="flex-1 text-center">{t('auth.continue_with_line')}</span>
-          <span className="ml-2 inline-flex items-center rounded-full bg-warm-100 dark:bg-white/10 px-2 py-0.5 text-xs text-charcoal-500 dark:text-white/50">
+          <span className="absolute -top-2 -right-1 inline-flex items-center rounded-full bg-saffron-500/15 dark:bg-saffron-500/25 px-2 py-0.5 text-[10px] font-medium text-saffron-600 dark:text-saffron-300 border border-saffron-500/20">
             {t('auth.line_coming_soon')}
           </span>
         </button>

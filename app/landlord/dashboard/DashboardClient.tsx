@@ -40,20 +40,22 @@ export function DashboardClient({
   const { t } = useI18n();
 
   return (
-    <div className="min-h-screen bg-warm-50 px-4 py-6">
+    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-900 px-4 py-6">
       <div className="mx-auto max-w-3xl">
         {/* Page heading */}
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-charcoal-900">{t('dashboard.landlord_title')}</h1>
-          <p className="text-sm text-charcoal-500">
+          <h1 className="text-xl font-bold text-charcoal-900 dark:text-white">
+            {t('dashboard.landlord_title')}
+          </h1>
+          <p className="text-sm text-charcoal-500 dark:text-white/50">
             {t('dashboard.welcome')}, {fullName ?? ''}
           </p>
         </div>
 
         {/* Renewals banner — shown only when N > 0 (preserved from previous layout) */}
         {renewalsNearingExpiry > 0 && (
-          <div className="mb-4 flex items-center justify-between rounded-lg border border-saffron-300 bg-warm-100 px-4 py-3">
-            <p className="text-sm font-medium text-charcoal-800">
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-saffron-300 bg-warm-100 dark:bg-white/5 px-4 py-3">
+            <p className="text-sm font-medium text-charcoal-800 dark:text-white/90">
               {renewalsNearingExpiry === 1
                 ? t('dashboard.renewals_banner_one')
                 : t('dashboard.renewals_banner_other').replace(
@@ -74,18 +76,20 @@ export function DashboardClient({
             Mobile: flex-col stack; Desktop: 3-col grid */}
         <div className="mb-6 flex flex-col gap-6 md:grid md:grid-cols-3 md:gap-6">
           {/* Card 1: Active Properties */}
-          <div className="rounded-2xl border border-warm-200 bg-white p-6 shadow-sm">
-            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-charcoal-500">
+          <div className="rounded-2xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 p-6 shadow-sm">
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-charcoal-500 dark:text-white/50">
               {t('dashboard.card_active_properties')}
             </p>
-            <p className="text-3xl font-bold text-charcoal-900">{dashboardA.activePropertyCount}</p>
-            <p className="mt-1 text-sm text-charcoal-500">
+            <p className="text-3xl font-bold text-charcoal-900 dark:text-white">
+              {dashboardA.activePropertyCount}
+            </p>
+            <p className="mt-1 text-sm text-charcoal-500 dark:text-white/50">
               {t('dashboard.card_active_properties_sub')}
             </p>
             {dashboardA.activePropertyNames.length > 0 && (
               <ul className="mt-3 space-y-0.5">
                 {dashboardA.activePropertyNames.map((name) => (
-                  <li key={name} className="truncate text-xs text-charcoal-500">
+                  <li key={name} className="truncate text-xs text-charcoal-500 dark:text-white/50">
                     {name}
                   </li>
                 ))}
@@ -102,19 +106,19 @@ export function DashboardClient({
           </div>
 
           {/* Card 2: Unpaid Rent */}
-          <div className="rounded-2xl border border-warm-200 bg-white p-6 shadow-sm">
-            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-charcoal-500">
+          <div className="rounded-2xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 p-6 shadow-sm">
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-charcoal-500 dark:text-white/50">
               {t('dashboard.card_unpaid_rent')}
             </p>
             <p className="text-3xl font-bold text-saffron-600">{dashboardA.unpaidRentCount}</p>
-            <p className="mt-1 text-sm text-charcoal-500">
+            <p className="mt-1 text-sm text-charcoal-500 dark:text-white/50">
               {t('dashboard.card_unpaid_rent_sub').replace(
                 '{count}',
                 String(dashboardA.unpaidRentCount)
               )}
             </p>
             {dashboardA.unpaidRentTotal > 0 && (
-              <p className="mt-1 text-sm font-medium text-charcoal-700">
+              <p className="mt-1 text-sm font-medium text-charcoal-700 dark:text-white/70">
                 {formatBaht(dashboardA.unpaidRentTotal)} outstanding
               </p>
             )}
@@ -129,12 +133,12 @@ export function DashboardClient({
           </div>
 
           {/* Card 3: Contracts Expiring */}
-          <div className="rounded-2xl border border-warm-200 bg-white p-6 shadow-sm">
-            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-charcoal-500">
+          <div className="rounded-2xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 p-6 shadow-sm">
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-charcoal-500 dark:text-white/50">
               {t('dashboard.card_contracts_expiring')}
             </p>
             <p className="text-3xl font-bold text-sage-500">{dashboardA.contractsExpiring30Days}</p>
-            <p className="mt-1 text-sm text-charcoal-500">
+            <p className="mt-1 text-sm text-charcoal-500 dark:text-white/50">
               {t('dashboard.card_contracts_expiring_sub')}
             </p>
             <div className="mt-3 text-right">

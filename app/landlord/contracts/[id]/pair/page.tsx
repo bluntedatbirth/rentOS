@@ -74,7 +74,7 @@ export default function PairTenantPage() {
     <div className="mx-auto max-w-lg">
       <Link
         href={`/landlord/contracts/${id}`}
-        className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-charcoal-500 dark:text-white/50 hover:text-charcoal-700 dark:hover:text-white/70"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -90,12 +90,18 @@ export default function PairTenantPage() {
         </svg>
         {t('nav.contracts')}
       </Link>
-      <h2 className="mb-2 text-xl font-bold text-gray-900">{t('pairing.title')}</h2>
-      <p className="mb-6 text-sm text-gray-500">{t('pairing.description')}</p>
+      <h2 className="mb-2 text-xl font-bold text-charcoal-900 dark:text-white">
+        {t('pairing.title')}
+      </h2>
+      <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
+        {t('pairing.description')}
+      </p>
 
       {!code ? (
-        <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-          <p className="mb-4 text-sm text-gray-600">{t('pairing.generate_prompt')}</p>
+        <div className="rounded-lg bg-white dark:bg-charcoal-800 p-8 text-center shadow-sm">
+          <p className="mb-4 text-sm text-charcoal-600 dark:text-white/60">
+            {t('pairing.generate_prompt')}
+          </p>
           <button
             type="button"
             onClick={generateCode}
@@ -107,7 +113,7 @@ export default function PairTenantPage() {
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         </div>
       ) : (
-        <div className="rounded-lg bg-white p-6 text-center shadow-sm">
+        <div className="rounded-lg bg-white dark:bg-charcoal-800 p-6 text-center shadow-sm">
           {/* QR Code — rendered entirely client-side, no external requests */}
           {qrValue && (
             <div className="mb-4 flex justify-center">
@@ -116,15 +122,17 @@ export default function PairTenantPage() {
           )}
 
           {/* Manual code */}
-          <p className="mb-1 text-xs text-gray-500">{t('pairing.or_enter_code')}</p>
-          <div className="mb-4 inline-block rounded-lg bg-gray-100 px-6 py-3">
-            <span className="font-mono text-3xl font-bold tracking-widest text-gray-900">
+          <p className="mb-1 text-xs text-charcoal-500 dark:text-white/50">
+            {t('pairing.or_enter_code')}
+          </p>
+          <div className="mb-4 inline-block rounded-lg bg-warm-100 dark:bg-white/5 px-6 py-3">
+            <span className="font-mono text-3xl font-bold tracking-widest text-charcoal-900 dark:text-white">
               {code}
             </span>
           </div>
 
           {/* Expiry */}
-          <p className="mb-4 text-xs text-gray-400">
+          <p className="mb-4 text-xs text-charcoal-400 dark:text-white/40">
             {t('pairing.expires_at')}: {expiresAt ? new Date(expiresAt).toLocaleTimeString() : '—'}
           </p>
 
@@ -141,7 +149,7 @@ export default function PairTenantPage() {
           <button
             type="button"
             onClick={generateCode}
-            className="mt-4 min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="mt-4 min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5"
           >
             {t('pairing.regenerate')}
           </button>

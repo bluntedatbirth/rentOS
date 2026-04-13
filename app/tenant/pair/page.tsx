@@ -57,19 +57,27 @@ export default function TenantPairPage() {
 
   return (
     <div className="mx-auto max-w-sm">
-      <h2 className="mb-2 text-xl font-bold text-charcoal-900">{t('pairing.tenant_title')}</h2>
-      <p className="mb-6 text-sm text-charcoal-500">{t('pairing.tenant_description')}</p>
+      <h2 className="mb-2 text-xl font-bold text-charcoal-900 dark:text-white">
+        {t('pairing.tenant_title')}
+      </h2>
+      <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
+        {t('pairing.tenant_description')}
+      </p>
 
       {success ? (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-6 text-center">
-          <p className="text-lg font-semibold text-green-900">{t('pairing.success')}</p>
-          <p className="mt-1 text-sm text-green-700">{t('pairing.redirecting')}</p>
+        <div className="rounded-lg border border-green-200 bg-green-100 dark:bg-green-500/15 p-6 text-center">
+          <p className="text-lg font-semibold text-green-900 dark:text-green-400">
+            {t('pairing.success')}
+          </p>
+          <p className="mt-1 text-sm text-green-700 dark:text-green-400">
+            {t('pairing.redirecting')}
+          </p>
         </div>
       ) : (
-        <div className="rounded-lg bg-white p-6 shadow-sm">
+        <div className="rounded-lg bg-white dark:bg-charcoal-800 p-6 shadow-sm dark:shadow-black/20">
           <label
             htmlFor="pairing-code"
-            className="mb-2 block text-sm font-medium text-charcoal-700"
+            className="mb-2 block text-sm font-medium text-charcoal-700 dark:text-white/70"
           >
             {t('pairing.enter_code')}
           </label>
@@ -80,16 +88,16 @@ export default function TenantPairPage() {
             onChange={(e) => setCode(e.target.value.toUpperCase().slice(0, 8))}
             maxLength={8}
             placeholder="ABC12345"
-            className="mb-4 block w-full rounded-lg border border-warm-200 px-4 py-3 text-center font-mono text-2xl font-bold tracking-widest text-charcoal-900 placeholder:text-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+            className="mb-4 block w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-4 py-3 text-center font-mono text-2xl font-bold tracking-widest text-charcoal-900 dark:text-white placeholder:text-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
           />
 
           {code.length > 0 && code.length < 8 && (
-            <p className="mb-2 text-xs text-charcoal-500">
+            <p className="mb-2 text-xs text-charcoal-500 dark:text-white/50">
               {t('pairing.code_length_hint').replace('{n}', String(8 - code.length))}
             </p>
           )}
 
-          {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+          {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
 
           <button
             type="button"

@@ -80,15 +80,17 @@ export function TenantDashboardClient({
   return (
     <div className="mx-auto max-w-2xl">
       {/* Greeting */}
-      <h2 className="text-xl font-bold text-charcoal-900">{t('dashboard.tenant_title')}</h2>
-      <p className="mb-6 text-sm text-charcoal-500">
+      <h2 className="text-xl font-bold text-charcoal-900 dark:text-white">
+        {t('dashboard.tenant_title')}
+      </h2>
+      <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
         {t('dashboard.welcome')}
         {fullName ? `, ${fullName}` : ''}
       </p>
 
       {/* Tab bar — only shown when multiple contracts */}
       {contracts.length > 1 && (
-        <div className="mb-4 flex gap-1 overflow-x-auto rounded-lg bg-warm-100 p-1">
+        <div className="mb-4 flex gap-1 overflow-x-auto rounded-lg bg-warm-100 dark:bg-white/5 p-1">
           {contracts.map((c, i) => (
             <button
               key={c.id}
@@ -96,8 +98,8 @@ export function TenantDashboardClient({
               onClick={() => setActiveTab(i)}
               className={`shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                 i === activeTab
-                  ? 'bg-white text-charcoal-900 shadow-sm'
-                  : 'text-charcoal-500 hover:text-charcoal-700'
+                  ? 'bg-white dark:bg-charcoal-800 text-charcoal-900 dark:text-white shadow-sm dark:shadow-black/20'
+                  : 'text-charcoal-500 dark:text-white/50 hover:text-charcoal-700 dark:hover:text-white/70'
               }`}
             >
               {c.properties?.name ?? t('tenant.property_tab').replace('{n}', String(i + 1))}
@@ -151,7 +153,7 @@ export function TenantDashboardClient({
 
         {showExpiryBanner && daysUntilExpiry !== null && (
           <div className="flex items-center justify-between rounded-lg border border-saffron-300 bg-warm-100 px-4 py-3">
-            <p className="text-sm font-medium text-charcoal-800">
+            <p className="text-sm font-medium text-charcoal-800 dark:text-white/90">
               {daysUntilExpiry === 0
                 ? t('dashboard.lease_expiry_banner_today')
                 : daysUntilExpiry === 1
@@ -204,8 +206,10 @@ export function TenantDashboardClient({
           <Card className="mb-4 transition-shadow hover:shadow-md">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-charcoal-500">{t('tenant.your_property')}</p>
-                <p className="text-sm font-semibold text-charcoal-900">
+                <p className="text-xs text-charcoal-500 dark:text-white/50">
+                  {t('tenant.your_property')}
+                </p>
+                <p className="text-sm font-semibold text-charcoal-900 dark:text-white">
                   {activeContract.properties?.name ?? '—'}
                 </p>
               </div>
@@ -213,19 +217,21 @@ export function TenantDashboardClient({
             </div>
             <div className="mt-3 grid grid-cols-2 gap-4">
               <div>
-                <p className="text-xs text-charcoal-500">{t('contract.lease_period')}</p>
-                <p className="text-sm text-charcoal-900">
+                <p className="text-xs text-charcoal-500 dark:text-white/50">
+                  {t('contract.lease_period')}
+                </p>
+                <p className="text-sm text-charcoal-900 dark:text-white">
                   {activeContract.lease_start ? formatDisplayDate(activeContract.lease_start) : '—'}{' '}
                   → {activeContract.lease_end ? formatDisplayDate(activeContract.lease_end) : '—'}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-charcoal-500">
+                <p className="text-xs text-charcoal-500 dark:text-white/50">
                   {activeContract.properties?.daily_rate
                     ? t('property.daily_rate')
                     : t('contract.monthly_rent')}
                 </p>
-                <p className="text-sm font-medium text-charcoal-900">
+                <p className="text-sm font-medium text-charcoal-900 dark:text-white">
                   {activeContract.properties?.daily_rate
                     ? `฿${activeContract.properties.daily_rate.toLocaleString()}${t('property.per_night')}`
                     : activeContract.monthly_rent
@@ -238,7 +244,7 @@ export function TenantDashboardClient({
         </Link>
       ) : (
         <Card className="mb-4">
-          <p className="text-sm text-charcoal-500">{t('tenant.no_contract')}</p>
+          <p className="text-sm text-charcoal-500 dark:text-white/50">{t('tenant.no_contract')}</p>
         </Card>
       )}
 
@@ -247,13 +253,17 @@ export function TenantDashboardClient({
         <Card className="mb-6 transition-shadow hover:shadow-md">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-charcoal-500">{t('tenant.next_payment')}</p>
+              <p className="text-xs text-charcoal-500 dark:text-white/50">
+                {t('tenant.next_payment')}
+              </p>
               {globalNextPayment ? (
-                <p className="text-sm font-semibold text-charcoal-900">
+                <p className="text-sm font-semibold text-charcoal-900 dark:text-white">
                   {formatDisplayDate(globalNextPayment.due_date)}
                 </p>
               ) : (
-                <p className="text-sm text-charcoal-500">{t('tenant.no_upcoming_payments')}</p>
+                <p className="text-sm text-charcoal-500 dark:text-white/50">
+                  {t('tenant.no_upcoming_payments')}
+                </p>
               )}
             </div>
             {globalNextPayment && (
@@ -273,22 +283,24 @@ export function TenantDashboardClient({
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-semibold text-charcoal-900 truncate">{prop.name}</p>
-                    <span className="shrink-0 rounded-full bg-warm-200 px-2 py-0.5 text-[11px] font-medium text-charcoal-500">
+                    <p className="text-sm font-semibold text-charcoal-900 dark:text-white truncate">
+                      {prop.name}
+                    </p>
+                    <span className="shrink-0 rounded-full bg-warm-200 dark:bg-white/10 px-2 py-0.5 text-[11px] font-medium text-charcoal-500 dark:text-white/50">
                       {t('tenant.shell_property_badge')}
                     </span>
                   </div>
                   {(prop.lease_start || prop.lease_end) && (
-                    <p className="mt-1.5 text-xs text-charcoal-500">
+                    <p className="mt-1.5 text-xs text-charcoal-500 dark:text-white/50">
                       {prop.lease_start ? formatDisplayDate(prop.lease_start) : '—'}
                       {' → '}
                       {prop.lease_end ? formatDisplayDate(prop.lease_end) : '—'}
                     </p>
                   )}
                   {prop.monthly_rent && (
-                    <p className="mt-1 text-xs font-medium text-charcoal-700">
+                    <p className="mt-1 text-xs font-medium text-charcoal-700 dark:text-white/70">
                       ฿{prop.monthly_rent.toLocaleString()}{' '}
-                      <span className="font-normal text-charcoal-400">
+                      <span className="font-normal text-charcoal-400 dark:text-white/40">
                         / {t('contract.monthly_rent').toLowerCase()}
                       </span>
                     </p>
@@ -298,7 +310,7 @@ export function TenantDashboardClient({
                   <button
                     type="button"
                     onClick={() => router.push('/tenant/properties/new')}
-                    className="min-h-[36px] rounded-lg border border-warm-200 px-3 py-1 text-xs font-medium text-charcoal-700 hover:bg-warm-100"
+                    className="min-h-[36px] rounded-lg border border-warm-200 dark:border-white/10 px-3 py-1 text-xs font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
                   >
                     {t('tenant.shell_property_edit')}
                   </button>
@@ -321,7 +333,7 @@ export function TenantDashboardClient({
       <div className="mb-4">
         <Link
           href="/tenant/properties/new"
-          className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-dashed border-warm-300 px-4 py-3 text-sm font-medium text-charcoal-500 hover:border-saffron-400 hover:text-saffron-700 hover:bg-saffron-50/40 transition-colors"
+          className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-dashed border-warm-300 dark:border-white/15 px-4 py-3 text-sm font-medium text-charcoal-500 dark:text-white/50 hover:border-saffron-400 hover:text-saffron-700 hover:bg-saffron-50/40 transition-colors"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -343,13 +355,13 @@ export function TenantDashboardClient({
       <div className="grid grid-cols-2 gap-3">
         <Link
           href="/tenant/contract/view"
-          className="flex min-h-[44px] items-center justify-center rounded-lg border border-warm-200 px-4 py-2 text-sm font-medium text-charcoal-700 hover:bg-warm-100"
+          className="flex min-h-[44px] items-center justify-center rounded-lg border border-warm-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
         >
           {t('contract.view')}
         </Link>
         <Link
           href="/tenant/payments"
-          className="flex min-h-[44px] items-center justify-center rounded-lg border border-warm-200 px-4 py-2 text-sm font-medium text-charcoal-700 hover:bg-warm-100"
+          className="flex min-h-[44px] items-center justify-center rounded-lg border border-warm-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
         >
           {t('nav.payments')}
         </Link>

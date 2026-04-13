@@ -118,7 +118,7 @@ export default function TenantOnboardingPage() {
       {/* Step indicator */}
       {step !== 'welcome' && step !== 'done' && (
         <div className="mb-6">
-          <p className="mb-2 text-center text-xs text-charcoal-500">
+          <p className="mb-2 text-center text-xs text-charcoal-500 dark:text-white/50">
             {t('onboarding.step_of')
               .replace('{}', String(stepIndex))
               .replace('{}', String(STEPS.length - 2))}
@@ -155,10 +155,10 @@ export default function TenantOnboardingPage() {
               </svg>
             </div>
           </div>
-          <h1 className="mb-2 text-2xl font-bold text-charcoal-900">
+          <h1 className="mb-2 text-2xl font-bold text-charcoal-900 dark:text-white">
             {t('tenant_onboarding.welcome_title')}
           </h1>
-          <p className="mb-8 text-sm text-charcoal-500">
+          <p className="mb-8 text-sm text-charcoal-500 dark:text-white/50">
             {t('tenant_onboarding.welcome_subtitle')}
           </p>
           <ul className="mb-8 space-y-3 text-left">
@@ -167,7 +167,10 @@ export default function TenantOnboardingPage() {
               t('tenant_onboarding.feature_track_payments'),
               ...(FEATURE_MAINTENANCE ? [t('tenant_onboarding.feature_submit_maintenance')] : []),
             ].map((feature) => (
-              <li key={feature} className="flex items-start gap-3 text-sm text-charcoal-700">
+              <li
+                key={feature}
+                className="flex items-start gap-3 text-sm text-charcoal-700 dark:text-white/70"
+              >
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-saffron-100 text-xs text-saffron-600">
                   &#10003;
                 </span>
@@ -188,15 +191,17 @@ export default function TenantOnboardingPage() {
       {/* Step: Enter Pairing Code */}
       {step === 'pair' && (
         <div>
-          <h2 className="mb-1 text-xl font-bold text-charcoal-900">
+          <h2 className="mb-1 text-xl font-bold text-charcoal-900 dark:text-white">
             {t('tenant_onboarding.pair_title')}
           </h2>
-          <p className="mb-6 text-sm text-charcoal-500">{t('tenant_onboarding.pair_subtitle')}</p>
+          <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
+            {t('tenant_onboarding.pair_subtitle')}
+          </p>
 
-          <div className="rounded-lg bg-white p-6 shadow-sm">
+          <div className="rounded-lg bg-white dark:bg-charcoal-800 p-6 shadow-sm dark:shadow-black/20">
             <label
               htmlFor="pairing-code"
-              className="mb-2 block text-sm font-medium text-charcoal-700"
+              className="mb-2 block text-sm font-medium text-charcoal-700 dark:text-white/70"
             >
               {t('pairing.enter_code')}
             </label>
@@ -210,7 +215,7 @@ export default function TenantOnboardingPage() {
               }}
               maxLength={6}
               placeholder="ABC123"
-              className="mb-4 block w-full rounded-lg border border-warm-200 px-4 py-3 text-center font-mono text-2xl font-bold tracking-widest text-charcoal-900 placeholder:text-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+              className="mb-4 block w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-4 py-3 text-center font-mono text-2xl font-bold tracking-widest text-charcoal-900 dark:text-white placeholder:text-charcoal-300 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
             />
 
             {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
@@ -229,7 +234,7 @@ export default function TenantOnboardingPage() {
             <button
               type="button"
               onClick={() => setStep('welcome')}
-              className="text-sm text-charcoal-500 hover:text-charcoal-700"
+              className="text-sm text-charcoal-500 dark:text-white/50 hover:text-charcoal-700 dark:hover:text-white/70"
             >
               {t('onboarding.back')}
             </button>
@@ -240,45 +245,59 @@ export default function TenantOnboardingPage() {
       {/* Step: Review Contract */}
       {step === 'review' && (
         <div>
-          <h2 className="mb-1 text-xl font-bold text-charcoal-900">
+          <h2 className="mb-1 text-xl font-bold text-charcoal-900 dark:text-white">
             {t('tenant_onboarding.review_title')}
           </h2>
-          <p className="mb-6 text-sm text-charcoal-500">{t('tenant_onboarding.review_subtitle')}</p>
+          <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
+            {t('tenant_onboarding.review_subtitle')}
+          </p>
 
           {contract ? (
-            <div className="rounded-lg bg-white p-6 shadow-sm">
+            <div className="rounded-lg bg-white dark:bg-charcoal-800 p-6 shadow-sm dark:shadow-black/20">
               <div className="space-y-4">
                 <div>
-                  <p className="text-xs text-charcoal-500">{t('property.name')}</p>
-                  <p className="text-sm font-semibold text-charcoal-900">
+                  <p className="text-xs text-charcoal-500 dark:text-white/50">
+                    {t('property.name')}
+                  </p>
+                  <p className="text-sm font-semibold text-charcoal-900 dark:text-white">
                     {contract.properties?.name ?? '-'}
                   </p>
                 </div>
                 {contract.properties?.address && (
                   <div>
-                    <p className="text-xs text-charcoal-500">{t('property.address')}</p>
-                    <p className="text-sm text-charcoal-900">{contract.properties.address}</p>
+                    <p className="text-xs text-charcoal-500 dark:text-white/50">
+                      {t('property.address')}
+                    </p>
+                    <p className="text-sm text-charcoal-900 dark:text-white">
+                      {contract.properties.address}
+                    </p>
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-charcoal-500">{t('contract.lease_period')}</p>
-                    <p className="text-sm text-charcoal-900">
+                    <p className="text-xs text-charcoal-500 dark:text-white/50">
+                      {t('contract.lease_period')}
+                    </p>
+                    <p className="text-sm text-charcoal-900 dark:text-white">
                       {contract.lease_start ? formatDisplayDate(contract.lease_start) : '-'} &rarr;{' '}
                       {contract.lease_end ? formatDisplayDate(contract.lease_end) : '-'}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-charcoal-500">{t('contract.monthly_rent')}</p>
-                    <p className="text-sm font-medium text-charcoal-900">
+                    <p className="text-xs text-charcoal-500 dark:text-white/50">
+                      {t('contract.monthly_rent')}
+                    </p>
+                    <p className="text-sm font-medium text-charcoal-900 dark:text-white">
                       {contract.monthly_rent ? `฿${contract.monthly_rent.toLocaleString()}` : '-'}
                     </p>
                   </div>
                 </div>
                 {contract.security_deposit != null && contract.security_deposit > 0 && (
                   <div>
-                    <p className="text-xs text-charcoal-500">{t('contract.security_deposit')}</p>
-                    <p className="text-sm text-charcoal-900">
+                    <p className="text-xs text-charcoal-500 dark:text-white/50">
+                      {t('contract.security_deposit')}
+                    </p>
+                    <p className="text-sm text-charcoal-900 dark:text-white">
                       ฿{contract.security_deposit.toLocaleString()}
                     </p>
                   </div>
@@ -320,10 +339,12 @@ export default function TenantOnboardingPage() {
               </svg>
             </div>
           </div>
-          <h2 className="mb-2 text-2xl font-bold text-charcoal-900">
+          <h2 className="mb-2 text-2xl font-bold text-charcoal-900 dark:text-white">
             {t('tenant_onboarding.done_title')}
           </h2>
-          <p className="mb-8 text-sm text-charcoal-500">{t('tenant_onboarding.done_subtitle')}</p>
+          <p className="mb-8 text-sm text-charcoal-500 dark:text-white/50">
+            {t('tenant_onboarding.done_subtitle')}
+          </p>
           <button
             type="button"
             onClick={() => router.push('/tenant/dashboard')}

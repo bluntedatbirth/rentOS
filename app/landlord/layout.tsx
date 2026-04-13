@@ -7,6 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { NotificationBell } from '@/components/ui/NotificationBell';
+import { useContractParse } from '@/components/providers/ContractParseProvider';
 import { BottomNav, type NavItem } from '@/components/ui/BottomNav';
 import { SideNav, type SideNavItem } from '@/components/ui/SideNav';
 
@@ -26,6 +27,7 @@ const LANDLORD_ROOT_TABS = ['/landlord/properties', '/landlord/settings'];
 export default function LandlordLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading, signOut } = useAuth();
   const { t, locale, setLocale } = useI18n();
+  const { activeJob } = useContractParse();
   const router = useRouter();
   const pathname = usePathname();
   const [headerVisible, setHeaderVisible] = useState(true);
@@ -50,7 +52,7 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-saffron-500 border-t-transparent" />
       </div>
     );
   }
@@ -59,8 +61,12 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
     return (
       <div className="flex min-h-screen items-center justify-center px-4">
         <div className="text-center">
-          <h1 className="text-xl font-bold text-gray-900">{t('auth.unauthorized')}</h1>
-          <p className="mt-2 text-sm text-gray-500">{t('auth.wrong_role')}</p>
+          <h1 className="text-xl font-bold text-charcoal-900 dark:text-white">
+            {t('auth.unauthorized')}
+          </h1>
+          <p className="mt-2 text-sm text-charcoal-500 dark:text-white/50">
+            {t('auth.wrong_role')}
+          </p>
         </div>
       </div>
     );
@@ -115,9 +121,9 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-900">
       <header
-        className={`fixed left-0 right-0 top-0 z-30 overflow-visible border-b border-gray-200 bg-white transition-transform duration-300 ${headerVisible ? 'translate-y-0' : '-translate-y-full'}`}
+        className={`fixed left-0 right-0 top-0 z-30 overflow-visible border-b border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 transition-transform duration-300 ${headerVisible ? 'translate-y-0' : '-translate-y-full'}`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between overflow-visible px-4 py-3">
           <div className="flex items-center gap-2">
@@ -126,7 +132,7 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
                 type="button"
                 onClick={() => router.back()}
                 aria-label={t('common.back')}
-                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 text-gray-700 hover:bg-gray-100"
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
               >
                 <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
                   <path
@@ -139,7 +145,7 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
             )}
             <Link
               href="/landlord/properties"
-              className="flex items-center gap-2 text-lg font-bold text-gray-900"
+              className="flex items-center gap-2 text-lg font-bold text-charcoal-900 dark:text-white"
             >
               {t('app.title')}
               <span className="rounded border border-amber-500 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">
@@ -166,7 +172,9 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
             {/* User name + PRO badge */}
             {profile?.full_name && (
               <div className="hidden items-center gap-1.5 sm:flex">
-                <span className="text-sm text-gray-600">{profile.full_name}</span>
+                <span className="text-sm text-charcoal-600 dark:text-white/60">
+                  {profile.full_name}
+                </span>
                 {profile.tier === 'pro' && (
                   <span className="rounded-full bg-saffron-500 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
                     {t('billing.pro_badge')}
@@ -174,25 +182,45 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
                 )}
               </div>
             )}
+            {activeJob && activeJob.status === 'parsing' && (
+              <div
+                className="flex items-center gap-1.5 text-xs text-saffron-500"
+                title={`${activeJob.progress}%`}
+              >
+                <span className="h-2 w-2 rounded-full bg-saffron-500 animate-pulse" />
+                <span className="hidden sm:inline">
+                  {t('ocr.parsing_contract')} {activeJob.progress}%
+                </span>
+              </div>
+            )}
             <NotificationBell role="landlord" />
             <button
               type="button"
               onClick={() => setLocale(locale === 'th' ? 'en' : 'th')}
               aria-label={locale === 'th' ? t('auth.switch_to_en') : t('auth.switch_to_th')}
-              className="min-h-[44px] min-w-[44px] rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+              className="min-h-[44px] min-w-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-3 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
             >
               {locale === 'th' ? 'EN' : 'TH'}
             </button>
             <button
               type="button"
               onClick={signOut}
-              className="min-h-[44px] rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+              className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-3 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
             >
               {t('nav.logout')}
             </button>
           </div>
         </div>
       </header>
+      {/* Global contract parse progress bar */}
+      {activeJob && activeJob.status === 'parsing' && (
+        <div className="fixed top-14 left-0 right-0 z-20 h-1 bg-warm-200 dark:bg-charcoal-700 overflow-hidden">
+          <div
+            className="h-full bg-saffron-500 transition-all duration-700 ease-out"
+            style={{ width: `${activeJob.progress}%` }}
+          />
+        </div>
+      )}
       {/* Spacer to prevent content from jumping under the fixed header (~56px tall) */}
       <div className="h-14" />
 

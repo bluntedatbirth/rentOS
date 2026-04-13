@@ -157,7 +157,7 @@ export default function ContractReviewPage() {
         <div className="mb-6">
           <Link
             href="/landlord/contracts"
-            className="mb-2 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+            className="mb-2 inline-flex items-center gap-1 text-sm text-charcoal-500 dark:text-white/50 hover:text-charcoal-700 dark:hover:text-white/70"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -216,7 +216,7 @@ export default function ContractReviewPage() {
         <div>
           <Link
             href="/landlord/contracts"
-            className="mb-2 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+            className="mb-2 inline-flex items-center gap-1 text-sm text-charcoal-500 dark:text-white/50 hover:text-charcoal-700 dark:hover:text-white/70"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -233,12 +233,14 @@ export default function ContractReviewPage() {
             {t('nav.contracts')}
           </Link>
           <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold text-gray-900">{t('contract.review_title')}</h2>
+            <h2 className="text-xl font-bold text-charcoal-900 dark:text-white">
+              {t('contract.review_title')}
+            </h2>
             <StatusBadge status={contract.status} />
           </div>
         </div>
         {contract.tenant_id ? (
-          <span className="inline-flex min-h-[44px] items-center rounded-lg bg-green-100 px-4 py-2 text-sm font-medium text-green-800">
+          <span className="inline-flex min-h-[44px] items-center rounded-lg bg-green-100 dark:bg-green-500/15 px-4 py-2 text-sm font-medium text-green-800 dark:text-green-400">
             ✓ {t('pairing.already_paired')}
           </span>
         ) : (
@@ -265,29 +267,35 @@ export default function ContractReviewPage() {
       </div>
 
       {/* Contract summary */}
-      <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg bg-white p-4 shadow-sm sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm sm:grid-cols-4">
         <div className="col-span-2 sm:col-span-1">
-          <p className="text-xs text-gray-500">{t('contract.lease_period')}</p>
-          <p className="break-all text-sm font-medium text-gray-900">
+          <p className="text-xs text-charcoal-500 dark:text-white/50">
+            {t('contract.lease_period')}
+          </p>
+          <p className="break-all text-sm font-medium text-charcoal-900 dark:text-white">
             {formatDisplayDate(contract.lease_start) || '—'} →{' '}
             {formatDisplayDate(contract.lease_end) || '—'}
           </p>
         </div>
         <div>
-          <p className="text-xs text-gray-500">{t('contract.monthly_rent')}</p>
-          <p className="text-sm font-medium text-gray-900">
+          <p className="text-xs text-charcoal-500 dark:text-white/50">
+            {t('contract.monthly_rent')}
+          </p>
+          <p className="text-sm font-medium text-charcoal-900 dark:text-white">
             {contract.monthly_rent ? `฿${contract.monthly_rent.toLocaleString()}` : '—'}
           </p>
         </div>
         <div>
-          <p className="text-xs text-gray-500">{t('contract.security_deposit')}</p>
-          <p className="text-sm font-medium text-gray-900">
+          <p className="text-xs text-charcoal-500 dark:text-white/50">
+            {t('contract.security_deposit')}
+          </p>
+          <p className="text-sm font-medium text-charcoal-900 dark:text-white">
             {contract.security_deposit ? `฿${contract.security_deposit.toLocaleString()}` : '—'}
           </p>
         </div>
         <div>
-          <p className="text-xs text-gray-500">{t('contract.clauses')}</p>
-          <p className="text-sm font-medium text-gray-900">{clauses.length}</p>
+          <p className="text-xs text-charcoal-500 dark:text-white/50">{t('contract.clauses')}</p>
+          <p className="text-sm font-medium text-charcoal-900 dark:text-white">{clauses.length}</p>
         </div>
       </div>
 
@@ -322,7 +330,7 @@ export default function ContractReviewPage() {
 
       {/* Clauses list */}
       {clauses.length === 0 ? (
-        <div className="rounded-lg bg-gray-50 p-8 text-center text-sm text-gray-500">
+        <div className="rounded-lg bg-warm-50 dark:bg-charcoal-900 p-8 text-center text-sm text-charcoal-500 dark:text-white/50">
           {contract.raw_text_th ? (
             <div className="space-y-3">
               <p>{t('contract.reparse_empty_state_hint')}</p>

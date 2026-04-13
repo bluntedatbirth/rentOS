@@ -80,12 +80,12 @@ export function PairShareModal({ pairCode, qrUrl, propertyName, onClose }: PairS
       aria-label={t('pairing.share_modal_title')}
     >
       {/* Card */}
-      <div className="relative w-full max-w-sm rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl">
+      <div className="relative w-full max-w-sm rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl dark:bg-charcoal-800 dark:shadow-black/40">
         {/* Close button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-charcoal-400 hover:bg-warm-100 hover:text-charcoal-700"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-charcoal-400 hover:bg-warm-100 hover:text-charcoal-700 dark:text-white/40 dark:hover:bg-white/10 dark:hover:text-white/70"
           aria-label={t('common.close')}
         >
           <svg
@@ -98,31 +98,33 @@ export function PairShareModal({ pairCode, qrUrl, propertyName, onClose }: PairS
           </svg>
         </button>
 
-        <h2 className="mb-1 text-base font-semibold text-charcoal-900">
+        <h2 className="mb-1 text-base font-semibold text-charcoal-900 dark:text-white">
           {t('pairing.share_modal_title')}
         </h2>
-        <p className="mb-5 text-xs text-charcoal-500">{propertyName}</p>
+        <p className="mb-5 text-xs text-charcoal-500 dark:text-white/50">{propertyName}</p>
 
         {/* QR code */}
         <div className="mb-5 flex justify-center">
-          <div className="rounded-xl border border-warm-200 bg-white p-3 shadow-sm">
+          <div className="rounded-xl border border-warm-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-white">
             <QRCodeSVG value={qrUrl} size={240} />
           </div>
         </div>
 
         {/* Pair code — tap to copy */}
         <div className="mb-5">
-          <p className="mb-1 text-xs font-medium text-charcoal-500">{t('pairing.code_label')}</p>
+          <p className="mb-1 text-xs font-medium text-charcoal-500 dark:text-white/50">
+            {t('pairing.code_label')}
+          </p>
           <button
             type="button"
             onClick={handleCopy}
-            className="flex w-full items-center justify-between gap-3 rounded-xl border border-warm-200 bg-warm-50 px-4 py-3 text-left hover:bg-warm-100 active:scale-[0.99]"
+            className="flex w-full items-center justify-between gap-3 rounded-xl border border-warm-200 bg-warm-50 px-4 py-3 text-left hover:bg-warm-100 active:scale-[0.99] dark:border-white/10 dark:bg-charcoal-900 dark:hover:bg-white/10"
             title={t('pairing.tap_to_copy')}
           >
-            <span className="font-mono text-2xl font-bold tracking-widest text-charcoal-900">
+            <span className="font-mono text-2xl font-bold tracking-widest text-charcoal-900 dark:text-white">
               {pairCode}
             </span>
-            <span className="shrink-0 text-xs font-medium text-saffron-600">
+            <span className="shrink-0 text-xs font-medium text-saffron-600 dark:text-saffron-400">
               {copied ? t('pairing.copied') : t('pairing.tap_to_copy')}
             </span>
           </button>
@@ -140,7 +142,7 @@ export function PairShareModal({ pairCode, qrUrl, propertyName, onClose }: PairS
           <button
             type="button"
             onClick={handleCopy}
-            className="min-h-[44px] rounded-xl border border-warm-200 px-4 py-2.5 text-sm font-medium text-charcoal-700 hover:bg-warm-50 active:scale-[0.98]"
+            className="min-h-[44px] rounded-xl border border-warm-200 px-4 py-2.5 text-sm font-medium text-charcoal-700 hover:bg-warm-50 active:scale-[0.98] dark:border-white/10 dark:text-white/70 dark:hover:bg-white/5"
           >
             {copied ? t('pairing.copied') : t('pairing.copy_code')}
           </button>

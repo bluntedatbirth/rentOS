@@ -56,10 +56,12 @@ export function FAQAccordion({ title, subtitle, categories }: Props) {
             {cat.items.map((item) => {
               const isOpen = openItems.has(item.id);
               return (
-                <div
+                <button
                   key={item.id}
+                  type="button"
                   onClick={() => toggle(item.id)}
-                  className={`backdrop-blur-[14px] bg-gradient-to-br from-charcoal-800/[0.03] to-white/70 dark:from-white/[0.06] dark:to-white/[0.04] rounded-2xl px-5 py-4 mb-3 cursor-pointer transition-all duration-200 ${
+                  aria-expanded={isOpen}
+                  className={`w-full text-left backdrop-blur-[14px] bg-gradient-to-br from-charcoal-800/[0.03] to-white/70 dark:from-white/[0.06] dark:to-white/[0.04] rounded-2xl px-5 py-4 mb-3 cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron-500 focus-visible:ring-offset-2 ${
                     isOpen
                       ? 'border border-saffron-500/40 shadow-md dark:shadow-black/20 border-l-4 border-l-saffron-500'
                       : 'border border-charcoal-800/10 dark:border-white/10 shadow-sm'
@@ -79,7 +81,7 @@ export function FAQAccordion({ title, subtitle, categories }: Props) {
                       {item.a}
                     </p>
                   )}
-                </div>
+                </button>
               );
             })}
           </div>

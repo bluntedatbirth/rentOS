@@ -93,6 +93,39 @@ export async function POST(request: Request) {
       // Non-fatal: pairing succeeded; contract activation can be retried separately
       console.error('[pairing/redeem] Contract activation failed:', result.error);
     }
+  } else {
+    // No unassigned contract found — check if there's an already-active contract
+    // that has a tenant assigned but missed payment seeding (e.g. lease_start arrived
+    // after OCR but before pairing occurred).
+    const { data: activeContract } = await adminClient
+      .from('contracts')
+      .select('id, status, structured_clauses')
+      .eq('property_id', propertyId)
+      .eq('tenant_id', user.id)
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (
+      activeContract &&
+      Array.isArray(activeContract.structured_clauses) &&
+      activeContract.structured_clauses.length > 0
+    ) {
+      const { count } = await adminClient
+        .from('payments')
+        .select('*', { count: 'exact', head: true })
+        .eq('contract_id', activeContract.id);
+
+      if (count === 0) {
+        const result = await activateContract(adminClient, activeContract.id);
+        if (!result.success) {
+          // Non-fatal: pairing succeeded; payment seeding can be retried separately
+          console.error(
+            '[pairing/redeem] Payment seeding for active contract failed:',
+            result.error
+          );
+        }
+      }
+    }
   }
 
   // 4. Notify landlord of the new pairing (fire-and-forget)

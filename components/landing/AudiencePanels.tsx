@@ -10,6 +10,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { AnimatedSection } from './AnimatedSection';
+import { NeonButton } from '@/components/ui/neon-button';
 
 const LANDLORD_ICONS = [FileText, CreditCard, Globe, Users];
 const TENANT_ICONS = [FileText, CalendarDays, Globe, Shield];
@@ -29,10 +30,7 @@ export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanels
           <p className="text-xs font-semibold tracking-[0.1em] uppercase text-saffron-500 mb-3 font-[var(--font-manrope)]">
             {t('landing.for_both_label')}
           </p>
-          <h2
-            className="font-[var(--font-manrope)] text-3xl md:text-4xl font-bold text-charcoal-800 dark:text-white mb-3"
-            style={{ letterSpacing: '-0.02em' }}
-          >
+          <h2 className="font-[var(--font-manrope)] text-3xl md:text-4xl font-bold text-charcoal-800 dark:text-white mb-3 tracking-[-0.02em]">
             {t('landing.for_both_h2')}
           </h2>
           <p className="text-charcoal-600 dark:text-white/60 text-lg max-w-[540px] mx-auto">
@@ -79,12 +77,11 @@ export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanels
                 </p>
               </div>
               <p className="text-xs text-warm-50/40">{t('landing.landlord_cta_hint')}</p>
-              <Link
-                href="/signup"
-                className="flex items-center justify-center gap-2 bg-gradient-to-r from-saffron-700 to-saffron-500 text-white py-3 rounded-xl text-sm font-semibold no-underline hover:brightness-110 transition"
-              >
-                {t('landing.landlord_cta')}
-                <ArrowRight className="w-3.5 h-3.5" />
+              <Link href="/signup" legacyBehavior passHref>
+                <NeonButton variant="default" size="full">
+                  {t('landing.landlord_cta')}
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </NeonButton>
               </Link>
             </div>
           </AnimatedSection>
@@ -129,12 +126,11 @@ export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanels
                   {t('landing.tenant_free_badge')}
                 </p>
               </div>
-              <Link
-                href="/signup"
-                className="flex items-center justify-center gap-2 border-2 border-charcoal-800 dark:border-white/30 text-charcoal-800 dark:text-white py-3 rounded-xl text-sm font-semibold no-underline hover:bg-charcoal-800 dark:hover:bg-white/10 hover:text-warm-50 transition-colors"
-              >
-                {t('landing.tenant_cta')}
-                <ArrowRight className="w-3.5 h-3.5" />
+              <Link href="/signup" legacyBehavior passHref>
+                <NeonButton variant="outline" size="full" neon={false}>
+                  {t('landing.tenant_cta')}
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </NeonButton>
               </Link>
             </div>
           </AnimatedSection>

@@ -181,25 +181,31 @@ export default function SecuritySettings() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h2 className="mb-6 text-xl font-bold text-gray-900">{t('security.title')}</h2>
+      <h2 className="mb-6 text-xl font-bold text-charcoal-900 dark:text-white">
+        {t('security.title')}
+      </h2>
 
       <div className="space-y-6">
         {/* Section 1: Email & Authentication */}
-        <div className="rounded-lg bg-white p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-gray-900">
+        <div className="rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm dark:shadow-black/20">
+          <h3 className="mb-3 text-sm font-semibold text-charcoal-900 dark:text-white">
             {t('security.email_section')}
           </h3>
 
           <div className="mb-3">
-            <p className="text-xs text-gray-500">{t('security.current_email')}</p>
-            <p className="text-sm font-medium text-gray-900">{user?.email || '-'}</p>
+            <p className="text-xs text-charcoal-500 dark:text-white/50">
+              {t('security.current_email')}
+            </p>
+            <p className="text-sm font-medium text-charcoal-900 dark:text-white">
+              {user?.email || '-'}
+            </p>
           </div>
 
           {!showEmailForm ? (
             <button
               type="button"
               onClick={() => setShowEmailForm(true)}
-              className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+              className="min-h-[44px] rounded-lg border border-warm-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
             >
               {t('security.change_email')}
             </button>
@@ -208,7 +214,7 @@ export default function SecuritySettings() {
               <div>
                 <label
                   htmlFor="sec-new-email"
-                  className="mb-1 block text-xs font-medium text-gray-700"
+                  className="mb-1 block text-xs font-medium text-charcoal-700 dark:text-white/70"
                 >
                   {t('security.new_email')}
                 </label>
@@ -218,7 +224,7 @@ export default function SecuritySettings() {
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder={t('security.new_email_placeholder')}
-                  className="min-h-[44px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="min-h-[44px] w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                 />
               </div>
               <div className="flex gap-2">
@@ -226,7 +232,7 @@ export default function SecuritySettings() {
                   type="button"
                   onClick={handleChangeEmail}
                   disabled={emailLoading || !newEmail}
-                  className="min-h-[44px] rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  className="min-h-[44px] rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
                 >
                   {emailLoading ? t('security.updating') : t('security.change_email')}
                 </button>
@@ -236,7 +242,7 @@ export default function SecuritySettings() {
                     setShowEmailForm(false);
                     setNewEmail('');
                   }}
-                  className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                  className="min-h-[44px] rounded-lg border border-warm-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
                 >
                   {t('common.cancel')}
                 </button>
@@ -248,17 +254,19 @@ export default function SecuritySettings() {
         </div>
 
         {/* Section 2: Password */}
-        <div className="rounded-lg bg-white p-4 shadow-sm">
-          <h3 className="mb-1 text-sm font-semibold text-gray-900">
+        <div className="rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm dark:shadow-black/20">
+          <h3 className="mb-1 text-sm font-semibold text-charcoal-900 dark:text-white">
             {t('security.password_section')}
           </h3>
-          <p className="mb-3 text-xs text-gray-500">{t('security.password_description')}</p>
+          <p className="mb-3 text-xs text-charcoal-500 dark:text-white/50">
+            {t('security.password_description')}
+          </p>
 
           <div className="space-y-3">
             <div>
               <label
                 htmlFor="sec-new-password"
-                className="mb-1 block text-xs font-medium text-gray-700"
+                className="mb-1 block text-xs font-medium text-charcoal-700 dark:text-white/70"
               >
                 {t('security.new_password')}
               </label>
@@ -271,13 +279,13 @@ export default function SecuritySettings() {
                   setPasswordError('');
                   setPasswordMessage('');
                 }}
-                className="min-h-[44px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="min-h-[44px] w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
               />
             </div>
             <div>
               <label
                 htmlFor="sec-confirm-password"
-                className="mb-1 block text-xs font-medium text-gray-700"
+                className="mb-1 block text-xs font-medium text-charcoal-700 dark:text-white/70"
               >
                 {t('security.confirm_password')}
               </label>
@@ -290,7 +298,7 @@ export default function SecuritySettings() {
                   setPasswordError('');
                   setPasswordMessage('');
                 }}
-                className="min-h-[44px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="min-h-[44px] w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
               />
             </div>
 
@@ -301,7 +309,7 @@ export default function SecuritySettings() {
               type="button"
               onClick={handleChangePassword}
               disabled={passwordLoading || !newPassword || !confirmPassword}
-              className="min-h-[44px] rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="min-h-[44px] rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600 disabled:opacity-50"
             >
               {passwordLoading ? t('security.updating') : t('security.set_password')}
             </button>
@@ -309,15 +317,17 @@ export default function SecuritySettings() {
         </div>
 
         {/* Section 3: Active Sessions */}
-        <div className="rounded-lg bg-white p-4 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold text-gray-900">
+        <div className="rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm dark:shadow-black/20">
+          <h3 className="mb-3 text-sm font-semibold text-charcoal-900 dark:text-white">
             {t('security.sessions_section')}
           </h3>
 
-          <div className="mb-4 rounded-lg border border-gray-200 p-3">
-            <p className="text-sm font-medium text-gray-900">{t('security.current_session')}</p>
-            <p className="text-xs text-gray-500">{browserInfo}</p>
-            <p className="mt-1 text-xs text-gray-500">
+          <div className="mb-4 rounded-lg border border-warm-200 dark:border-white/10 p-3">
+            <p className="text-sm font-medium text-charcoal-900 dark:text-white">
+              {t('security.current_session')}
+            </p>
+            <p className="text-xs text-charcoal-500 dark:text-white/50">{browserInfo}</p>
+            <p className="mt-1 text-xs text-charcoal-500 dark:text-white/50">
               {t('security.last_sign_in')}: {lastSignIn}
             </p>
           </div>
@@ -326,7 +336,7 @@ export default function SecuritySettings() {
             type="button"
             onClick={handleSignOutAll}
             disabled={sessionLoading}
-            className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+            className="min-h-[44px] rounded-lg border border-warm-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10 disabled:opacity-50"
           >
             {sessionLoading ? t('security.updating') : t('security.sign_out_all')}
           </button>
@@ -335,29 +345,33 @@ export default function SecuritySettings() {
         </div>
 
         {/* Section 4: Danger Zone */}
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-red-900">{t('security.danger_zone')}</h3>
+        <div className="rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-4">
+          <h3 className="mb-3 text-sm font-semibold text-red-900 dark:text-red-400">
+            {t('security.danger_zone')}
+          </h3>
 
           {!showDeleteConfirm ? (
             <button
               type="button"
               onClick={openDeleteConfirm}
-              className="min-h-[44px] rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
+              className="min-h-[44px] rounded-lg border border-red-300 dark:border-red-700 bg-white dark:bg-charcoal-800 px-4 py-2 text-sm font-medium text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30"
             >
               {t('security.delete_account')}
             </button>
           ) : (
             <div className="space-y-3">
               {precheckLoading && (
-                <p className="text-sm text-red-700">{t('security.delete_checking')}</p>
+                <p className="text-sm text-red-700 dark:text-red-400">
+                  {t('security.delete_checking')}
+                </p>
               )}
 
               {deletePrecheck && !deletePrecheck.can_delete && (
-                <div className="rounded-lg border border-red-300 bg-white p-3">
-                  <p className="text-sm font-semibold text-red-900">
+                <div className="rounded-lg border border-red-300 dark:border-red-700 bg-white dark:bg-charcoal-800 p-3">
+                  <p className="text-sm font-semibold text-red-900 dark:text-red-400">
                     {t('security.delete_blocked_title')}
                   </p>
-                  <p className="mt-1 text-sm text-red-700">
+                  <p className="mt-1 text-sm text-red-700 dark:text-red-400">
                     {t('security.delete_blocked_active').replace(
                       '{count}',
                       String(deletePrecheck.active_contracts)
@@ -369,8 +383,8 @@ export default function SecuritySettings() {
               {deletePrecheck &&
                 deletePrecheck.can_delete &&
                 deletePrecheck.pending_contracts > 0 && (
-                  <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
-                    <p className="text-sm text-amber-900">
+                  <div className="rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 p-3">
+                    <p className="text-sm text-amber-900 dark:text-amber-400">
                       {(deletePrecheck.role === 'landlord'
                         ? t('security.delete_warn_landlord_pending')
                         : t('security.delete_warn_tenant_pending')
@@ -379,7 +393,9 @@ export default function SecuritySettings() {
                   </div>
                 )}
 
-              <p className="text-sm text-red-700">{t('security.delete_confirm')}</p>
+              <p className="text-sm text-red-700 dark:text-red-400">
+                {t('security.delete_confirm')}
+              </p>
               <label htmlFor="sec-delete-confirm" className="sr-only">
                 {t('security.delete_confirm')}
               </label>
@@ -389,7 +405,7 @@ export default function SecuritySettings() {
                 value={deleteInput}
                 onChange={(e) => setDeleteInput(e.target.value)}
                 placeholder={t('security.delete_placeholder')}
-                className="min-h-[44px] w-full rounded-lg border border-red-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                className="min-h-[44px] w-full rounded-lg border border-red-300 dark:border-red-700 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-charcoal-900 dark:text-white focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
               />
               <div className="flex gap-2">
                 <button
@@ -410,13 +426,15 @@ export default function SecuritySettings() {
                     setShowDeleteConfirm(false);
                     setDeleteInput('');
                   }}
-                  className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+                  className="min-h-[44px] rounded-lg border border-warm-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
                 >
                   {t('common.cancel')}
                 </button>
               </div>
 
-              {deleteMessage && <p className="text-sm text-red-600">{deleteMessage}</p>}
+              {deleteMessage && (
+                <p className="text-sm text-red-600 dark:text-red-400">{deleteMessage}</p>
+              )}
             </div>
           )}
         </div>

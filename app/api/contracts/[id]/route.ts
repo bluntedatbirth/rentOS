@@ -20,6 +20,42 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   return NextResponse.json(data);
 }
 
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+  const { user } = await getAuthenticatedUser();
+  if (!user) return unauthorized();
+
+  const body = await request.json();
+  if (body?.status !== 'terminated') {
+    return badRequest('Only status=terminated is supported');
+  }
+
+  const admin = createServiceRoleClient();
+
+  const { data: contract, error: fetchError } = await admin
+    .from('contracts')
+    .select('id, landlord_id, status, property_id')
+    .eq('id', params.id)
+    .single();
+
+  if (fetchError || !contract) return notFound('Contract not found');
+  if (contract.landlord_id !== user.id) return unauthorized();
+  if (contract.status !== 'active' && contract.status !== 'scheduled') {
+    return badRequest('Only active or scheduled contracts can be terminated');
+  }
+
+  // Set contract to terminated
+  const { error: updateError } = await admin
+    .from('contracts')
+    .update({ status: 'terminated' })
+    .eq('id', params.id);
+
+  if (updateError) {
+    return NextResponse.json({ error: 'Failed to terminate contract' }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}
+
 export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
   const { user } = await getAuthenticatedUser();
   if (!user) return unauthorized();
@@ -41,9 +77,9 @@ export async function DELETE(_request: Request, { params }: { params: { id: stri
     return unauthorized();
   }
 
-  // Only allow deleting unpaired contracts or terminated ones
-  if (contract.tenant_id && contract.status !== 'terminated') {
-    return badRequest('Cannot delete a contract that has a paired tenant');
+  // Block deletion of active/scheduled contracts — must terminate first
+  if (contract.status === 'active' || contract.status === 'scheduled') {
+    return badRequest('Terminate the contract before deleting it');
   }
 
   // Delete related records first (payments, penalties)

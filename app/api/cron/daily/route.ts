@@ -214,7 +214,7 @@ export async function GET(request: Request) {
       // Mark as notified so cron is idempotent
       await supabase
         .from('payments')
-        .update({ penalty_notified_at: new Date().toISOString() } as Record<string, unknown>)
+        .update({ penalty_notified_at: new Date().toISOString() })
         .eq('id', payment.id);
 
       penaltyNotifications++;

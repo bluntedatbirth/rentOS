@@ -18,15 +18,19 @@ export function PropertyCard({ id, name, address, unit_number, contractCount }: 
   return (
     <Link href={`/landlord/properties/${id}`}>
       <Card className="hover:shadow-md transition-shadow">
-        <h3 className="text-sm font-semibold text-gray-900">{name}</h3>
+        <h3 className="text-sm font-semibold text-charcoal-900 dark:text-white">{name}</h3>
         {unit_number && (
-          <p className="mt-0.5 text-xs text-gray-500">
+          <p className="mt-0.5 text-xs text-charcoal-500 dark:text-white/50">
             {t('property.unit')}: {unit_number}
           </p>
         )}
-        {address && <p className="mt-1 text-xs text-gray-400 line-clamp-2">{address}</p>}
+        {address && (
+          <p className="mt-1 text-xs text-charcoal-400 line-clamp-2 dark:text-white/40">
+            {address}
+          </p>
+        )}
         {contractCount !== undefined && (
-          <p className="mt-2 text-xs text-blue-600">
+          <p className="mt-2 text-xs text-saffron-600 dark:text-saffron-400">
             {contractCount} {t('property.contracts')}
           </p>
         )}

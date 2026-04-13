@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { AnimatedSection } from './AnimatedSection';
-import { RippleButton } from '@/components/ui/multi-type-ripple-buttons';
+import { NeonButton } from '@/components/ui/neon-button';
 
 interface PricingCardsProps {
   t: (key: string) => string;
@@ -48,7 +48,7 @@ export function PricingCards({ t, freePlanItems }: PricingCardsProps) {
             {/* Glassy pricing card */}
             <div className="backdrop-blur-[14px] bg-gradient-to-br from-charcoal-800/5 to-white/60 dark:from-white/5 dark:to-white/10 border border-charcoal-800/10 dark:border-white/10 rounded-2xl shadow-xl px-7 py-8 flex flex-col relative overflow-hidden">
               {/* Popular badge */}
-              <div className="absolute -top-0 right-4 px-3 py-1.5 text-[11px] font-bold rounded-b-lg bg-saffron-500 text-white tracking-wide">
+              <div className="absolute top-3 right-4 px-3 py-1.5 text-[11px] font-bold rounded-b-lg bg-saffron-500 text-white tracking-wide">
                 {t('landing.plan_free_name')}
               </div>
 
@@ -67,7 +67,9 @@ export function PricingCards({ t, freePlanItems }: PricingCardsProps) {
                 <span className="text-[48px] font-extralight text-charcoal-900 dark:text-white font-[var(--font-manrope)]">
                   ฿0
                 </span>
-                <span className="text-sm text-charcoal-500 dark:text-white/50">/ month</span>
+                <span className="text-sm text-charcoal-500 dark:text-white/50">
+                  {t('landing.plan_free_period')}
+                </span>
               </div>
 
               {/* Glassy divider */}
@@ -84,10 +86,10 @@ export function PricingCards({ t, freePlanItems }: PricingCardsProps) {
               </ul>
 
               {/* CTA button with ripple */}
-              <Link href="/signup" className="no-underline mt-auto">
-                <RippleButton className="w-full py-3 rounded-xl font-semibold text-sm bg-gradient-to-r from-saffron-600 to-saffron-500 text-white hover:brightness-110">
+              <Link href="/signup" legacyBehavior passHref>
+                <NeonButton variant="default" size="full" className="mt-auto">
                   {t('landing.plan_free_cta')}
-                </RippleButton>
+                </NeonButton>
               </Link>
             </div>
           </AnimatedSection>

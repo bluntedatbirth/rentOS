@@ -20,7 +20,7 @@ export async function activateContract(
   const { data: contractRaw, error: fetchError } = await supabase
     .from('contracts')
     .select(
-      'id, tenant_id, property_id, landlord_id, status, structured_clauses, lease_start, lease_end, monthly_rent, renewed_from'
+      'id, tenant_id, property_id, landlord_id, status, structured_clauses, lease_start, lease_end, monthly_rent, renewed_from, due_day'
     )
     .eq('id', contractId)
     .single();
@@ -44,6 +44,7 @@ export async function activateContract(
     lease_end: string | null;
     monthly_rent: number | null;
     renewed_from: string | null;
+    due_day: number | null;
   };
 
   // 2. Verify invariants
@@ -147,9 +148,13 @@ export async function activateContract(
   // T-BUG-07: bound seeding loop by lease_end so short leases don't get rows past expiry
   const leaseEndDate = contract.lease_end ? new Date(contract.lease_end) : null;
 
+  // Use due_day from contract, defaulting to 1 and clamping to 1–28 to avoid
+  // month-length edge cases (e.g. no Feb 30th).
+  const dueDay = Math.min(Math.max(contract.due_day ?? 1, 1), 28);
+
   const paymentRows: Database['public']['Tables']['payments']['Insert'][] = [];
   for (let i = 0; i < 12; i++) {
-    const dueDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + i, 1);
+    const dueDate = new Date(anchorDate.getFullYear(), anchorDate.getMonth() + i, dueDay);
     // T-BUG-07: stop seeding when due date exceeds lease end
     if (leaseEndDate && dueDate > leaseEndDate) break;
     const dueDateStr = dueDate.toISOString().split('T')[0]!;

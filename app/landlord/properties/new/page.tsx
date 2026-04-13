@@ -138,13 +138,13 @@ export default function NewPropertyPage() {
   if (atSlotLimit) {
     return (
       <div className="mx-auto max-w-lg px-4 py-10">
-        <div className="rounded-2xl border border-warm-200 bg-warm-50 p-8 text-center shadow-sm">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
+        <div className="rounded-2xl border border-warm-200 bg-warm-50 p-8 text-center shadow-sm dark:border-white/10 dark:bg-charcoal-900 dark:shadow-black/20">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/15">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="currentColor"
-              className="h-7 w-7 text-amber-500"
+              className="h-7 w-7 text-amber-500 dark:text-amber-400"
             >
               <path
                 fillRule="evenodd"
@@ -153,10 +153,12 @@ export default function NewPropertyPage() {
               />
             </svg>
           </div>
-          <h2 className="mb-2 text-lg font-bold text-charcoal-900">
+          <h2 className="mb-2 text-lg font-bold text-charcoal-900 dark:text-white">
             {t('property.slots_full_title')}
           </h2>
-          <p className="mb-6 text-sm text-charcoal-500">{t('property.slots_full_body')}</p>
+          <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
+            {t('property.slots_full_body')}
+          </p>
           <div className="flex flex-col gap-3">
             <a
               href="/landlord/billing/slots"
@@ -166,13 +168,13 @@ export default function NewPropertyPage() {
             </a>
             <a
               href="/landlord/billing/upgrade"
-              className="block rounded-xl border border-sage-500 py-3 text-center text-sm font-bold text-sage-700 hover:bg-sage-50"
+              className="block rounded-xl border border-sage-500 py-3 text-center text-sm font-bold text-sage-700 hover:bg-sage-50 dark:text-sage-400 dark:hover:bg-sage-500/10"
             >
               {t('property.upgrade_pro')}
             </a>
             <Link
               href="/landlord/properties"
-              className="text-sm text-charcoal-400 hover:text-charcoal-600"
+              className="text-sm text-charcoal-400 hover:text-charcoal-600 dark:text-white/40 dark:hover:text-white/60"
             >
               {t('common.cancel')}
             </Link>
@@ -188,7 +190,7 @@ export default function NewPropertyPage() {
       <div className="mb-6 flex items-center gap-3">
         <Link
           href="/landlord/properties"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-warm-200 bg-white text-charcoal-400 hover:bg-warm-100"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-warm-200 bg-white text-charcoal-400 hover:bg-warm-100 dark:border-white/10 dark:bg-charcoal-800 dark:text-white/40 dark:hover:bg-white/10"
           aria-label={t('common.back')}
         >
           <svg
@@ -204,18 +206,20 @@ export default function NewPropertyPage() {
             />
           </svg>
         </Link>
-        <h1 className="text-xl font-bold text-charcoal-900">{t('property.new_title')}</h1>
+        <h1 className="text-xl font-bold text-charcoal-900 dark:text-white">
+          {t('property.new_title')}
+        </h1>
       </div>
 
       {/* Form card */}
-      <div className="rounded-2xl border border-warm-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-warm-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-charcoal-800 dark:shadow-black/20">
         <form onSubmit={handleSubmit} noValidate>
           <div className="space-y-4">
             {/* Name — required */}
             <div>
               <label
                 htmlFor="prop-name"
-                className="mb-1 block text-sm font-medium text-charcoal-700"
+                className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
               >
                 {t('property.name')}
                 <span className="ml-1 text-red-500">*</span>
@@ -227,7 +231,7 @@ export default function NewPropertyPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t('property.name_placeholder')}
-                className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500 dark:border-white/10 dark:bg-charcoal-800 dark:text-white dark:placeholder:text-white/40"
               />
             </div>
 
@@ -235,7 +239,7 @@ export default function NewPropertyPage() {
             <div>
               <label
                 htmlFor="prop-address"
-                className="mb-1 block text-sm font-medium text-charcoal-700"
+                className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
               >
                 {t('property.address')}
               </label>
@@ -245,7 +249,7 @@ export default function NewPropertyPage() {
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder={t('property.address_placeholder')}
-                className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500 dark:border-white/10 dark:bg-charcoal-800 dark:text-white dark:placeholder:text-white/40"
               />
             </div>
 
@@ -253,7 +257,7 @@ export default function NewPropertyPage() {
             <div>
               <label
                 htmlFor="prop-unit"
-                className="mb-1 block text-sm font-medium text-charcoal-700"
+                className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
               >
                 {t('property.unit')}
               </label>
@@ -263,7 +267,7 @@ export default function NewPropertyPage() {
                 value={unitNumber}
                 onChange={(e) => setUnitNumber(e.target.value)}
                 placeholder={t('property.unit_placeholder')}
-                className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500 dark:border-white/10 dark:bg-charcoal-800 dark:text-white dark:placeholder:text-white/40"
               />
             </div>
 
@@ -271,7 +275,7 @@ export default function NewPropertyPage() {
             <div>
               <label
                 htmlFor="prop-lease-start"
-                className="mb-1 block text-sm font-medium text-charcoal-700"
+                className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
               >
                 {t('property.lease_start')}
               </label>
@@ -280,14 +284,14 @@ export default function NewPropertyPage() {
                 type="date"
                 value={leaseStart}
                 onChange={(e) => handleLeaseStartChange(e.target.value)}
-                className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500 dark:border-white/10 dark:bg-charcoal-800 dark:text-white"
               />
             </div>
 
             {/* Lease Duration selector */}
             {leaseStart && (
               <div>
-                <label className="mb-1 block text-sm font-medium text-charcoal-700">
+                <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                   {t('property.lease_duration')}
                 </label>
                 <div className="flex gap-2">
@@ -305,8 +309,8 @@ export default function NewPropertyPage() {
                       onClick={() => handleDurationChange(opt.value)}
                       className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                         leaseDuration === opt.value
-                          ? 'border-saffron-500 bg-saffron-50 text-saffron-700'
-                          : 'border-warm-200 text-charcoal-600 hover:bg-warm-50'
+                          ? 'border-saffron-500 bg-saffron-50 text-saffron-700 dark:bg-saffron-500/10 dark:text-saffron-400'
+                          : 'border-warm-200 text-charcoal-600 hover:bg-warm-50 dark:border-white/10 dark:text-white/60 dark:hover:bg-white/5'
                       }`}
                     >
                       {opt.label}
@@ -321,7 +325,7 @@ export default function NewPropertyPage() {
               <div>
                 <label
                   htmlFor="prop-lease-end"
-                  className="mb-1 block text-sm font-medium text-charcoal-700"
+                  className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                 >
                   {t('property.lease_end')}
                 </label>
@@ -334,15 +338,19 @@ export default function NewPropertyPage() {
                     setLeaseEnd(e.target.value);
                     if (errors.leaseEnd) setErrors((prev) => ({ ...prev, leaseEnd: undefined }));
                   }}
-                  className={`block w-full rounded-lg border px-3 py-2.5 text-sm text-charcoal-900 focus:outline-none focus:ring-1 ${
-                    leaseDuration !== 'custom' ? 'bg-warm-50 text-charcoal-500' : ''
+                  className={`block w-full rounded-lg border px-3 py-2.5 text-sm text-charcoal-900 focus:outline-none focus:ring-1 dark:text-white ${
+                    leaseDuration !== 'custom'
+                      ? 'bg-warm-50 text-charcoal-500 dark:bg-charcoal-900 dark:text-white/50'
+                      : 'dark:bg-charcoal-800'
                   } ${
                     errors.leaseEnd
                       ? 'border-red-400 focus:border-red-500 focus:ring-red-500'
-                      : 'border-warm-200 focus:border-saffron-500 focus:ring-saffron-500'
+                      : 'border-warm-200 focus:border-saffron-500 focus:ring-saffron-500 dark:border-white/10'
                   }`}
                 />
-                {errors.leaseEnd && <p className="mt-1 text-xs text-red-600">{errors.leaseEnd}</p>}
+                {errors.leaseEnd && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.leaseEnd}</p>
+                )}
               </div>
             )}
 
@@ -351,12 +359,12 @@ export default function NewPropertyPage() {
               <div>
                 <label
                   htmlFor="prop-daily-rate"
-                  className="mb-1 block text-sm font-medium text-charcoal-700"
+                  className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                 >
                   {t('property.daily_rate')}
                 </label>
                 <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-charcoal-400">
+                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-charcoal-400 dark:text-white/40">
                     ฿
                   </span>
                   <input
@@ -367,7 +375,7 @@ export default function NewPropertyPage() {
                     value={dailyRate}
                     onChange={(e) => setDailyRate(e.target.value)}
                     placeholder={t('property.daily_rate_placeholder')}
-                    className="block w-full rounded-lg border border-warm-200 pl-7 pr-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="block w-full rounded-lg border border-warm-200 pl-7 pr-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none dark:border-white/10 dark:bg-charcoal-800 dark:text-white dark:placeholder:text-white/40"
                   />
                 </div>
               </div>
@@ -375,12 +383,12 @@ export default function NewPropertyPage() {
               <div>
                 <label
                   htmlFor="prop-rent"
-                  className="mb-1 block text-sm font-medium text-charcoal-700"
+                  className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                 >
                   {t('property.monthly_rent')}
                 </label>
                 <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-charcoal-400">
+                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-charcoal-400 dark:text-white/40">
                     ฿
                   </span>
                   <input
@@ -395,15 +403,17 @@ export default function NewPropertyPage() {
                         setErrors((prev) => ({ ...prev, monthlyRent: undefined }));
                     }}
                     placeholder={t('property.monthly_rent_placeholder')}
-                    className={`block w-full rounded-lg border pl-7 pr-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                    className={`block w-full rounded-lg border pl-7 pr-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:outline-none focus:ring-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none dark:bg-charcoal-800 dark:text-white dark:placeholder:text-white/40 ${
                       errors.monthlyRent
                         ? 'border-red-400 focus:border-red-500 focus:ring-red-500'
-                        : 'border-warm-200 focus:border-saffron-500 focus:ring-saffron-500'
+                        : 'border-warm-200 focus:border-saffron-500 focus:ring-saffron-500 dark:border-white/10'
                     }`}
                   />
                 </div>
                 {errors.monthlyRent && (
-                  <p className="mt-1 text-xs text-red-600">{errors.monthlyRent}</p>
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                    {errors.monthlyRent}
+                  </p>
                 )}
               </div>
             )}
@@ -439,12 +449,12 @@ export default function NewPropertyPage() {
         {/* Divider + upload contract link */}
         <div className="relative mt-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-warm-200" />
+            <div className="w-full border-t border-warm-200 dark:border-white/10" />
           </div>
           <div className="relative flex justify-center">
             <Link
               href="/landlord/contracts/upload"
-              className="bg-white px-4 text-sm text-saffron-600 hover:text-saffron-800"
+              className="bg-white px-4 text-sm text-saffron-600 hover:text-saffron-800 dark:bg-charcoal-800"
             >
               {t('property.or_upload_contract')} &rarr;
             </Link>

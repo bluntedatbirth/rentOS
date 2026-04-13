@@ -21,10 +21,7 @@ export function FeaturesGrid({ t, features }: FeaturesGridProps) {
           <p className="text-xs font-semibold tracking-[0.1em] uppercase text-saffron-500 mb-3 font-[var(--font-manrope)]">
             {t('landing.features_label')}
           </p>
-          <h2
-            className="font-[var(--font-manrope)] text-3xl md:text-4xl font-bold text-charcoal-800 dark:text-white mb-3"
-            style={{ letterSpacing: '-0.02em' }}
-          >
+          <h2 className="font-[var(--font-manrope)] text-3xl md:text-4xl font-bold text-charcoal-800 dark:text-white mb-3 tracking-[-0.02em]">
             {t('landing.features_h2')}
           </h2>
           <p className="text-charcoal-600 dark:text-white/60 text-lg max-w-[520px] mx-auto">

@@ -12,6 +12,7 @@ import { useProGate } from '@/lib/hooks/useProGate';
 import { useToast } from '@/components/ui/ToastProvider';
 import { getPropertyLimit } from '@/lib/tier';
 import { computePropertyStatus, type PropertyStatus } from '@/lib/properties/status';
+import { useContractParse, type ParseJob } from '@/components/providers/ContractParseProvider';
 
 const supabase = createClient();
 
@@ -35,13 +36,13 @@ interface PropertyRow {
 function statusBadgeClass(status: PropertyStatus): string {
   switch (status) {
     case 'active':
-      return 'bg-green-100 text-green-800';
+      return 'bg-green-100 dark:bg-green-500/15 text-green-800 dark:text-green-400';
     case 'expiring':
-      return 'bg-amber-100 text-amber-800';
+      return 'bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-400';
     case 'vacant':
-      return 'bg-gray-100 text-gray-500';
+      return 'bg-warm-100 dark:bg-white/5 text-charcoal-500 dark:text-white/50';
     case 'upcoming':
-      return 'bg-blue-100 text-blue-800';
+      return 'bg-saffron-100 dark:bg-saffron-500/15 text-saffron-600 dark:text-saffron-400';
   }
 }
 
@@ -64,9 +65,10 @@ interface PropertyListRowProps {
   property: PropertyRow;
   overdueIds: Set<string>;
   onRemoved: (id: string) => void;
+  activeJob: ParseJob | null;
 }
 
-function PropertyListRow({ property, overdueIds, onRemoved }: PropertyListRowProps) {
+function PropertyListRow({ property, overdueIds, onRemoved, activeJob }: PropertyListRowProps) {
   const { t } = useI18n();
   const { toast } = useToast();
   const [expanded, setExpanded] = useState(false);
@@ -107,7 +109,7 @@ function PropertyListRow({ property, overdueIds, onRemoved }: PropertyListRowPro
   };
 
   return (
-    <div className="overflow-hidden rounded-lg bg-white shadow-sm transition-shadow hover:shadow-md">
+    <div className="overflow-hidden rounded-lg bg-white dark:bg-charcoal-800 shadow-sm transition-shadow hover:shadow-md">
       {/* Cover image banner */}
       {property.cover_image_url && (
         <div
@@ -125,7 +127,7 @@ function PropertyListRow({ property, overdueIds, onRemoved }: PropertyListRowPro
       >
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-medium text-gray-900">{property.name}</p>
+            <p className="font-medium text-charcoal-900 dark:text-white">{property.name}</p>
             {/* Status badge */}
             <span
               className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadgeClass(status)}`}
@@ -134,12 +136,12 @@ function PropertyListRow({ property, overdueIds, onRemoved }: PropertyListRowPro
             </span>
             {/* Overdue indicator */}
             {isOverdue && (
-              <span className="inline-block rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-medium text-rose-700">
+              <span className="inline-block rounded-full bg-rose-100 dark:bg-red-500/15 px-2.5 py-0.5 text-xs font-medium text-rose-700 dark:text-red-400">
                 {t('payments.overdue')}
               </span>
             )}
           </div>
-          <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500">
+          <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-charcoal-500 dark:text-white/50">
             {property.address && <span>{property.address}</span>}
             {property.unit_number && (
               <span>
@@ -167,7 +169,7 @@ function PropertyListRow({ property, overdueIds, onRemoved }: PropertyListRowPro
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
           fill="currentColor"
-          className={`h-5 w-5 shrink-0 text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''}`}
+          className={`h-5 w-5 shrink-0 text-charcoal-400 dark:text-white/40 transition-transform ${expanded ? 'rotate-90' : ''}`}
         >
           <path
             fillRule="evenodd"
@@ -179,7 +181,7 @@ function PropertyListRow({ property, overdueIds, onRemoved }: PropertyListRowPro
 
       {/* Expanded quick actions */}
       {expanded && (
-        <div className="border-t border-gray-100 px-4 pb-4 pt-3">
+        <div className="border-t border-warm-100 dark:border-white/5 px-4 pb-4 pt-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             {/* Property detail — always */}
             <Link
@@ -199,13 +201,46 @@ function PropertyListRow({ property, overdueIds, onRemoved }: PropertyListRowPro
               </Link>
             )}
 
-            {/* Upload Contract — always */}
-            <Link
-              href={`/landlord/contracts/upload?property_id=${property.id}`}
-              className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 sm:w-auto"
-            >
-              {t('properties.action_upload_contract')}
-            </Link>
+            {/* Upload Contract — shows parse progress when this property's contract is being parsed */}
+            {activeJob?.propertyId === property.id ? (
+              activeJob.status === 'parsing' ? (
+                <div className="flex items-center gap-2 text-saffron-500">
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
+                  </svg>
+                  <span className="text-sm">
+                    {t('ocr.parsing_contract')} {activeJob.progress}%
+                  </span>
+                </div>
+              ) : activeJob.status === 'done' ? (
+                <span className="text-sm text-sage-600 dark:text-sage-400">
+                  ✓ {t('ocr.parse_complete')}
+                </span>
+              ) : (
+                <span className="text-sm text-red-500 dark:text-red-400">
+                  ✗ {t('ocr.parse_failed')}
+                </span>
+              )
+            ) : (
+              <Link
+                href={`/landlord/contracts/upload?property_id=${property.id}`}
+                className="w-full rounded-md border border-warm-300 dark:border-white/15 px-3 py-1.5 text-xs font-medium text-charcoal-600 dark:text-white/60 hover:bg-warm-50 dark:hover:bg-white/5 sm:w-auto"
+              >
+                {t('properties.action_upload_contract')}
+              </Link>
+            )}
 
             {/* Renew Lease — when expiring */}
             {status === 'expiring' && (
@@ -237,17 +272,19 @@ function PropertyListRow({ property, overdueIds, onRemoved }: PropertyListRowPro
             if (e.target === e.currentTarget) setConfirmDelete(false);
           }}
         >
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
-            <h3 className="mb-2 text-base font-semibold text-gray-900">
+          <div className="w-full max-w-sm rounded-lg bg-white dark:bg-charcoal-800 p-6 shadow-xl">
+            <h3 className="mb-2 text-base font-semibold text-charcoal-900 dark:text-white">
               {t('properties.v2c_confirm_title').replace('{name}', property.name)}
             </h3>
-            <p className="mb-5 text-sm text-gray-500">{t('properties.v2c_confirm_body')}</p>
+            <p className="mb-5 text-sm text-charcoal-500 dark:text-white/50">
+              {t('properties.v2c_confirm_body')}
+            </p>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setConfirmDelete(false)}
                 disabled={deleting}
-                className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="flex-1 rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5 disabled:opacity-50"
               >
                 {t('common.cancel')}
               </button>
@@ -289,6 +326,7 @@ function PropertyListRow({ property, overdueIds, onRemoved }: PropertyListRowPro
 export default function PropertiesPage() {
   const { user, profile } = useAuth();
   const { t } = useI18n();
+  const { activeJob } = useContractParse();
   const router = useRouter();
   const { PromptModal } = useProGate('slot_limit', { showSlotUnlock: true });
   const [properties, setProperties] = useState<PropertyRow[]>([]);
@@ -391,7 +429,7 @@ export default function PropertiesPage() {
   // Pill styling by slot state
   const pillStyles =
     slotState === 'under'
-      ? 'bg-warm-100 text-charcoal-600'
+      ? 'bg-warm-100 dark:bg-white/5 text-charcoal-600 dark:text-white/60'
       : 'bg-amber-50 text-amber-800 border border-amber-200';
 
   return (
@@ -408,7 +446,9 @@ export default function PropertiesPage() {
       {/* Header row */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-xl font-bold text-gray-900">{t('property.title')}</h2>
+          <h2 className="text-xl font-bold text-charcoal-900 dark:text-white">
+            {t('property.title')}
+          </h2>
           {/* Slot usage pill — hidden when limit is Infinity (alpha/defer mode) */}
           {slotLimit !== Infinity && (
             <div
@@ -450,17 +490,17 @@ export default function PropertiesPage() {
       {properties.length > 0 && (overdueCount > 0 || expiringCount > 0 || vacantCount > 0) && (
         <div className="mb-5 flex flex-wrap gap-2">
           {overdueCount > 0 && (
-            <span className="inline-flex items-center rounded-full bg-rose-100 px-3 py-1 text-xs font-medium text-rose-700">
+            <span className="inline-flex items-center rounded-full bg-rose-100 dark:bg-red-500/15 px-3 py-1 text-xs font-medium text-rose-700 dark:text-red-400">
               {t('properties.summary_overdue').replace('{n}', String(overdueCount))}
             </span>
           )}
           {expiringCount > 0 && (
-            <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+            <span className="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-500/15 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">
               {t('properties.summary_expiring').replace('{n}', String(expiringCount))}
             </span>
           )}
           {vacantCount > 0 && (
-            <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-500">
+            <span className="inline-flex items-center rounded-full bg-warm-100 dark:bg-white/5 px-3 py-1 text-xs font-medium text-charcoal-500 dark:text-white/50">
               {t('properties.summary_vacant').replace('{n}', String(vacantCount))}
             </span>
           )}
@@ -469,7 +509,7 @@ export default function PropertiesPage() {
 
       {/* Properties list */}
       {properties.length === 0 ? (
-        <div className="rounded-lg bg-gray-50 p-8 text-center text-sm text-gray-500">
+        <div className="rounded-lg bg-warm-50 dark:bg-charcoal-900 p-8 text-center text-sm text-charcoal-500 dark:text-white/50">
           {t('property.no_properties')}
         </div>
       ) : (
@@ -480,6 +520,7 @@ export default function PropertiesPage() {
               property={p}
               overdueIds={overduePropertyIds}
               onRemoved={(id) => setProperties((prev) => prev.filter((x) => x.id !== id))}
+              activeJob={activeJob}
             />
           ))}
         </div>

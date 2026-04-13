@@ -101,10 +101,12 @@ export default function TenantPenaltiesPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h2 className="mb-6 text-xl font-bold text-charcoal-900">{t('tenant.penalties_title')}</h2>
+      <h2 className="mb-6 text-xl font-bold text-charcoal-900 dark:text-white">
+        {t('tenant.penalties_title')}
+      </h2>
 
       {penalties.length === 0 ? (
-        <div className="rounded-lg bg-warm-50 p-8 text-center text-sm text-charcoal-500">
+        <div className="rounded-lg bg-warm-50 dark:bg-charcoal-900 p-8 text-center text-sm text-charcoal-500 dark:text-white/50">
           {t('tenant.no_penalties')}
         </div>
       ) : (
@@ -114,40 +116,51 @@ export default function TenantPenaltiesPage() {
             const desc = locale === 'th' ? p.description_th : p.description_en;
 
             return (
-              <div key={p.id} className="rounded-lg bg-white p-4 shadow-sm">
+              <div
+                key={p.id}
+                className="rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm dark:shadow-black/20"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <StatusBadge status={p.status} />
                     {amount > 0 && (
-                      <span className="text-sm font-medium text-red-600">
+                      <span className="text-sm font-medium text-red-600 dark:text-red-400">
                         ฿{amount.toLocaleString()}
                       </span>
                     )}
                   </div>
-                  <span className="text-xs text-charcoal-400">{formatDate(p.created_at)}</span>
+                  <span className="text-xs text-charcoal-400 dark:text-white/40">
+                    {formatDate(p.created_at)}
+                  </span>
                 </div>
 
-                {desc && <p className="mt-2 text-sm text-charcoal-700">{desc}</p>}
+                {desc && (
+                  <p className="mt-2 text-sm text-charcoal-700 dark:text-white/70">{desc}</p>
+                )}
 
-                <p className="mt-1 text-xs text-charcoal-400">
+                <p className="mt-1 text-xs text-charcoal-400 dark:text-white/40">
                   {t('contract.clause')}: {p.clause_id.toUpperCase()}
                 </p>
 
                 {p.tenant_appeal_note && (
-                  <div className="mt-3 rounded-lg bg-saffron-50 p-3">
+                  <div className="mt-3 rounded-lg bg-saffron-50 dark:bg-charcoal-900 p-3">
                     <p className="text-xs font-medium text-saffron-700">
                       {t('tenant.your_appeal')}
                     </p>
-                    <p className="mt-1 text-sm text-charcoal-900">{p.tenant_appeal_note}</p>
+                    <p className="mt-1 text-sm text-charcoal-900 dark:text-white">
+                      {p.tenant_appeal_note}
+                    </p>
                   </div>
                 )}
 
                 {p.landlord_resolution_note && (
-                  <div className="mt-2 rounded-lg bg-green-50 p-3">
-                    <p className="text-xs font-medium text-green-700">
+                  <div className="mt-2 rounded-lg bg-green-100 dark:bg-green-500/15 p-3">
+                    <p className="text-xs font-medium text-green-700 dark:text-green-400">
                       {t('tenant.landlord_response')}
                     </p>
-                    <p className="mt-1 text-sm text-green-900">{p.landlord_resolution_note}</p>
+                    <p className="mt-1 text-sm text-green-900 dark:text-green-400">
+                      {p.landlord_resolution_note}
+                    </p>
                   </div>
                 )}
 
@@ -162,7 +175,7 @@ export default function TenantPenaltiesPage() {
                           rows={3}
                           maxLength={2000}
                           placeholder={t('tenant.appeal_placeholder')}
-                          className="block w-full rounded-lg border border-warm-200 px-3 py-2.5 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
+                          className="block w-full rounded-lg border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-3 py-2.5 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 focus:border-saffron-500 focus:outline-none focus:ring-1 focus:ring-saffron-500"
                         />
                         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
                         <div className="mt-2 flex gap-2">
@@ -180,7 +193,7 @@ export default function TenantPenaltiesPage() {
                               setAppealingId(null);
                               setAppealNote('');
                             }}
-                            className="min-h-[44px] rounded-lg border border-warm-200 px-4 py-2 text-sm font-medium text-charcoal-700 hover:bg-warm-100"
+                            className="min-h-[44px] rounded-lg border border-warm-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
                           >
                             {t('common.cancel')}
                           </button>

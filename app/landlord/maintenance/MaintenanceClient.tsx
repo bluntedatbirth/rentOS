@@ -215,21 +215,29 @@ export function MaintenanceClient({
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h2 className="mb-6 text-xl font-bold text-gray-900">{t('maintenance.title')}</h2>
+      <h2 className="mb-6 text-xl font-bold text-charcoal-900 dark:text-white">
+        {t('maintenance.title')}
+      </h2>
 
       {/* Summary stats */}
       <div className="mb-6 grid grid-cols-3 gap-3">
-        <div className="rounded-lg bg-white p-4 shadow-sm text-center">
+        <div className="rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm text-center">
           <p className="text-2xl font-bold text-saffron-600">{openCount}</p>
-          <p className="text-xs text-gray-500">{t('maintenance.open_count')}</p>
+          <p className="text-xs text-charcoal-500 dark:text-white/50">
+            {t('maintenance.open_count')}
+          </p>
         </div>
-        <div className="rounded-lg bg-white p-4 shadow-sm text-center">
+        <div className="rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm text-center">
           <p className="text-2xl font-bold text-purple-600">{inProgressCount}</p>
-          <p className="text-xs text-gray-500">{t('maintenance.in_progress_count')}</p>
+          <p className="text-xs text-charcoal-500 dark:text-white/50">
+            {t('maintenance.in_progress_count')}
+          </p>
         </div>
-        <div className="rounded-lg bg-white p-4 shadow-sm text-center">
+        <div className="rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm text-center">
           <p className="text-2xl font-bold text-green-600">{resolvedCount}</p>
-          <p className="text-xs text-gray-500">{t('maintenance.resolved_count')}</p>
+          <p className="text-xs text-charcoal-500 dark:text-white/50">
+            {t('maintenance.resolved_count')}
+          </p>
         </div>
       </div>
 
@@ -239,7 +247,7 @@ export function MaintenanceClient({
           <select
             value={propertyFilter}
             onChange={(e) => setPropertyFilter(e.target.value)}
-            className="min-h-[44px] w-full rounded-lg border border-gray-300 px-3 text-sm sm:w-auto sm:min-w-[220px]"
+            className="min-h-[44px] w-full rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 dark:text-white px-3 text-sm sm:w-auto sm:min-w-[220px]"
           >
             <option value="all">{t('maintenance.filter_all_properties')}</option>
             {initialProperties.map((p) => (
@@ -253,7 +261,7 @@ export function MaintenanceClient({
 
       {/* Requests list */}
       {filteredRequests.length === 0 ? (
-        <div className="rounded-lg bg-gray-50 p-8 text-center text-sm text-gray-500">
+        <div className="rounded-lg bg-warm-50 dark:bg-charcoal-900 p-8 text-center text-sm text-charcoal-500 dark:text-white/50">
           {t('maintenance.no_requests')}
         </div>
       ) : (
@@ -261,37 +269,47 @@ export function MaintenanceClient({
           {filteredRequests.map((req) => (
             <div key={req.id} className="rounded-lg bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-900">{req.title}</h3>
+                <h3 className="text-sm font-semibold text-charcoal-900 dark:text-white">
+                  {req.title}
+                </h3>
                 <StatusBadge status={req.status} label={statusLabel(req.status)} />
               </div>
 
-              {req.description && <p className="mt-2 text-sm text-gray-600">{req.description}</p>}
+              {req.description && (
+                <p className="mt-2 text-sm text-charcoal-600 dark:text-white/60">
+                  {req.description}
+                </p>
+              )}
 
               {/* Pro fields display */}
               {isPro && (
                 <div className="mt-3 rounded-lg bg-amber-50 p-3 space-y-1">
                   {req.assigned_to ? (
                     <div className="flex items-center gap-2 text-xs">
-                      <span className="text-gray-500 font-medium">
+                      <span className="text-charcoal-500 dark:text-white/50 font-medium">
                         {t('maintenance.assign_technician')}:
                       </span>
-                      <span className="text-gray-800">{req.assigned_to}</span>
+                      <span className="text-charcoal-800 dark:text-white/90">
+                        {req.assigned_to}
+                      </span>
                     </div>
                   ) : (
-                    <div className="text-xs text-gray-400 italic">
+                    <div className="text-xs text-charcoal-400 dark:text-white/40 italic">
                       {t('maintenance.assign_technician')}: —
                     </div>
                   )}
                   {req.sla_deadline ? (
                     <div className="flex items-center gap-2 text-xs">
-                      <span className="text-gray-500 font-medium">
+                      <span className="text-charcoal-500 dark:text-white/50 font-medium">
                         {t('maintenance.sla_deadline')}:
                       </span>
-                      <span className="text-gray-800">{formatDate(req.sla_deadline)}</span>
+                      <span className="text-charcoal-800 dark:text-white/90">
+                        {formatDate(req.sla_deadline)}
+                      </span>
                       <SlaCountdown deadline={req.sla_deadline} />
                     </div>
                   ) : (
-                    <div className="text-xs text-gray-400 italic">
+                    <div className="text-xs text-charcoal-400 dark:text-white/40 italic">
                       {t('maintenance.sla_deadline')}: —
                     </div>
                   )}
@@ -299,20 +317,22 @@ export function MaintenanceClient({
                     <div className="flex items-center gap-3 text-xs flex-wrap">
                       {req.estimated_cost !== null && (
                         <span>
-                          <span className="text-gray-500 font-medium">
+                          <span className="text-charcoal-500 dark:text-white/50 font-medium">
                             {t('maintenance.estimated_cost')}:
                           </span>{' '}
-                          <span className="text-gray-800">
+                          <span className="text-charcoal-800 dark:text-white/90">
                             ฿{req.estimated_cost.toLocaleString()}
                           </span>
                         </span>
                       )}
                       {req.actual_cost !== null && (
                         <span>
-                          <span className="text-gray-500 font-medium">
+                          <span className="text-charcoal-500 dark:text-white/50 font-medium">
                             {t('maintenance.actual_cost')}:
                           </span>{' '}
-                          <span className="text-gray-800">฿{req.actual_cost.toLocaleString()}</span>
+                          <span className="text-charcoal-800 dark:text-white/90">
+                            ฿{req.actual_cost.toLocaleString()}
+                          </span>
                         </span>
                       )}
                       {req.estimated_cost !== null && req.actual_cost !== null && (
@@ -326,7 +346,7 @@ export function MaintenanceClient({
                       )}
                     </div>
                   ) : (
-                    <div className="text-xs text-gray-400 italic">
+                    <div className="text-xs text-charcoal-400 dark:text-white/40 italic">
                       {t('maintenance.cost_tracking')}: —
                     </div>
                   )}
@@ -334,7 +354,7 @@ export function MaintenanceClient({
                     <button
                       type="button"
                       onClick={() => openEditProModal(req)}
-                      className="text-xs font-medium text-amber-700 hover:text-amber-900 underline"
+                      className="text-xs font-medium text-amber-700 dark:text-amber-400 hover:text-amber-900 underline"
                     >
                       {t('maintenance.edit_costs')}
                     </button>
@@ -344,7 +364,7 @@ export function MaintenanceClient({
 
               {/* Pro badge hint for free users */}
               {!isPro && (
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-400">
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-charcoal-400 dark:text-white/40">
                   <ProBadge />
                   <span>{t('maintenance.pro_fields_hint')}</span>
                 </div>
@@ -353,9 +373,13 @@ export function MaintenanceClient({
               <div className="mt-3 flex items-center justify-between">
                 <div>
                   {req.property_name && (
-                    <p className="text-xs text-gray-500">{req.property_name}</p>
+                    <p className="text-xs text-charcoal-500 dark:text-white/50">
+                      {req.property_name}
+                    </p>
                   )}
-                  <p className="text-xs text-gray-400">{formatDate(req.created_at)}</p>
+                  <p className="text-xs text-charcoal-400 dark:text-white/40">
+                    {formatDate(req.created_at)}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   {req.status === 'open' && (
@@ -388,17 +412,19 @@ export function MaintenanceClient({
       {/* Resolve modal (Pro: capture actual cost) */}
       {resolveId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
-            <h3 className="mb-2 text-base font-bold text-gray-900">
+          <div className="w-full max-w-sm rounded-xl bg-white dark:bg-charcoal-800 p-6 shadow-xl">
+            <h3 className="mb-2 text-base font-bold text-charcoal-900 dark:text-white">
               {t('maintenance.mark_resolved')}
             </h3>
-            <p className="mb-4 text-sm text-gray-600">{t('maintenance.resolve_prompt')}</p>
+            <p className="mb-4 text-sm text-charcoal-600 dark:text-white/60">
+              {t('maintenance.resolve_prompt')}
+            </p>
             <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium text-gray-700">
+              <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                 {t('maintenance.actual_cost')} ({t('common.optional')})
               </label>
-              <div className="flex items-center rounded-lg border border-gray-300 overflow-hidden">
-                <span className="bg-gray-50 px-3 py-2 text-sm text-gray-500 border-r border-gray-300">
+              <div className="flex items-center rounded-lg border border-warm-300 dark:border-white/15 overflow-hidden">
+                <span className="bg-warm-50 dark:bg-charcoal-900 px-3 py-2 text-sm text-charcoal-500 dark:text-white/50 border-r border-warm-300 dark:border-white/15">
                   ฿
                 </span>
                 <input
@@ -419,7 +445,7 @@ export function MaintenanceClient({
                   setResolveId(null);
                   setActualCost('');
                 }}
-                className="flex-1 min-h-[44px] rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="flex-1 min-h-[44px] rounded-lg border border-warm-200 dark:border-white/10 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5"
               >
                 {t('common.cancel')}
               </button>
@@ -439,14 +465,14 @@ export function MaintenanceClient({
       {/* Edit Pro Fields modal */}
       {editProId && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
-          <div className="w-full max-w-md rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl">
-            <h3 className="mb-4 text-base font-bold text-gray-900">
+          <div className="w-full max-w-md rounded-t-2xl bg-white dark:bg-charcoal-800 p-6 shadow-xl sm:rounded-2xl">
+            <h3 className="mb-4 text-base font-bold text-charcoal-900 dark:text-white">
               {t('maintenance.edit_costs')}
             </h3>
             <div className="space-y-4">
               {/* Assign Technician */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                   {t('maintenance.assign_technician')}
                 </label>
                 <input
@@ -454,17 +480,17 @@ export function MaintenanceClient({
                   value={editAssignedTo}
                   onChange={(e) => setEditAssignedTo(e.target.value)}
                   placeholder="e.g. John Smith"
-                  className="w-full min-h-[44px] rounded-lg border border-gray-300 px-3 text-sm text-gray-900 placeholder:text-gray-400"
+                  className="w-full min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/30"
                 />
               </div>
 
               {/* Estimated Cost */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                   {t('maintenance.estimated_cost')}
                 </label>
-                <div className="flex items-center rounded-lg border border-gray-300 overflow-hidden">
-                  <span className="bg-gray-50 px-3 py-2 text-sm text-gray-500 border-r border-gray-300">
+                <div className="flex items-center rounded-lg border border-warm-300 dark:border-white/15 overflow-hidden">
+                  <span className="bg-warm-50 dark:bg-charcoal-900 px-3 py-2 text-sm text-charcoal-500 dark:text-white/50 border-r border-warm-300 dark:border-white/15">
                     ฿
                   </span>
                   <input
@@ -474,21 +500,21 @@ export function MaintenanceClient({
                     value={editEstimatedCost}
                     onChange={(e) => setEditEstimatedCost(e.target.value)}
                     placeholder="0.00"
-                    className="flex-1 min-h-[44px] px-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none"
+                    className="flex-1 min-h-[44px] px-3 text-sm text-charcoal-900 dark:text-white placeholder:text-charcoal-400 dark:placeholder:text-white/30 outline-none"
                   />
                 </div>
               </div>
 
               {/* SLA Deadline */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70">
                   {t('maintenance.sla_deadline')}
                 </label>
                 <input
                   type="datetime-local"
                   value={editSlaDeadline}
                   onChange={(e) => setEditSlaDeadline(e.target.value)}
-                  className="w-full min-h-[44px] rounded-lg border border-gray-300 px-3 text-sm text-gray-900"
+                  className="w-full min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 bg-white dark:bg-charcoal-800 px-3 text-sm text-charcoal-900 dark:text-white"
                 />
                 {editSlaDeadline && new Date(editSlaDeadline) < new Date() && (
                   <p className="mt-1 text-xs text-red-600">{t('maintenance.sla_overdue')}</p>
@@ -500,7 +526,7 @@ export function MaintenanceClient({
               <button
                 type="button"
                 onClick={() => setEditProId(null)}
-                className="flex-1 min-h-[44px] rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="flex-1 min-h-[44px] rounded-lg border border-warm-200 dark:border-white/10 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5"
               >
                 {t('common.cancel')}
               </button>

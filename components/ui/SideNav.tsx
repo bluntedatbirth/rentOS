@@ -32,8 +32,8 @@ function NavLinks({ items, onLinkClick }: { items: SideNavItem[]; onLinkClick?: 
             onClick={onLinkClick}
             className={`relative overflow-hidden flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
               isActive
-                ? 'bg-saffron-50 text-saffron-600'
-                : 'text-charcoal-500 hover:bg-warm-100 hover:text-charcoal-900'
+                ? 'bg-saffron-50 dark:bg-saffron-500/15 text-saffron-600'
+                : 'text-charcoal-500 dark:text-white/50 hover:bg-warm-100 dark:hover:bg-white/10 hover:text-charcoal-900 dark:hover:text-white'
             }`}
           >
             {item.label}
@@ -49,7 +49,7 @@ function NavLinks({ items, onLinkClick }: { items: SideNavItem[]; onLinkClick?: 
 export function SideNav({ items }: SideNavProps) {
   return (
     /* Desktop sidebar — always visible on md+ */
-    <nav className="hidden md:block w-56 shrink-0 border-r border-warm-200 bg-warm-50">
+    <nav className="hidden md:block w-56 shrink-0 border-r border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-charcoal-900">
       <div className="sticky top-0">
         <NavLinks items={items} />
       </div>

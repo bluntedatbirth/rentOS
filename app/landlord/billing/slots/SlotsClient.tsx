@@ -97,12 +97,16 @@ export default function SlotsClient({ initialPurchasedSlots, isPro }: SlotsClien
 
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900">{t('billing.slots_title')}</h1>
-        <p className="mt-2 text-sm text-gray-500">{t('billing.slots_subtitle')}</p>
+        <h1 className="text-2xl font-bold text-charcoal-900 dark:text-white">
+          {t('billing.slots_title')}
+        </h1>
+        <p className="mt-2 text-sm text-charcoal-500 dark:text-white/50">
+          {t('billing.slots_subtitle')}
+        </p>
       </div>
 
       {/* Owned slots display */}
-      <div className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-3 text-center text-sm text-gray-600">
+      <div className="rounded-xl border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-charcoal-900 px-5 py-3 text-center text-sm text-charcoal-600 dark:text-white/60">
         {t('billing.slots_owned').replace('{count}', String(purchasedSlots))}
       </div>
 
@@ -114,19 +118,23 @@ export default function SlotsClient({ initialPurchasedSlots, isPro }: SlotsClien
           return (
             <div
               key={pack.packIndex}
-              className="relative flex flex-col items-center rounded-2xl border-2 border-warm-200 bg-warm-50 p-6 shadow-sm"
+              className="relative flex flex-col items-center rounded-2xl border-2 border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-charcoal-800 p-6 shadow-sm"
             >
               {/* SIM badge — visible only when NEXT_PUBLIC_PAYMENTS_SIMULATED=true */}
               {isSimulated && (
-                <span className="absolute right-2 top-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+                <span className="absolute right-2 top-2 rounded-full bg-amber-100 dark:bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-400">
                   SIM
                 </span>
               )}
-              <p className="text-base font-semibold text-gray-900">{t(nameKey)}</p>
-              <p className="mt-2 text-2xl font-extrabold text-charcoal-900">
+              <p className="text-base font-semibold text-charcoal-900 dark:text-white">
+                {t(nameKey)}
+              </p>
+              <p className="mt-2 text-2xl font-extrabold text-charcoal-900 dark:text-white">
                 {t('billing.slots_pack_price').replace('{price}', String(pack.thb))}
               </p>
-              <p className="mt-1 text-xs text-gray-400">{t('billing.slots_subtitle')}</p>
+              <p className="mt-1 text-xs text-charcoal-400 dark:text-white/40">
+                {t('billing.slots_subtitle')}
+              </p>
               <button
                 type="button"
                 disabled={isLoading}

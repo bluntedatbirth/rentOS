@@ -24,6 +24,28 @@ export interface StructuredClause {
   penalty_description: string | null;
 }
 
+export interface TenantBill {
+  id: string;
+  tenant_id: string;
+  name: string;
+  amount: number;
+  due_day: number;
+  is_recurring: boolean;
+  category: 'rent' | 'electric' | 'water' | 'internet' | 'phone' | 'insurance' | 'other';
+  status: 'active' | 'paused' | 'deleted';
+  created_at: string;
+}
+
+export interface TenantBillPayment {
+  id: string;
+  bill_id: string;
+  due_date: string;
+  status: 'pending' | 'paid' | 'overdue';
+  paid_date: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -344,6 +366,10 @@ export interface Database {
           confirmation_date: string | null;
           confirmed_by: string | null;
           created_at: string;
+          claimed_by: string | null;
+          claimed_at: string | null;
+          claimed_note: string | null;
+          penalty_notified_at: string | null;
         };
         Insert: {
           id?: string;
@@ -358,6 +384,10 @@ export interface Database {
           confirmation_date?: string | null;
           confirmed_by?: string | null;
           created_at?: string;
+          claimed_by?: string | null;
+          claimed_at?: string | null;
+          claimed_note?: string | null;
+          penalty_notified_at?: string | null;
         };
         Update: {
           id?: string;
@@ -372,6 +402,10 @@ export interface Database {
           confirmation_date?: string | null;
           confirmed_by?: string | null;
           created_at?: string;
+          claimed_by?: string | null;
+          claimed_at?: string | null;
+          claimed_note?: string | null;
+          penalty_notified_at?: string | null;
         };
         Relationships: [
           {
@@ -379,6 +413,88 @@ export interface Database {
             columns: ['contract_id'];
             isOneToOne: false;
             referencedRelation: 'contracts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      tenant_bills: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          name: string;
+          amount: number;
+          due_day: number;
+          is_recurring: boolean;
+          category: 'rent' | 'electric' | 'water' | 'internet' | 'phone' | 'insurance' | 'other';
+          status: 'active' | 'paused' | 'deleted';
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          tenant_id: string;
+          name: string;
+          amount: number;
+          due_day?: number;
+          is_recurring?: boolean;
+          category?: 'rent' | 'electric' | 'water' | 'internet' | 'phone' | 'insurance' | 'other';
+          status?: 'active' | 'paused' | 'deleted';
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          tenant_id?: string;
+          name?: string;
+          amount?: number;
+          due_day?: number;
+          is_recurring?: boolean;
+          category?: 'rent' | 'electric' | 'water' | 'internet' | 'phone' | 'insurance' | 'other';
+          status?: 'active' | 'paused' | 'deleted';
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'tenant_bills_tenant_id_fkey';
+            columns: ['tenant_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      tenant_bill_payments: {
+        Row: {
+          id: string;
+          bill_id: string;
+          due_date: string;
+          status: 'pending' | 'paid' | 'overdue';
+          paid_date: string | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          bill_id: string;
+          due_date: string;
+          status?: 'pending' | 'paid' | 'overdue';
+          paid_date?: string | null;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          bill_id?: string;
+          due_date?: string;
+          status?: 'pending' | 'paid' | 'overdue';
+          paid_date?: string | null;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'tenant_bill_payments_bill_id_fkey';
+            columns: ['bill_id'];
+            isOneToOne: false;
+            referencedRelation: 'tenant_bills';
             referencedColumns: ['id'];
           },
         ];

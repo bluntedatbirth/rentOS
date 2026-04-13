@@ -13,13 +13,13 @@ export function LandingFooter({ t }: LandingFooterProps) {
           {t('disclaimer.footer_text')}{' '}
           <Link
             href="/legal#privacy"
-            className="text-charcoal-500 dark:text-white/50 underline hover:text-saffron-500 dark:hover:text-white"
+            className="text-charcoal-500 dark:text-white/50 underline hover:text-saffron-500 dark:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron-500 focus-visible:ring-offset-2 rounded"
           >
             {t('disclaimer.privacy_link')}
           </Link>{' '}
           <Link
             href="/legal#terms"
-            className="text-charcoal-500 dark:text-white/50 underline hover:text-saffron-500 dark:hover:text-white"
+            className="text-charcoal-500 dark:text-white/50 underline hover:text-saffron-500 dark:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron-500 focus-visible:ring-offset-2 rounded"
           >
             {t('disclaimer.terms_link')}
           </Link>
@@ -33,25 +33,25 @@ export function LandingFooter({ t }: LandingFooterProps) {
           <div className="flex gap-6 flex-wrap">
             <a
               href="#faq"
-              className="text-xs text-charcoal-300 dark:text-white/50 no-underline hover:text-saffron-500 dark:hover:text-white transition-colors"
+              className="text-xs text-charcoal-300 dark:text-white/50 no-underline hover:text-saffron-500 dark:hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron-500 focus-visible:ring-offset-2 rounded"
             >
               {t('footer.faq_link')}
             </a>
             <Link
               href="/login"
-              className="text-xs text-charcoal-300 dark:text-white/50 no-underline hover:text-saffron-500 dark:hover:text-white transition-colors"
+              className="text-xs text-charcoal-300 dark:text-white/50 no-underline hover:text-saffron-500 dark:hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron-500 focus-visible:ring-offset-2 rounded"
             >
               {t('landing.nav_login')}
             </Link>
             <Link
               href="/signup"
-              className="text-xs text-charcoal-300 dark:text-white/50 no-underline hover:text-saffron-500 dark:hover:text-white transition-colors"
+              className="text-xs text-charcoal-300 dark:text-white/50 no-underline hover:text-saffron-500 dark:hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron-500 focus-visible:ring-offset-2 rounded"
             >
               {t('landing.nav_cta')}
             </Link>
             <a
               href="mailto:hello@rentos.homes"
-              className="text-xs text-charcoal-300 dark:text-white/50 no-underline hover:text-saffron-500 dark:hover:text-white transition-colors"
+              className="text-xs text-charcoal-300 dark:text-white/50 no-underline hover:text-saffron-500 dark:hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-saffron-500 focus-visible:ring-offset-2 rounded"
             >
               hello@rentos.homes
             </a>

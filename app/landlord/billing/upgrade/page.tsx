@@ -62,22 +62,24 @@ export default function UpgradePage() {
     <div className="mx-auto max-w-4xl space-y-6 pb-12">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+        <h1 className="text-2xl font-bold text-charcoal-900 dark:text-white sm:text-3xl">
           {t('billing.upgrade_title')}
         </h1>
-        <p className="mt-2 text-sm text-gray-500">{t('billing.upgrade_subtitle')}</p>
+        <p className="mt-2 text-sm text-charcoal-500 dark:text-white/50">
+          {t('billing.upgrade_subtitle')}
+        </p>
       </div>
 
       {/* Monthly / Yearly toggle */}
       <div className="flex justify-center">
-        <div className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 p-1">
+        <div className="inline-flex items-center rounded-full border border-warm-200 dark:border-white/10 bg-warm-100 dark:bg-white/5 p-1">
           <button
             type="button"
             onClick={() => setBilling('monthly')}
             className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${
               billing === 'monthly'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white dark:bg-charcoal-800 text-charcoal-900 dark:text-white shadow-sm'
+                : 'text-charcoal-500 dark:text-white/50 hover:text-charcoal-700 dark:hover:text-white/70'
             }`}
           >
             {t('billing.monthly')}
@@ -87,8 +89,8 @@ export default function UpgradePage() {
             onClick={() => setBilling('yearly')}
             className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors ${
               billing === 'yearly'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white dark:bg-charcoal-800 text-charcoal-900 dark:text-white shadow-sm'
+                : 'text-charcoal-500 dark:text-white/50 hover:text-charcoal-700 dark:hover:text-white/70'
             }`}
           >
             {t('billing.yearly')}
@@ -103,29 +105,40 @@ export default function UpgradePage() {
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         {/* Free card */}
         <div
-          className={`relative rounded-2xl border-2 bg-white p-6 shadow-sm ${
-            tier === 'free' ? 'border-gray-400' : 'border-gray-200'
+          className={`relative rounded-2xl border-2 bg-white dark:bg-charcoal-800 p-6 shadow-sm ${
+            tier === 'free'
+              ? 'border-warm-300 dark:border-white/15'
+              : 'border-warm-200 dark:border-white/10'
           }`}
         >
           {tier === 'free' && (
-            <span className="absolute -top-3 left-5 rounded-full bg-gray-700 px-3 py-1 text-xs font-semibold text-white">
+            <span className="absolute -top-3 left-5 rounded-full bg-charcoal-700 dark:bg-charcoal-600 px-3 py-1 text-xs font-semibold text-white">
               {t('billing.current_plan_badge')}
             </span>
           )}
-          <h2 className="text-xl font-bold text-gray-900">{t('billing.free_plan')}</h2>
+          <h2 className="text-xl font-bold text-charcoal-900 dark:text-white">
+            {t('billing.free_plan')}
+          </h2>
           <div className="mt-2 flex items-baseline gap-1">
-            <span className="text-3xl font-extrabold text-gray-900">{t('billing.free_price')}</span>
-            <span className="text-sm text-gray-500">{t('billing.free_price_sub')}</span>
+            <span className="text-3xl font-extrabold text-charcoal-900 dark:text-white">
+              {t('billing.free_price')}
+            </span>
+            <span className="text-sm text-charcoal-500 dark:text-white/50">
+              {t('billing.free_price_sub')}
+            </span>
           </div>
 
           <ul className="mt-5 space-y-2.5">
             {FREE_FEATURES.map((key) => (
-              <li key={key} className="flex items-start gap-2 text-sm text-gray-700">
+              <li
+                key={key}
+                className="flex items-start gap-2 text-sm text-charcoal-700 dark:text-white/70"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
-                  className="mt-0.5 h-4 w-4 shrink-0 text-gray-400"
+                  className="mt-0.5 h-4 w-4 shrink-0 text-charcoal-400 dark:text-white/40"
                 >
                   <path
                     fillRule="evenodd"
@@ -140,13 +153,13 @@ export default function UpgradePage() {
 
           <div className="mt-6">
             {tier === 'free' ? (
-              <div className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2.5 text-center text-sm font-medium text-gray-500">
+              <div className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2.5 text-center text-sm font-medium text-charcoal-500 dark:text-white/50">
                 {t('billing.current_plan')}
               </div>
             ) : (
               <Link
                 href="/landlord/billing"
-                className="flex min-h-[44px] items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="flex min-h-[44px] items-center justify-center rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-50 dark:hover:bg-white/5"
               >
                 {t('billing.change_plan')}
               </Link>
@@ -156,7 +169,7 @@ export default function UpgradePage() {
 
         {/* Pro card */}
         <div
-          className={`relative rounded-2xl border-2 bg-white p-6 shadow-sm ${
+          className={`relative rounded-2xl border-2 bg-white dark:bg-charcoal-800 p-6 shadow-sm ${
             tier === 'pro' ? 'border-sage-500' : 'border-sage-400'
           }`}
         >
@@ -173,12 +186,14 @@ export default function UpgradePage() {
             </div>
           </div>
 
-          <h2 className="text-xl font-bold text-gray-900">{t('billing.pro_plan')}</h2>
+          <h2 className="text-xl font-bold text-charcoal-900 dark:text-white">
+            {t('billing.pro_plan')}
+          </h2>
           <div className="mt-2 flex items-baseline gap-1">
             <span className="text-3xl font-extrabold text-sage-700">
               {billing === 'monthly' ? t('billing.monthly_price') : t('billing.yearly_price')}
             </span>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-charcoal-500 dark:text-white/50">
               {billing === 'monthly'
                 ? t('billing.monthly_price_sub')
                 : t('billing.yearly_price_sub')}
@@ -190,7 +205,10 @@ export default function UpgradePage() {
 
           <ul className="mt-5 space-y-2.5">
             {PRO_FEATURES.map((key) => (
-              <li key={key} className="flex items-start gap-2 text-sm text-gray-700">
+              <li
+                key={key}
+                className="flex items-start gap-2 text-sm text-charcoal-700 dark:text-white/70"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
@@ -229,7 +247,9 @@ export default function UpgradePage() {
 
       {error && <p className="text-center text-sm text-red-600">{error}</p>}
 
-      <p className="text-center text-xs text-gray-400">{t('billing.payment_providers')}</p>
+      <p className="text-center text-xs text-charcoal-400 dark:text-white/40">
+        {t('billing.payment_providers')}
+      </p>
     </div>
   );
 }
