@@ -4,8 +4,6 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { Database } from '@/lib/supabase/types';
-import { sendEmail } from '@/lib/email/send';
-import { welcomeOauthTemplate } from '@/lib/email/templates/welcomeOauth';
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
@@ -139,16 +137,7 @@ export async function GET(request: NextRequest) {
           console.error('[callback] profile upsert failed', upsertError);
         }
 
-        // Fresh OAuth signup → fire welcome email (non-blocking)
-        const provider = session.user.app_metadata.provider;
-        if (provider && provider !== 'email') {
-          const loginUrl = `${requestUrl.origin}/login`;
-          void sendEmail({
-            to: session.user.email!,
-            kind: 'welcome_oauth',
-            ...welcomeOauthTemplate({ fullName, role: resolvedRole, dashboardUrl: loginUrl }),
-          });
-        }
+        // Welcome email removed — not needed during beta
 
         // pair_code resolution: query param → cookie → metadata
         const queryPair = requestUrl.searchParams.get('pair');
