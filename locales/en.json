@@ -17,7 +17,7 @@
   "auth.complete_profile_description": "One last step — choose how you'll use RentOS.",
   "auth.role": "I want to...",
   "auth.role_landlord": "Manage my rentals",
-  "auth.role_tenant": "Find or manage my lease",
+  "auth.role_tenant": "Join my rental",
   "auth.full_name": "Full Name",
   "auth.full_name_placeholder": "Your full name",
   "auth.phone": "Phone Number",

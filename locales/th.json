@@ -17,7 +17,7 @@
   "auth.complete_profile_description": "อีกขั้นตอนเดียว — เลือกวิธีใช้งาน RentOS ของคุณ",
   "auth.role": "ฉันต้องการ...",
   "auth.role_landlord": "จัดการที่พักให้เช่า",
-  "auth.role_tenant": "จัดการสัญญาเช่าของฉัน",
+  "auth.role_tenant": "เข้าร่วมห้องเช่า",
   "auth.full_name": "ชื่อ-นามสกุล",
   "auth.full_name_placeholder": "ชื่อเต็มของคุณ",
   "auth.phone": "เบอร์โทรศัพท์",
