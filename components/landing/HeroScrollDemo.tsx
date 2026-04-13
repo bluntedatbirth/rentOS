@@ -123,7 +123,7 @@ function AppMockup() {
 
       {/* Bottom nav bar — matches landlord nav tabs */}
       <div className="shrink-0 bg-white border-t border-warm-200 flex items-center justify-around px-2 py-2">
-        <NavTab icon={<Home className="w-4 h-4" />} label="Properties" active />
+        <NavTab icon={<Home className="w-4 h-4" />} label="Dashboard" active />
         <NavTab icon={<Settings className="w-4 h-4" />} label="Settings" />
       </div>
     </div>
