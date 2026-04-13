@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { AnimatedSection } from './AnimatedSection';
-import { BackgroundPaths } from '@/components/ui/background-paths';
 
 interface CTABandProps {
   t: (key: string) => string;
@@ -9,7 +8,7 @@ interface CTABandProps {
 
 export function CTABand({ t }: CTABandProps) {
   return (
-    <BackgroundPaths className="bg-charcoal-900 py-20 px-6 min-h-[400px]">
+    <section className="bg-charcoal-900 py-20 px-6 min-h-[400px]">
       <AnimatedSection className="max-w-[500px] mx-auto space-y-6 text-center">
         <h2
           className="font-[var(--font-manrope)] text-3xl md:text-4xl font-bold text-white"
@@ -28,6 +27,6 @@ export function CTABand({ t }: CTABandProps) {
           </Link>
         </div>
       </AnimatedSection>
-    </BackgroundPaths>
+    </section>
   );
 }
