@@ -252,7 +252,7 @@ function SignupPageInner() {
                   htmlFor="fullName"
                   className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                 >
-                  {t('auth.full_name')}
+                  {t('auth.full_name')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="fullName"
@@ -290,7 +290,7 @@ function SignupPageInner() {
                   htmlFor="email"
                   className="mb-1 block text-sm font-medium text-charcoal-700 dark:text-white/70"
                 >
-                  {t('auth.email')}
+                  {t('auth.email')} <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="email"
@@ -387,7 +387,8 @@ function SignupPageInner() {
                     className="text-saffron-600 dark:text-saffron-400 underline hover:text-saffron-700 dark:hover:text-saffron-300"
                   >
                     {t('auth.consent_privacy_link')}
-                  </a>
+                  </a>{' '}
+                  <span className="text-red-500">*</span>
                 </span>
               </label>
 

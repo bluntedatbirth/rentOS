@@ -185,7 +185,46 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!profile) {
-    // No profile yet — redirect to signup
+    // Auto-create missing profile from user metadata (safety net for failed callback)
+    const metadata = user.user_metadata ?? {};
+    const resolvedRole = metadata.role === 'tenant' ? 'tenant' : 'landlord';
+    const fullName =
+      typeof metadata.full_name === 'string'
+        ? metadata.full_name
+        : typeof metadata.name === 'string'
+          ? metadata.name
+          : null;
+
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (serviceKey && supabaseUrl) {
+      const admin = createClient(supabaseUrl, serviceKey);
+      const { error: upsertError } = await admin.from('profiles').upsert(
+        {
+          id: user.id,
+          role: resolvedRole,
+          full_name: fullName,
+          phone: (metadata.phone as string) || null,
+          language: 'th',
+          tier: 'pro',
+          tier_expires_at: oneYearFromNow.toISOString(),
+          founding_member: true,
+        },
+        { onConflict: 'id', ignoreDuplicates: true }
+      );
+
+      if (!upsertError) {
+        // Profile created — redirect to dashboard
+        const dashboardUrl =
+          resolvedRole === 'landlord' ? '/landlord/dashboard' : '/tenant/dashboard';
+        return NextResponse.redirect(new URL(dashboardUrl, request.url));
+      }
+    }
+
+    // Fallback: still redirect to signup if profile creation failed
     if (process.env.NODE_ENV === 'development') {
       console.log('[middleware]', {
         pathname,

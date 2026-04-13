@@ -155,14 +155,8 @@ export function useAuth() {
             data: metadata,
           },
         });
-        if (!error) {
-          // Fire-and-forget: send our own confirmation email via Resend
-          void fetch('/api/auth/magic-link', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, metadata }),
-          });
-        }
+        // Supabase already sends its own confirmation email for password signups —
+        // do NOT fire a magic-link here or the user receives two emails.
         return { error };
       }
       // Passwordless: POST to our own magic-link endpoint
