@@ -13,15 +13,15 @@ interface HeroScrollDemoProps {
 
 export function HeroScrollDemo({ labels }: HeroScrollDemoProps) {
   return (
-    <section className="bg-warm-50">
+    <section className="bg-warm-50 dark:bg-charcoal-900">
       <ContainerScroll
         titleComponent={
           <div className="space-y-4">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-saffron-500/10 px-4 py-1.5 text-sm font-medium text-saffron-700">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-saffron-500/10 dark:bg-saffron-500/20 px-4 py-1.5 text-sm font-medium text-saffron-700 dark:text-saffron-300">
               {labels.badge}
             </span>
             <h2
-              className="font-[var(--font-manrope)] text-3xl md:text-5xl font-light text-charcoal-900"
+              className="font-[var(--font-manrope)] text-3xl md:text-5xl font-light text-charcoal-900 dark:text-white"
               style={{ letterSpacing: '-0.02em' }}
             >
               {labels.headline.split('\n').map((line, i) => (
@@ -31,7 +31,7 @@ export function HeroScrollDemo({ labels }: HeroScrollDemoProps) {
                 </span>
               ))}
             </h2>
-            <p className="text-charcoal-600 text-base md:text-lg max-w-lg mx-auto">
+            <p className="text-charcoal-600 dark:text-white/70 text-base md:text-lg max-w-lg mx-auto">
               {labels.subheadline}
             </p>
           </div>

@@ -11,6 +11,7 @@ import type { FAQCategory } from '@/components/landing/FAQAccordion';
 import { CTABand } from '@/components/landing/CTABand';
 import { LandingFooter } from '@/components/landing/LandingFooter';
 import { AuroraBackground } from '@/components/ui/aurora-background';
+import { BackgroundPaths } from '@/components/ui/background-paths';
 
 // ─── Landing Page — "People First" (Variant A: Minimal/Editorial)
 // Design: Stitch "Editorial Humanism" system
@@ -120,14 +121,16 @@ export default function LandingPage() {
         }}
       />
       <AudiencePanels t={t} landlordItems={landlordItems} tenantItems={tenantItems} />
-      <FeaturesGrid t={t} features={features} />
-      <PricingCards t={t} freePlanItems={freePlanItems} />
-      <FAQAccordion
-        title={t('faq.title')}
-        subtitle={t('faq.subtitle')}
-        categories={faqCategories}
-      />
-      <CTABand t={t} />
+      <BackgroundPaths overlay>
+        <FeaturesGrid t={t} features={features} />
+        <PricingCards t={t} freePlanItems={freePlanItems} />
+        <FAQAccordion
+          title={t('faq.title')}
+          subtitle={t('faq.subtitle')}
+          categories={faqCategories}
+        />
+        <CTABand t={t} />
+      </BackgroundPaths>
       <LandingFooter t={t} />
     </div>
   );

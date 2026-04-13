@@ -32,7 +32,7 @@ export function FeaturesGrid({ t, features }: FeaturesGridProps) {
           </p>
         </AnimatedSection>
 
-        <div className="grid md:grid-cols-2 gap-5">
+        <div className="grid md:grid-cols-2 gap-6">
           {features.map(({ titleKey, descKey, color }, i) => {
             const Icon = FEATURE_ICONS[i] || FileText;
             const palette = color === '#f0a500' ? 'saffron' : 'sage';
@@ -41,10 +41,10 @@ export function FeaturesGrid({ t, features }: FeaturesGridProps) {
               <AnimatedSection
                 key={titleKey}
                 delay={i * 0.06}
-                className="bg-white dark:bg-charcoal-800 rounded-sm p-7 border border-charcoal-800/[0.05] dark:border-white/10"
+                className="backdrop-blur-[14px] bg-gradient-to-br from-charcoal-800/[0.03] to-white/70 dark:from-white/[0.06] dark:to-white/[0.04] border border-charcoal-800/10 dark:border-white/10 rounded-2xl shadow-md dark:shadow-black/20 p-7"
               >
                 <div
-                  className={`w-12 h-12 rounded-sm flex items-center justify-center mb-4 ${
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
                     palette === 'saffron' ? 'bg-saffron-500/12' : 'bg-sage-500/12'
                   }`}
                 >

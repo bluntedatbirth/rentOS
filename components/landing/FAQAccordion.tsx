@@ -37,10 +37,10 @@ export function FAQAccordion({ title, subtitle, categories }: Props) {
   };
 
   return (
-    <section id="faq" className="bg-saffron-500/[0.04] dark:bg-charcoal-900 py-20 px-6">
+    <section id="faq" className="bg-warm-50 dark:bg-charcoal-900 py-20 px-6">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-4">
+        <div className="text-center mb-10">
           <h2 className="font-[var(--font-manrope)] text-3xl md:text-4xl font-bold text-charcoal-800 dark:text-white mb-2 tracking-tight">
             {title}
           </h2>
@@ -59,10 +59,10 @@ export function FAQAccordion({ title, subtitle, categories }: Props) {
                 <div
                   key={item.id}
                   onClick={() => toggle(item.id)}
-                  className={`bg-white dark:bg-charcoal-800 rounded-lg px-5 py-4 mb-3 cursor-pointer transition-colors duration-150 ${
+                  className={`backdrop-blur-[14px] bg-gradient-to-br from-charcoal-800/[0.03] to-white/70 dark:from-white/[0.06] dark:to-white/[0.04] rounded-2xl px-5 py-4 mb-3 cursor-pointer transition-all duration-200 ${
                     isOpen
-                      ? 'border border-saffron-500/35 border-l-4 border-l-saffron-500'
-                      : 'border border-charcoal-800/10 dark:border-white/10'
+                      ? 'border border-saffron-500/40 shadow-md dark:shadow-black/20 border-l-4 border-l-saffron-500'
+                      : 'border border-charcoal-800/10 dark:border-white/10 shadow-sm'
                   }`}
                 >
                   <div className="flex justify-between items-center gap-4">

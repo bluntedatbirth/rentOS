@@ -22,7 +22,7 @@ interface AudiencePanelsProps {
 
 export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanelsProps) {
   return (
-    <section className="py-20 px-6 bg-saffron-500/[0.04]">
+    <section className="py-24 px-6 bg-saffron-500/[0.04] dark:bg-charcoal-800/50">
       <div className="max-w-[1100px] mx-auto">
         {/* Section header */}
         <AnimatedSection className="text-center mb-14">
@@ -42,9 +42,9 @@ export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanels
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Landlords panel — dark */}
-          <AnimatedSection className="bg-charcoal-800 rounded-sm p-10">
+          <AnimatedSection className="backdrop-blur-[14px] bg-gradient-to-br from-charcoal-800/95 to-charcoal-700/80 dark:from-charcoal-700/60 dark:to-charcoal-800/80 border border-white/[0.08] rounded-2xl shadow-lg dark:shadow-black/30 p-10">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-11 h-11 rounded-sm bg-saffron-500 flex items-center justify-center">
+              <div className="w-11 h-11 rounded-xl bg-saffron-500 flex items-center justify-center">
                 <Building2 className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -73,7 +73,7 @@ export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanels
             </div>
 
             <div className="pt-6 border-t border-warm-50/10 space-y-4">
-              <div className="bg-saffron-500/15 border border-saffron-500/30 rounded-sm px-4 py-3">
+              <div className="bg-saffron-500/15 border border-saffron-500/30 rounded-xl px-4 py-3">
                 <p className="text-sm font-semibold text-saffron-500">
                   {t('landing.landlord_free_badge')}
                 </p>
@@ -81,7 +81,7 @@ export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanels
               <p className="text-xs text-warm-50/40">{t('landing.landlord_cta_hint')}</p>
               <Link
                 href="/signup"
-                className="flex items-center justify-center gap-2 bg-gradient-to-r from-saffron-700 to-saffron-500 text-white py-3 rounded-sm text-sm font-semibold no-underline hover:brightness-110 transition"
+                className="flex items-center justify-center gap-2 bg-gradient-to-r from-saffron-700 to-saffron-500 text-white py-3 rounded-xl text-sm font-semibold no-underline hover:brightness-110 transition"
               >
                 {t('landing.landlord_cta')}
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -92,10 +92,10 @@ export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanels
           {/* Tenants panel — light */}
           <AnimatedSection
             delay={0.1}
-            className="bg-white dark:bg-charcoal-800 rounded-sm p-10 border border-charcoal-800/[0.06] dark:border-white/10"
+            className="backdrop-blur-[14px] bg-gradient-to-br from-charcoal-800/[0.03] to-white/70 dark:from-white/[0.06] dark:to-white/[0.04] border border-charcoal-800/10 dark:border-white/10 rounded-2xl shadow-md dark:shadow-black/20 p-10"
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-11 h-11 rounded-sm bg-sage-500/15 flex items-center justify-center">
+              <div className="w-11 h-11 rounded-xl bg-sage-500/15 flex items-center justify-center">
                 <Shield className="w-5 h-5 text-sage-500" />
               </div>
               <div>
@@ -124,14 +124,14 @@ export function AudiencePanels({ t, landlordItems, tenantItems }: AudiencePanels
             </div>
 
             <div className="pt-6 border-t border-charcoal-800/[0.06] dark:border-white/10 space-y-4">
-              <div className="bg-sage-500/[0.08] border border-sage-500/20 rounded-sm px-4 py-3">
+              <div className="bg-sage-500/[0.08] border border-sage-500/20 rounded-xl px-4 py-3">
                 <p className="text-sm font-semibold text-sage-500">
                   {t('landing.tenant_free_badge')}
                 </p>
               </div>
               <Link
                 href="/signup"
-                className="flex items-center justify-center gap-2 border-2 border-charcoal-800 dark:border-white/30 text-charcoal-800 dark:text-white py-3 rounded-sm text-sm font-semibold no-underline hover:bg-charcoal-800 dark:hover:bg-white/10 hover:text-warm-50 transition-colors"
+                className="flex items-center justify-center gap-2 border-2 border-charcoal-800 dark:border-white/30 text-charcoal-800 dark:text-white py-3 rounded-xl text-sm font-semibold no-underline hover:bg-charcoal-800 dark:hover:bg-white/10 hover:text-warm-50 transition-colors"
               >
                 {t('landing.tenant_cta')}
                 <ArrowRight className="w-3.5 h-3.5" />

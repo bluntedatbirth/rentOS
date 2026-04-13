@@ -26,7 +26,7 @@ const CheckIcon = ({ className }: { className?: string }) => (
 
 export function PricingCards({ t, freePlanItems }: PricingCardsProps) {
   return (
-    <section id="pricing" className="py-20 px-6 bg-warm-50 dark:bg-charcoal-900">
+    <section id="pricing" className="py-20 px-6 bg-saffron-500/[0.04] dark:bg-charcoal-800/50">
       <div className="max-w-[960px] mx-auto">
         <AnimatedSection className="text-center mb-14">
           <p className="text-xs font-semibold tracking-[0.1em] uppercase text-saffron-500 mb-3 font-[var(--font-manrope)]">
