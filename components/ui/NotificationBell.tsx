@@ -58,6 +58,16 @@ function timeAgo(dateStr: string, t: (key: string) => string): string {
   return t('notifications.time_ago_days').replace('{}', String(diffDays));
 }
 
+interface AIUsageSnapshot {
+  ocr: { used: number; limit: number; exhausted: boolean };
+  analyze: { used: number; limit: number; exhausted: boolean };
+  resetsInSeconds: number;
+}
+
+function formatResetHours(resetsInSeconds: number): number {
+  return Math.max(1, Math.ceil(resetsInSeconds / 3600));
+}
+
 export function NotificationBell({ role, parsing }: NotificationBellProps) {
   const { user } = useAuth();
   const { t, locale } = useI18n();
@@ -66,6 +76,7 @@ export function NotificationBell({ role, parsing }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingList, setLoadingList] = useState(false);
+  const [aiUsage, setAiUsage] = useState<AIUsageSnapshot | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const fetchCount = useCallback(async () => {
@@ -110,6 +121,46 @@ export function NotificationBell({ role, parsing }: NotificationBellProps) {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [user, fetchCount]);
+
+  // Poll AI usage — drives the cooldown indicator. Landlord-only; tenants
+  // don't run AI ops. Once a limit is hit, check frequently enough that the
+  // user sees the state flip back when midnight UTC rolls over.
+  const fetchAiUsage = useCallback(async () => {
+    if (role !== 'landlord') return;
+    if (document.visibilityState !== 'visible') return;
+    try {
+      const res = await fetch('/api/ai/usage');
+      if (res.ok) {
+        const data = (await res.json()) as AIUsageSnapshot;
+        setAiUsage(data);
+      }
+    } catch {
+      // Silent — indicator just won't show
+    }
+  }, [role]);
+
+  useEffect(() => {
+    if (!user || role !== 'landlord') return;
+    fetchAiUsage();
+    const interval = setInterval(fetchAiUsage, 120000);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') fetchAiUsage();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [user, role, fetchAiUsage]);
+
+  // Refresh usage the moment the user opens the bell — they've just done
+  // something that might have tripped a limit.
+  useEffect(() => {
+    if (open) void fetchAiUsage();
+  }, [open, fetchAiUsage]);
+
+  const cooldownActive =
+    !parsing && !!aiUsage && (aiUsage.ocr.exhausted || aiUsage.analyze.exhausted);
 
   // Load the full list lazily on open
   useEffect(() => {
@@ -200,6 +251,14 @@ export function NotificationBell({ role, parsing }: NotificationBellProps) {
           >
             {Math.round(parsing.progress)}%
           </span>
+        ) : cooldownActive ? (
+          <span
+            className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-charcoal-800"
+            title={t('ai_cooldown.badge_title')}
+            aria-label={t('ai_cooldown.badge_title')}
+          >
+            ⏳
+          </span>
         ) : (
           count > 0 && (
             <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
@@ -229,6 +288,33 @@ export function NotificationBell({ role, parsing }: NotificationBellProps) {
               </button>
             )}
           </div>
+
+          {cooldownActive && aiUsage && (
+            <div className="border-b border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-4 py-3">
+              <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+                {t('ai_cooldown.title')}
+              </p>
+              <ul className="mt-1 space-y-0.5 text-[11px] text-amber-800 dark:text-amber-200/80">
+                {aiUsage.ocr.exhausted && (
+                  <li>
+                    • {t('ai_cooldown.ocr_hit').replace('{limit}', String(aiUsage.ocr.limit))}
+                  </li>
+                )}
+                {aiUsage.analyze.exhausted && (
+                  <li>
+                    •{' '}
+                    {t('ai_cooldown.analyze_hit').replace('{limit}', String(aiUsage.analyze.limit))}
+                  </li>
+                )}
+              </ul>
+              <p className="mt-1 text-[11px] text-amber-700 dark:text-amber-300/70">
+                {t('ai_cooldown.resets_in').replace(
+                  '{hours}',
+                  String(formatResetHours(aiUsage.resetsInSeconds))
+                )}
+              </p>
+            </div>
+          )}
 
           <div className="flex-1 overflow-y-auto">
             {loadingList && (

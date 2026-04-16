@@ -40,12 +40,39 @@ function oneHourAgoUTC(): string {
   return new Date(Date.now() - 3600 * 1000).toISOString();
 }
 
+/** Comma-separated list of user IDs OR emails that bypass all rate limits (dev/test accounts). */
+const BYPASS_LIST = (process.env.RATE_LIMIT_BYPASS ?? '')
+  .split(',')
+  .map((s) => s.trim().toLowerCase())
+  .filter(Boolean);
+
+/** Check if a user (by id or email) is on the bypass list. */
+export function isRateLimitBypassed(userIdOrEmail: string): boolean {
+  return BYPASS_LIST.includes(userIdOrEmail.toLowerCase());
+}
+
+export interface RateLimitOptions {
+  /**
+   * If true, only check the limits — do NOT increment the counter.
+   * Caller is expected to call `incrementRateLimit()` after the operation
+   * succeeds. Used for long-running AI operations where we only want to
+   * count successful completions against the limit.
+   */
+  skipIncrement?: boolean;
+}
+
 export async function checkRateLimit(
   userId: string,
   endpoint: string,
   maxPerHour: number,
-  maxPerDay: number
+  maxPerDay: number,
+  options: RateLimitOptions = {}
 ): Promise<RateLimitResult> {
+  // Dev/test accounts bypass all rate limits
+  if (BYPASS_LIST.includes(userId.toLowerCase())) {
+    return { allowed: true };
+  }
+
   const supabase = createServiceRoleClient();
   const retrySeconds = secondsUntilMidnightUTC();
   const todayStart = todayStartUTC();
@@ -115,17 +142,12 @@ export async function checkRateLimit(
       }
     }
 
-    // 5. Atomically increment the current hour's window via upsert.
-    // onConflict targets the unique index on (user_id, endpoint, window_start).
-    const { error: upsertError } = await supabase
-      .from('ai_rate_limits')
-      .upsert(
-        { user_id: userId, endpoint, window_start: hourStart, count: 1 },
-        { onConflict: 'user_id,endpoint,window_start', ignoreDuplicates: false }
-      );
-
-    if (upsertError) {
-      console.error('[rateLimit] upsert failed:', upsertError.message);
+    // 5. Increment the current hour's window — unless caller opted out
+    // (skipIncrement is used for long-running AI ops that only want to
+    // count SUCCESSFUL completions; the caller invokes incrementRateLimit
+    // after the operation succeeds).
+    if (!options.skipIncrement) {
+      await incrementWindow(supabase, userId, endpoint, hourStart);
     }
 
     return { allowed: true };
@@ -137,6 +159,92 @@ export async function checkRateLimit(
       err
     );
     return { allowed: false, reason: 'global', retryAfterSeconds: 60 };
+  }
+}
+
+/**
+ * Read-modify-write a single (user, endpoint, window_start) row, incrementing
+ * its `count` by 1. Not perfectly atomic under concurrent callers — acceptable
+ * for our workload (one heavy AI op per user at a time). Race results in at
+ * worst an undercount, which errs in the user's favor.
+ */
+async function incrementWindow(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  userId: string,
+  endpoint: string,
+  hourStart: string
+): Promise<void> {
+  try {
+    const { data: existing } = await supabase
+      .from('ai_rate_limits')
+      .select('count')
+      .eq('user_id', userId)
+      .eq('endpoint', endpoint)
+      .eq('window_start', hourStart)
+      .maybeSingle();
+
+    const nextCount = (existing?.count ?? 0) + 1;
+
+    const { error: upsertError } = await supabase
+      .from('ai_rate_limits')
+      .upsert(
+        { user_id: userId, endpoint, window_start: hourStart, count: nextCount },
+        { onConflict: 'user_id,endpoint,window_start', ignoreDuplicates: false }
+      );
+
+    if (upsertError) {
+      console.error('[rateLimit] incrementWindow upsert failed:', upsertError.message);
+    }
+  } catch (err) {
+    console.error('[rateLimit] incrementWindow threw:', err);
+  }
+}
+
+/**
+ * Increment a user's rate-limit counter for an endpoint, bucketed by the
+ * current hour UTC. Call this AFTER an operation successfully completes
+ * when you used `checkRateLimit(..., { skipIncrement: true })` so only
+ * successful ops count toward the daily limit.
+ */
+export async function incrementRateLimit(userId: string, endpoint: string): Promise<void> {
+  const supabase = createServiceRoleClient();
+  await incrementWindow(supabase, userId, endpoint, currentHourUTC());
+}
+
+/**
+ * Return the user's current successful-call totals for the last hour and
+ * the current UTC day for a given endpoint. Used by the UI to show cooldown
+ * state in the notification bell.
+ */
+export async function getRateLimitUsage(
+  userId: string,
+  endpoint: string
+): Promise<{ hourly: number; daily: number }> {
+  try {
+    const supabase = createServiceRoleClient();
+    const todayStart = todayStartUTC();
+    const oneHourAgo = oneHourAgoUTC();
+
+    const { data: dailyRows } = await supabase
+      .from('ai_rate_limits')
+      .select('count, window_start')
+      .eq('user_id', userId)
+      .eq('endpoint', endpoint)
+      .gte('window_start', todayStart);
+
+    const daily = (dailyRows ?? []).reduce(
+      (sum: number, r: { count: number }) => sum + Number(r.count),
+      0
+    );
+    const hourly = (dailyRows ?? [])
+      .filter((r: { window_start: string }) => r.window_start >= oneHourAgo)
+      .reduce((sum: number, r: { count: number }) => sum + Number(r.count), 0);
+
+    return { hourly, daily };
+  } catch (err) {
+    console.error('[rateLimit] getRateLimitUsage threw:', err);
+    return { hourly: 0, daily: 0 };
   }
 }
 

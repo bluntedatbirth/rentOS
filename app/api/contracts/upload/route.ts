@@ -27,6 +27,27 @@ export async function POST(request: Request) {
 
   const adminClient = createServiceRoleClient();
 
+  // Guard: reject upload if the property already has an active or pending contract.
+  // Landlords must terminate the current contract or wait for expiry first.
+  if (propertyId && propertyId !== 'auto') {
+    const { data: existingContracts } = await adminClient
+      .from('contracts')
+      .select('id, status')
+      .eq('property_id', propertyId)
+      .in('status', ['active', 'pending', 'scheduled']);
+
+    if (existingContracts && existingContracts.length > 0) {
+      return NextResponse.json(
+        {
+          error: 'property_has_active_contract',
+          message:
+            'This property already has an active or pending contract. Terminate the current contract or wait for it to expire before uploading a new one.',
+        },
+        { status: 409 }
+      );
+    }
+  }
+
   try {
     // 1. Upload file to Supabase Storage
     const ext = file.name.split('.').pop() ?? 'jpg';
@@ -70,6 +91,10 @@ export async function POST(request: Request) {
     // 3. Create contract record
     const fileType = file.type === 'application/pdf' ? 'pdf' : 'image';
 
+    // The contracts bucket is private (PDPA). Store the public-format URL
+    // for backwards compatibility (the file-url endpoint extracts the
+    // storage path from it to generate signed URLs). Eventually migrate
+    // to storing storagePath directly.
     const { data: urlData } = adminClient.storage.from('contracts').getPublicUrl(storagePath);
 
     const { data: contract, error: contractError } = await adminClient

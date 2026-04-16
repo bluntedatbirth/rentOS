@@ -45,12 +45,20 @@ export default function ContractUploadPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [hasActiveContract, setHasActiveContract] = useState(false);
+  const [activeContractId, setActiveContractId] = useState<string | null>(null);
+  // Block the form while the active-contract check is in-flight so the user
+  // can't race ahead and select a file before we know if the guard should fire.
+  const [guardChecking, setGuardChecking] = useState(!!propertyIdParam);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch property name if property_id is in URL
+  // Fetch property name + check for existing active/pending contract
   useEffect(() => {
-    if (!propertyIdParam) return;
+    if (!propertyIdParam) {
+      setGuardChecking(false);
+      return;
+    }
 
     const supabase = createClient();
     supabase
@@ -61,6 +69,26 @@ export default function ContractUploadPage() {
       .then(({ data }) => {
         if (data?.name) setPropertyName(data.name);
       });
+
+    // Guard: block upload if property already has an active/pending/scheduled contract
+    Promise.resolve(
+      supabase
+        .from('contracts')
+        .select('id, status')
+        .eq('property_id', propertyIdParam)
+        .in('status', ['active', 'pending', 'scheduled'])
+        .limit(1)
+    )
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setHasActiveContract(true);
+          setActiveContractId(data[0]!.id);
+        }
+      })
+      .catch(() => {
+        // Silent — server guard will catch it anyway
+      })
+      .finally(() => setGuardChecking(false));
   }, [propertyIdParam]);
 
   // Watch activeJob for completion/error when user stays on page after parse started
@@ -102,6 +130,13 @@ export default function ContractUploadPage() {
   // ── Upload + SSE pipeline ────────────────────────────────────────────────
 
   async function processFile(file: File) {
+    // Double-check the guard even if the UI hides the form — the user may
+    // have dropped a file before the async check completed.
+    if (hasActiveContract) {
+      setFileError(t('contract.upload_active_exists'));
+      return;
+    }
+
     const validationError = validateFile(file);
     if (validationError) {
       setFileError(validationError);
@@ -127,7 +162,11 @@ export default function ContractUploadPage() {
         let detail = `Upload failed (${res.status})`;
         try {
           const json = (await res.json()) as { error?: string; message?: string };
-          detail = json.error ?? json.message ?? detail;
+          if (json.error === 'property_has_active_contract') {
+            detail = t('contract.upload_active_exists');
+          } else {
+            detail = json.error ?? json.message ?? detail;
+          }
         } catch {
           // ignore
         }
@@ -154,7 +193,29 @@ export default function ContractUploadPage() {
       });
 
       if (!sseRes.ok || !sseRes.body) {
-        throw new Error(`OCR request failed (${sseRes.status})`);
+        // Parse the error body so we can surface the daily-limit "try again in
+        // 24 hours" copy rather than a bare status code.
+        let friendly = `OCR request failed (${sseRes.status})`;
+        try {
+          const body = (await sseRes.json()) as {
+            error?: string;
+            reason?: string;
+            dailyLimit?: number;
+            retryAfterSeconds?: number;
+          };
+          if (sseRes.status === 429 || body.error === 'ai_unavailable') {
+            // Any rate-limit reason — show reset time
+            const retryHours = body.retryAfterSeconds
+              ? Math.max(1, Math.ceil(body.retryAfterSeconds / 3600))
+              : 24;
+            friendly = t('ocr.error_daily_limit')
+              .replace('{limit}', body.dailyLimit ? String(body.dailyLimit) : '')
+              .replace('{hours}', String(retryHours));
+          }
+        } catch {
+          // Not JSON — keep the default
+        }
+        throw new Error(friendly);
       }
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Processing failed');
@@ -251,10 +312,40 @@ export default function ContractUploadPage() {
         </div>
       )}
 
+      {/* Guard: property already has an active/pending contract */}
+      {hasActiveContract && (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-4 dark:border-red-500/20 dark:bg-red-500/10">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" />
+            <div>
+              <p className="text-sm font-medium text-red-800 dark:text-red-300">
+                {t('contract.upload_active_exists')}
+              </p>
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400/80">
+                {t('contract.upload_active_exists_hint')}
+              </p>
+              {activeContractId && (
+                <Link
+                  href={`/landlord/contracts/${activeContractId}`}
+                  className="mt-2 inline-block text-xs font-medium text-saffron-600 hover:underline"
+                >
+                  {t('contract.upload_view_existing')} →
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main card */}
       <div className="rounded-2xl border border-warm-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-charcoal-800 dark:shadow-black/20">
         {/* ── STATE: READY ── */}
-        {pageState === 'ready' && (
+        {guardChecking && (
+          <div className="flex items-center justify-center py-14">
+            <Loader2 className="h-6 w-6 animate-spin text-charcoal-300 dark:text-white/30" />
+          </div>
+        )}
+        {pageState === 'ready' && !hasActiveContract && !guardChecking && (
           <>
             {/* Drop zone */}
             <div

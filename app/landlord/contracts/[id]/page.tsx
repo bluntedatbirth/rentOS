@@ -36,7 +36,7 @@ interface ContractData {
 export default function ContractReviewPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { t, locale } = useI18n();
   const [contract, setContract] = useState<ContractData | null>(null);
   const [pendingRenewal, setPendingRenewal] = useState<{
@@ -50,6 +50,7 @@ export default function ContractReviewPage() {
   const [reparseLoading, setReparseLoading] = useState(false);
   const [reparseError, setReparseError] = useState<string | null>(null);
   const [isPollingCheck, setIsPollingCheck] = useState(false);
+  const [signedFileUrl, setSignedFileUrl] = useState<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Auto-dismiss notifications related to this contract
@@ -63,7 +64,14 @@ export default function ContractReviewPage() {
   );
 
   const loadContract = useCallback(async () => {
-    if (!user || !id) return;
+    // Wait until auth resolves — don't run with a stale null user during
+    // SPA navigations (e.g. redirect from upload page). Without this the
+    // page would stay on skeleton forever.
+    if (authLoading) return;
+    if (!user || !id) {
+      setLoading(false);
+      return;
+    }
     const { data } = await supabase
       .from('contracts')
       .select(
@@ -87,7 +95,7 @@ export default function ContractReviewPage() {
     }
 
     setLoading(false);
-  }, [user, id]);
+  }, [user, authLoading, id]);
 
   const handleReparse = useCallback(async () => {
     if (!id) return;
@@ -116,6 +124,27 @@ export default function ContractReviewPage() {
   useEffect(() => {
     loadContract();
   }, [loadContract]);
+
+  // Fetch a signed URL for the original file preview. The contracts bucket
+  // is private (PDPA), so the stored public URL no longer works in iframes.
+  useEffect(() => {
+    if (!contract?.original_file_url || !id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/contracts/${id}/file-url`);
+        if (res.ok) {
+          const data = (await res.json()) as { url: string };
+          if (!cancelled) setSignedFileUrl(data.url);
+        }
+      } catch {
+        // Silent — user still sees "Open in new tab" link as fallback
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [contract?.original_file_url, id]);
 
   // Poll every 10 s while contract status is 'pending'
   useEffect(() => {
@@ -308,23 +337,33 @@ export default function ContractReviewPage() {
 
       {/* Original contract file preview */}
       {contract.original_file_url && (
-        <section className="mb-6 rounded-2xl border border-warm-200 bg-white p-4 shadow-sm">
-          <h2 className="mb-2 text-sm font-semibold text-charcoal-900">
+        <section className="mb-6 rounded-2xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 p-4 shadow-sm">
+          <h2 className="mb-2 text-sm font-semibold text-charcoal-900 dark:text-white">
             {t('contract.original_file')}
           </h2>
-          <iframe
-            src={contract.original_file_url}
-            title={t('contract.original_file')}
-            className="h-[60vh] w-full rounded-xl border border-warm-200"
-          />
-          <a
-            href={contract.original_file_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-block text-sm font-medium text-saffron-600 hover:underline"
-          >
-            {t('contract.open_in_new_tab')} ↗
-          </a>
+          {signedFileUrl ? (
+            <iframe
+              src={signedFileUrl}
+              title={t('contract.original_file')}
+              className="h-[60vh] w-full rounded-xl border border-warm-200 dark:border-white/10"
+            />
+          ) : (
+            <div className="flex h-[60vh] w-full items-center justify-center rounded-xl border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-charcoal-900">
+              <p className="text-sm text-charcoal-400 dark:text-white/40">
+                {t('contract.file_loading')}
+              </p>
+            </div>
+          )}
+          {signedFileUrl && (
+            <a
+              href={signedFileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block text-sm font-medium text-saffron-600 hover:underline"
+            >
+              {t('contract.open_in_new_tab')} ↗
+            </a>
+          )}
         </section>
       )}
 

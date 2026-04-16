@@ -5,8 +5,18 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { requirePro } from '@/lib/tier';
 import { withRetry } from '@/lib/claude/retry';
 import { trackTokenUsage } from '@/lib/claude/tokenTracker';
-import { checkRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
+import {
+  checkRateLimit,
+  incrementRateLimit,
+  isRateLimitBypassed,
+  logAISpend,
+} from '@/lib/rateLimit/persistent';
+import { getAILimits } from '@/lib/ai/limits';
 import type { StructuredClause } from '@/lib/supabase/types';
+
+// Analysis runs a single Claude call with up to 16384 output tokens — can
+// take 60–120s on large contracts. Allow 5 minutes to match OCR route.
+export const maxDuration = 300;
 
 const client = new Anthropic();
 
@@ -52,12 +62,35 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   const { user, supabase } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
-  // Persistent rate limit: 3/hour, 10/day per user
-  const rl = await checkRateLimit(user.id, 'analyze', 3, 10);
+  // Per-user daily AI limit scales with property slots (2× slots, min 2 slots).
+  // Count properties the user owns to size the budget.
+  const budgetClient = createServiceRoleClient();
+  const { count: propertyCount } = await budgetClient
+    .from('properties')
+    .select('id', { count: 'exact', head: true })
+    .eq('landlord_id', user.id);
+
+  const limits = getAILimits(propertyCount ?? 0);
+
+  // Dev/test bypass — skip ALL rate limit checks
+  const bypassed = isRateLimitBypassed(user.id) || isRateLimitBypassed(user.email ?? '');
+
+  // skipIncrement so only SUCCESSFUL analyses count — we increment after the
+  // analysis parses + caches cleanly.
+  const rl = bypassed
+    ? ({ allowed: true } as const)
+    : await checkRateLimit(user.id, 'analyze', limits.hourlyAnalyze, limits.dailyAnalyze, {
+        skipIncrement: true,
+      });
   if (!rl.allowed) {
     console.warn('[rateLimit] analyze blocked, reason:', rl.reason, 'user:', user.id);
     return new Response(
-      JSON.stringify({ error: 'ai_unavailable', retryAfterSeconds: rl.retryAfterSeconds }),
+      JSON.stringify({
+        error: 'ai_unavailable',
+        reason: rl.reason,
+        retryAfterSeconds: rl.retryAfterSeconds,
+        dailyLimit: limits.dailyAnalyze,
+      }),
       {
         status: 429,
         headers: {
@@ -80,7 +113,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     );
   }
 
-  const serviceClient = createServiceRoleClient();
+  const serviceClient = budgetClient;
 
   // Fetch the contract (verify ownership)
   const { data: contract, error: contractError } = await serviceClient
@@ -141,11 +174,12 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   try {
     response = await withRetry(() =>
       client.messages.create({
-        model: 'claude-sonnet-4-5',
+        // Sonnet 4.5 was consistently hitting the Vercel 300s ceiling on
+        // bilingual contracts with 10+ clauses. Haiku 4.5 completes the same
+        // analysis in <60s at acceptable quality for risk/rating detection.
+        model: 'claude-haiku-4-5',
         // Output can be large: full Thai+English replacement text per risk +
         // full ready-to-insert clauses per missing clause + bilingual summary.
-        // 8192 was truncating on contracts with ~10+ flagged clauses and
-        // producing invalid JSON. Bumped to 16384 to cut truncation.
         max_tokens: 16384,
         messages: [
           {
@@ -289,6 +323,9 @@ IMPORTANT for missing_clauses:
     console.error('[analyzeContract] Failed to cache analysis:', insertError.message);
     // Non-fatal — still return the result
   }
+
+  // Count this successful analysis against the daily limit. Fire-and-forget.
+  void incrementRateLimit(user.id, 'analyze');
 
   return NextResponse.json({
     ...analysis,

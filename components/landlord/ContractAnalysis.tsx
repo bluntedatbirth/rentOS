@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/lib/i18n/context';
 
 interface RiskItem {
@@ -8,13 +8,21 @@ interface RiskItem {
   severity: 'low' | 'medium' | 'high';
   description_en: string;
   description_th: string;
+  suggested_text_en: string | null;
+  suggested_text_th: string | null;
 }
 
 interface MissingClause {
   title_en: string;
   title_th: string;
-  recommendation_en: string;
-  recommendation_th: string;
+  // Legacy field name (older analyses may use this)
+  recommendation_en?: string;
+  recommendation_th?: string;
+  // New field names from the updated prompt
+  reason_en?: string;
+  reason_th?: string;
+  clause_text_en?: string;
+  clause_text_th?: string;
 }
 
 interface ClauseRating {
@@ -91,6 +99,191 @@ function useFakeProgress(active: boolean): { progress: number; label: string } {
   };
 }
 
+// ── Copy button ───────────────────────────────────────────────────────────
+
+function CopyButton({ text, t }: { text: string; t: (key: string) => string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback: ignore — clipboard API may be unavailable
+    }
+  }, [text]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="inline-flex items-center gap-1 rounded-md border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 px-2.5 py-1.5 text-xs font-medium text-charcoal-600 dark:text-white/60 hover:bg-warm-50 dark:hover:bg-white/5 transition-colors"
+    >
+      {copied ? (
+        <>
+          <svg
+            className="h-3.5 w-3.5 text-green-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          {t('ai_analysis.copied')}
+        </>
+      ) : (
+        <>
+          <svg
+            className="h-3.5 w-3.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+            />
+          </svg>
+          {t('ai_analysis.copy_text')}
+        </>
+      )}
+    </button>
+  );
+}
+
+// ── Risk card with expandable suggested fix ───────────────────────────────
+
+function RiskCard({
+  risk,
+  styles,
+  suggestedText,
+  showLang,
+  t,
+}: {
+  risk: RiskItem;
+  styles: { badge: string; dot: string };
+  suggestedText: string | null | undefined;
+  showLang: 'th' | 'en';
+  t: (key: string) => string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="rounded-lg border border-warm-100 dark:border-white/5 bg-warm-50 dark:bg-charcoal-900 p-3">
+      <div className="flex items-start gap-3">
+        <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${styles.dot}`} />
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles.badge}`}>
+              {risk.severity.toUpperCase()}
+            </span>
+            {risk.clause_id && risk.clause_id !== 'general' && (
+              <span className="text-xs text-charcoal-400 dark:text-white/40">
+                {t('ai_analysis.clause_ref')} {risk.clause_id}
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-charcoal-700 dark:text-white/70">
+            {showLang === 'th' ? risk.description_th : risk.description_en}
+          </p>
+          {suggestedText && (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+            >
+              <svg
+                className={`h-3.5 w-3.5 transition-transform ${expanded ? 'rotate-90' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+              {t('ai_analysis.suggested_fix')}
+            </button>
+          )}
+        </div>
+      </div>
+      {expanded && suggestedText && (
+        <div className="mt-3 ml-5 rounded-lg border border-purple-100 dark:border-purple-500/20 bg-purple-50 dark:bg-purple-900/20 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[11px] font-medium text-purple-700 dark:text-purple-300 uppercase tracking-wide">
+              {t('ai_analysis.suggested_replacement')}
+            </span>
+            <CopyButton text={suggestedText} t={t} />
+          </div>
+          <p className="whitespace-pre-wrap text-xs leading-relaxed text-purple-900 dark:text-purple-100/90 font-mono">
+            {suggestedText}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Missing clause card with expandable clause text ───────────────────────
+
+function MissingClauseCard({
+  title,
+  reason,
+  clauseText,
+  t,
+}: {
+  title: string;
+  reason: string | undefined;
+  clauseText: string | undefined;
+  t: (key: string) => string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="rounded-lg border border-orange-100 dark:border-orange-500/20 bg-orange-50 dark:bg-orange-900/20 p-3">
+      <p className="mb-1 text-sm font-medium text-orange-900 dark:text-orange-200">{title}</p>
+      {reason && <p className="text-xs text-orange-700 dark:text-orange-300/80">{reason}</p>}
+      {clauseText && (
+        <>
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+          >
+            <svg
+              className={`h-3.5 w-3.5 transition-transform ${expanded ? 'rotate-90' : ''}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+            {t('ai_analysis.view_clause_text')}
+          </button>
+          {expanded && (
+            <div className="mt-3 rounded-lg border border-purple-100 dark:border-purple-500/20 bg-purple-50 dark:bg-purple-900/20 p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[11px] font-medium text-purple-700 dark:text-purple-300 uppercase tracking-wide">
+                  {t('ai_analysis.ready_to_insert')}
+                </span>
+                <CopyButton text={clauseText} t={t} />
+              </div>
+              <p className="whitespace-pre-wrap text-xs leading-relaxed text-purple-900 dark:text-purple-100/90 font-mono">
+                {clauseText}
+              </p>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────
+
 export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps) {
   const { t } = useI18n();
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
@@ -128,12 +321,24 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
     try {
       const res = await fetch(`/api/contracts/${contractId}/analyze`, { method: 'POST' });
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        const body = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          reason?: string;
+          dailyLimit?: number;
+          retryAfterSeconds?: number;
+        };
         const code = body.error ?? '';
         // Map API error codes to friendly i18n strings rather than raw "internal_error"
         let friendly = t('ai_analysis.error_generic');
         if (code === 'ai_unavailable' || res.status === 429) {
-          friendly = t('ai_analysis.error_rate_limit');
+          // Any rate-limit reason — show the daily limit message with reset timing.
+          // All reasons (daily, hourly, global, user_daily_spend) mean "try later".
+          const retryHours = body.retryAfterSeconds
+            ? Math.max(1, Math.ceil(body.retryAfterSeconds / 3600))
+            : 24;
+          friendly = t('ai_analysis.error_daily_limit')
+            .replace('{limit}', body.dailyLimit ? String(body.dailyLimit) : '')
+            .replace('{hours}', String(retryHours));
         } else if (res.status === 403) {
           friendly = t('ai_analysis.error_not_pro');
         }
@@ -263,30 +468,17 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
                 <div className="space-y-2">
                   {analysis.risks.map((risk, idx) => {
                     const styles = SEVERITY_STYLES[risk.severity] ?? DEFAULT_SEVERITY_STYLE;
+                    const suggestedText =
+                      showLang === 'th' ? risk.suggested_text_th : risk.suggested_text_en;
                     return (
-                      <div
+                      <RiskCard
                         key={idx}
-                        className="flex items-start gap-3 rounded-lg border border-warm-100 dark:border-white/5 bg-warm-50 dark:bg-charcoal-900 p-3"
-                      >
-                        <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${styles.dot}`} />
-                        <div className="min-w-0 flex-1">
-                          <div className="mb-1 flex flex-wrap items-center gap-2">
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-xs font-medium ${styles.badge}`}
-                            >
-                              {risk.severity.toUpperCase()}
-                            </span>
-                            {risk.clause_id && risk.clause_id !== 'general' && (
-                              <span className="text-xs text-charcoal-400 dark:text-white/40">
-                                {t('ai_analysis.clause_ref')} {risk.clause_id}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-charcoal-700 dark:text-white/70">
-                            {showLang === 'th' ? risk.description_th : risk.description_en}
-                          </p>
-                        </div>
-                      </div>
+                        risk={risk}
+                        styles={styles}
+                        suggestedText={suggestedText}
+                        showLang={showLang}
+                        t={t}
+                      />
                     );
                   })}
                 </div>
@@ -300,16 +492,22 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
                   {t('ai_analysis.missing_title')}
                 </h4>
                 <div className="space-y-2">
-                  {analysis.missing_clauses.map((mc, idx) => (
-                    <div key={idx} className="rounded-lg border border-orange-100 bg-orange-50 p-3">
-                      <p className="mb-1 text-sm font-medium text-orange-900">
-                        {showLang === 'th' ? mc.title_th : mc.title_en}
-                      </p>
-                      <p className="text-xs text-orange-700">
-                        {showLang === 'th' ? mc.recommendation_th : mc.recommendation_en}
-                      </p>
-                    </div>
-                  ))}
+                  {analysis.missing_clauses.map((mc, idx) => {
+                    const reason =
+                      showLang === 'th'
+                        ? (mc.reason_th ?? mc.recommendation_th)
+                        : (mc.reason_en ?? mc.recommendation_en);
+                    const clauseText = showLang === 'th' ? mc.clause_text_th : mc.clause_text_en;
+                    return (
+                      <MissingClauseCard
+                        key={idx}
+                        title={showLang === 'th' ? mc.title_th : mc.title_en}
+                        reason={reason}
+                        clauseText={clauseText}
+                        t={t}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}

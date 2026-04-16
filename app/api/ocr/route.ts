@@ -2,7 +2,13 @@ import { z } from 'zod';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getAuthenticatedUser, unauthorized, badRequest, forbidden } from '@/lib/supabase/api';
 import { extractContractWithProgress, ContractValidationError } from '@/lib/claude/extractContract';
-import { checkRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
+import {
+  checkRateLimit,
+  incrementRateLimit,
+  isRateLimitBypassed,
+  logAISpend,
+} from '@/lib/rateLimit/persistent';
+import { getAILimits } from '@/lib/ai/limits';
 import { sendNotification } from '@/lib/notifications/send';
 
 // Contract parsing runs two Claude passes (90s + 180s SDK timeouts) plus
@@ -39,12 +45,36 @@ export async function POST(request: Request) {
   const { user, supabase: sessionClient } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
-  // Persistent rate limit: 10/hour, 20/day per user
-  const rl = await checkRateLimit(user.id, 'ocr', 10, 20);
+  // Dev/test bypass — skip ALL rate limit checks
+  const bypassed = isRateLimitBypassed(user.id) || isRateLimitBypassed(user.email ?? '');
+
+  // Per-user daily AI limit scales with property slots: 4 successful parses/day
+  // for a basic 2-slot landlord, 2× slots for larger accounts. Count property
+  // rows owned by the user to size the budget.
+  const budgetClient = createServiceRoleClient();
+  const { count: propertyCount } = await budgetClient
+    .from('properties')
+    .select('id', { count: 'exact', head: true })
+    .eq('landlord_id', user.id);
+
+  const limits = getAILimits(propertyCount ?? 0);
+
+  // Persistent rate limit — skipIncrement so only SUCCESSFUL parses count.
+  // We call incrementRateLimit(user.id, 'ocr') at the end of the success path.
+  const rl = bypassed
+    ? ({ allowed: true } as const)
+    : await checkRateLimit(user.id, 'ocr', limits.hourlyOcr, limits.dailyOcr, {
+        skipIncrement: true,
+      });
   if (!rl.allowed) {
     console.warn('[rateLimit] ocr blocked, reason:', rl.reason, 'user:', user.id);
     return new Response(
-      JSON.stringify({ error: 'ai_unavailable', retryAfterSeconds: rl.retryAfterSeconds }),
+      JSON.stringify({
+        error: 'ai_unavailable',
+        reason: rl.reason,
+        retryAfterSeconds: rl.retryAfterSeconds,
+        dailyLimit: limits.dailyOcr,
+      }),
       {
         status: 429,
         headers: {
@@ -336,6 +366,10 @@ export async function POST(request: Request) {
           controller.close();
           return;
         }
+
+        // Only count SUCCESSFUL parses against the daily limit. Fire-and-forget
+        // — we don't block the SSE completion on the counter write.
+        void incrementRateLimit(user.id, 'ocr');
 
         send({
           step: 'done',
