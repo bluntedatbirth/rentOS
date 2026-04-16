@@ -162,7 +162,7 @@ export async function POST(request: Request) {
         titleTh: 'ต้องยื่นแบบ ตม.30',
         bodyEn: `File TM.30 with Immigration within 24 hours of your foreign tenant moving into ${body.property_name}. File online at tm30.immigration.go.th or visit your local immigration office.`,
         bodyTh: `ยื่นแบบ ตม.30 ต่อสำนักงานตรวจคนเข้าเมืองภายใน 24 ชม. หลังผู้เช่าต่างชาติเข้าพักที่ ${body.property_name} ยื่นออนไลน์ที่ tm30.immigration.go.th หรือสำนักงานใกล้บ้าน`,
-        url: '/landlord/documents/tm30',
+        url: '/landlord/dashboard', // TM30 generator removed in scale-back; link to dashboard
       }).catch(() => {}); // Non-blocking
     }
 
