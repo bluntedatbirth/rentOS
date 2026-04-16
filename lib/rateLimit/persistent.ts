@@ -163,10 +163,11 @@ export async function checkRateLimit(
 }
 
 /**
- * Read-modify-write a single (user, endpoint, window_start) row, incrementing
- * its `count` by 1. Not perfectly atomic under concurrent callers — acceptable
- * for our workload (one heavy AI op per user at a time). Race results in at
- * worst an undercount, which errs in the user's favor.
+ * Atomically increment a single (user, endpoint, window_start) row's count by 1
+ * via a Postgres RPC. Replaces the previous read-then-upsert which could lose
+ * increments under concurrent requests (two calls both read count=N, both write
+ * N+1 instead of N+1 then N+2). The DB function uses INSERT ... ON CONFLICT DO
+ * UPDATE SET count = count + 1 in a single statement — no race window.
  */
 async function incrementWindow(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -176,25 +177,18 @@ async function incrementWindow(
   hourStart: string
 ): Promise<void> {
   try {
-    const { data: existing } = await supabase
-      .from('ai_rate_limits')
-      .select('count')
-      .eq('user_id', userId)
-      .eq('endpoint', endpoint)
-      .eq('window_start', hourStart)
-      .maybeSingle();
+    // Atomic increment via Postgres RPC — replaces the previous read-then-upsert
+    // which could lose increments under concurrent requests. The DB function is
+    // SECURITY DEFINER and does INSERT ... ON CONFLICT DO UPDATE SET count = count + 1
+    // in a single statement.
+    const { error } = await supabase.rpc('increment_rate_limit', {
+      p_user_id: userId,
+      p_endpoint: endpoint,
+      p_window_start: hourStart,
+    });
 
-    const nextCount = (existing?.count ?? 0) + 1;
-
-    const { error: upsertError } = await supabase
-      .from('ai_rate_limits')
-      .upsert(
-        { user_id: userId, endpoint, window_start: hourStart, count: nextCount },
-        { onConflict: 'user_id,endpoint,window_start', ignoreDuplicates: false }
-      );
-
-    if (upsertError) {
-      console.error('[rateLimit] incrementWindow upsert failed:', upsertError.message);
+    if (error) {
+      console.error('[rateLimit] incrementWindow RPC failed:', error.message);
     }
   } catch (err) {
     console.error('[rateLimit] incrementWindow threw:', err);
