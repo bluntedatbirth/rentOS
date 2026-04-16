@@ -12,6 +12,7 @@ const config: Config = {
     extend: {
       animation: {
         aurora: 'aurora 60s linear infinite',
+        slide: 'slide 2s ease-in-out infinite',
       },
       keyframes: {
         aurora: {
@@ -21,6 +22,10 @@ const config: Config = {
           to: {
             backgroundPosition: '350% 50%, 350% 50%',
           },
+        },
+        slide: {
+          '0%': { transform: 'translateX(-200%)' },
+          '100%': { transform: 'translateX(400%)' },
         },
       },
       colors: {
