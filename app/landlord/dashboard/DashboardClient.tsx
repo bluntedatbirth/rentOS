@@ -2,8 +2,6 @@
 
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n/context';
-import { DevToolsPanel } from '@/components/dev/DevToolsPanel';
-
 // ── Types (kept here since dashboard/page.tsx now only redirects) ─────────────
 
 export interface DashboardACards {
@@ -26,7 +24,6 @@ interface DashboardClientProps {
   fullName: string | null;
   dashboardA: DashboardACards;
   renewalsNearingExpiry?: number;
-  showDevTools?: boolean;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -35,7 +32,6 @@ export function DashboardClient({
   fullName,
   dashboardA,
   renewalsNearingExpiry = 0,
-  showDevTools = false,
 }: DashboardClientProps) {
   const { t } = useI18n();
 
@@ -152,7 +148,6 @@ export function DashboardClient({
           </div>
         </div>
       </div>
-      {showDevTools && <DevToolsPanel />}
     </div>
   );
 }
