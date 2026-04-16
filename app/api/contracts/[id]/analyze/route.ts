@@ -142,7 +142,11 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     response = await withRetry(() =>
       client.messages.create({
         model: 'claude-sonnet-4-5',
-        max_tokens: 8192,
+        // Output can be large: full Thai+English replacement text per risk +
+        // full ready-to-insert clauses per missing clause + bilingual summary.
+        // 8192 was truncating on contracts with ~10+ flagged clauses and
+        // producing invalid JSON. Bumped to 16384 to cut truncation.
+        max_tokens: 16384,
         messages: [
           {
             role: 'user',
@@ -221,6 +225,20 @@ IMPORTANT for missing_clauses:
     void logAISpend(user.id, 'analyze', response.usage.input_tokens, response.usage.output_tokens);
   }
 
+  // If Claude hit the max_tokens ceiling, the JSON is almost certainly
+  // truncated mid-object and JSON.parse will fail. Surface a specific
+  // error so we can tell truncation apart from genuine malformed output.
+  if (response.stop_reason === 'max_tokens') {
+    console.error(
+      '[analyzeContract] Response truncated at max_tokens',
+      'output_tokens=',
+      response.usage?.output_tokens
+    );
+    return serverError(
+      'Analysis result was too long to complete. Please try again — if this keeps happening the contract may be too large.'
+    );
+  }
+
   const textContent = response.content.find((b) => b.type === 'text');
   const rawText = textContent && 'text' in textContent ? textContent.text.trim() : '';
 
@@ -242,8 +260,15 @@ IMPORTANT for missing_clauses:
       }
     }
     analysis = JSON.parse(jsonText) as AnalysisResult;
-  } catch {
-    console.error('[analyzeContract] Failed to parse Claude response:', rawText.slice(0, 500));
+  } catch (parseErr) {
+    // Log the FULL raw response (not sliced) so we can see whether Claude
+    // was truncated, wrapped its JSON in unexpected prose, or produced
+    // invalid Thai-escaping. Vercel keeps function logs for a few days.
+    console.error('[analyzeContract] Failed to parse Claude response');
+    console.error('[analyzeContract] stop_reason:', response.stop_reason);
+    console.error('[analyzeContract] output_tokens:', response.usage?.output_tokens);
+    console.error('[analyzeContract] parse error:', parseErr);
+    console.error('[analyzeContract] raw text (full):', rawText);
     return serverError('AI returned an invalid analysis format. Please try again.');
   }
 
