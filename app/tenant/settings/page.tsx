@@ -23,7 +23,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
 };
 
 export default function TenantSettingsPage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { t } = useI18n();
   const { toast } = useToast();
 
@@ -199,20 +199,31 @@ export default function TenantSettingsPage() {
         <div className="mt-4 flex flex-wrap gap-4">
           <Link
             href="/legal#privacy"
-            className="text-sm text-saffron-600 underline hover:text-saffron-700"
+            className="text-sm text-saffron-700 underline hover:text-saffron-800"
           >
             {t('settings.about_privacy_link')}
           </Link>
           <Link
             href="/legal#terms"
-            className="text-sm text-saffron-600 underline hover:text-saffron-700"
+            className="text-sm text-saffron-700 underline hover:text-saffron-800"
           >
             {t('settings.about_terms_link')}
           </Link>
-          <Link href="/#faq" className="text-sm text-saffron-600 underline hover:text-saffron-700">
+          <Link href="/#faq" className="text-sm text-saffron-700 underline hover:text-saffron-800">
             {t('settings.about_faq_link')}
           </Link>
         </div>
+      </section>
+
+      {/* Log out — always visible; ensures logout is reachable in ≤2 taps on mobile */}
+      <section>
+        <button
+          type="button"
+          onClick={signOut}
+          className="min-h-[44px] w-full rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
+        >
+          {t('nav.logout')}
+        </button>
       </section>
     </div>
   );
