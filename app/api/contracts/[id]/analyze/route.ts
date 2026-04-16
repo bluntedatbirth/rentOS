@@ -174,8 +174,14 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
   let response: Anthropic.Message;
   try {
-    response = await withRetry(() =>
-      client.messages.create({
+    response = await withRetry(async () => {
+      // Stream the response: the Anthropic SDK refuses non-streaming
+      // requests it estimates could exceed 10 minutes, which max_tokens
+      // of 32768 on Haiku 4.5 triggers. finalMessage() returns the same
+      // Anthropic.Message shape as messages.create() — no code downstream
+      // needs to change. See:
+      // https://github.com/anthropics/anthropic-sdk-typescript#long-requests
+      const stream = client.messages.stream({
         // Sonnet 4.5 was consistently hitting the Vercel 300s ceiling on
         // bilingual contracts with 10+ clauses. Haiku 4.5 completes the same
         // analysis in <60s at acceptable quality for risk/rating detection.
@@ -249,8 +255,9 @@ IMPORTANT for missing_clauses:
 - Match the tone and formality of the existing clauses above`,
           },
         ],
-      })
-    );
+      });
+      return await stream.finalMessage();
+    });
   } catch (err) {
     console.error('[analyzeContract] Claude API error:', err);
     return serverError('Failed to analyze contract with AI');
