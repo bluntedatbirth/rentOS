@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/supabase/useAuth';
@@ -11,16 +10,7 @@ import { useContractParse } from '@/components/providers/ContractParseProvider';
 import { BottomNav, type NavItem } from '@/components/ui/BottomNav';
 import { SideNav, type SideNavItem } from '@/components/ui/SideNav';
 
-const SimulationPanel =
-  process.env.NEXT_PUBLIC_BETA_SIMULATIONS === 'true'
-    ? dynamic(
-        () =>
-          import('@/components/beta/SimulationPanel').then((m) => ({
-            default: m.SimulationPanel,
-          })),
-        { ssr: false }
-      )
-    : () => null;
+// SimulationPanel removed (beta module deleted in Sprint 4)
 
 const LANDLORD_ROOT_TABS = ['/landlord/properties', '/landlord/settings'];
 
@@ -229,8 +219,6 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
       </div>
 
       <BottomNav items={bottomNavItems} />
-      {/* DB CHECK constraint guarantees this is 'tenant' | 'landlord' */}
-      <SimulationPanel role={(profile.active_mode ?? profile.role) as 'tenant' | 'landlord'} />
     </div>
   );
 }
