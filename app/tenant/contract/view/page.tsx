@@ -524,7 +524,7 @@ export default function TenantContractViewPage() {
                         </span>
                         {clause.category && (
                           <span className="rounded-full bg-saffron-100/50 px-2 py-0.5 text-xs font-medium text-saffron-600">
-                            {clause.category}
+                            {t(`contract.category.${clause.category}`)}
                           </span>
                         )}
                       </div>

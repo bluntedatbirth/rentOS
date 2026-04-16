@@ -41,7 +41,7 @@ export function ContractClauseCard({ clause, showLang, onRaisePenalty }: Contrac
             categoryColors[clause.category] ?? categoryColors.other
           }`}
         >
-          {clause.category}
+          {t(`contract.category.${clause.category}`)}
         </span>
         {clause.penalty_defined && (
           <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-400">
