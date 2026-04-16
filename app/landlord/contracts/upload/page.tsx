@@ -356,16 +356,6 @@ export default function ContractUploadPage() {
             )}
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              {/* "Watch progress" just keeps the user here — progress is already showing */}
-              <button
-                type="button"
-                onClick={() => {
-                  /* already watching — no-op, progress visible above */
-                }}
-                className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-warm-300 bg-white px-5 text-sm font-semibold text-charcoal-700 hover:bg-warm-50 dark:border-white/15 dark:bg-charcoal-800 dark:text-white/70 dark:hover:bg-white/5"
-              >
-                {t('ocr.watch_progress')}
-              </button>
               <Link
                 href="/landlord/properties"
                 className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-saffron-500 px-5 text-sm font-semibold text-white hover:bg-saffron-600"

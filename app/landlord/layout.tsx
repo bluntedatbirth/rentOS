@@ -125,14 +125,14 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
       <header
         className={`fixed left-0 right-0 top-0 z-30 overflow-visible border-b border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 transition-transform duration-300 ${headerVisible ? 'translate-y-0' : '-translate-y-full'}`}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between overflow-visible px-4 py-3">
-          <div className="flex items-center gap-2">
+        <div className="mx-auto flex max-w-7xl items-center justify-between overflow-visible px-3 py-3 gap-2 sm:px-4">
+          <div className="flex min-w-0 items-center gap-1 sm:gap-2">
             {!isRootTab && (
               <button
                 type="button"
                 onClick={() => router.back()}
                 aria-label={t('common.back')}
-                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
+                className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg p-2 text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
               >
                 <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
                   <path
@@ -145,15 +145,15 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
             )}
             <Link
               href="/landlord/properties"
-              className="flex items-center gap-2 text-lg font-bold text-charcoal-900 dark:text-white"
+              className="flex min-w-0 items-center gap-2 text-lg font-bold text-charcoal-900 dark:text-white"
             >
-              {t('app.title')}
-              <span className="rounded border border-amber-500 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+              <span className="truncate">{t('app.title')}</span>
+              <span className="hidden sm:inline-flex rounded border border-amber-500 bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">
                 Beta
               </span>
             </Link>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <button
               type="button"
               onClick={async () => {
@@ -165,7 +165,7 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
                 sessionStorage.setItem('rentos_mode_switch', 'tenant');
                 window.location.href = '/tenant/dashboard';
               }}
-              className="min-h-[44px] rounded-lg border border-saffron-300 bg-saffron-50 px-3 py-2 text-xs font-medium text-saffron-700 hover:bg-saffron-100"
+              className="hidden min-h-[44px] rounded-lg border border-saffron-300 bg-saffron-50 px-3 py-2 text-xs font-medium text-saffron-700 hover:bg-saffron-100 sm:inline-flex"
             >
               {t('mode.switch_to_tenant')}
             </button>
@@ -198,14 +198,15 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
               type="button"
               onClick={() => setLocale(locale === 'th' ? 'en' : 'th')}
               aria-label={locale === 'th' ? t('auth.switch_to_en') : t('auth.switch_to_th')}
-              className="min-h-[44px] min-w-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-3 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
+              className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border border-warm-300 dark:border-white/15 px-2 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10 sm:px-3"
             >
               {locale === 'th' ? 'EN' : 'TH'}
             </button>
             <button
               type="button"
               onClick={signOut}
-              className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-3 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10"
+              aria-label={t('nav.logout')}
+              className="hidden min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-3 py-2 text-sm font-medium text-charcoal-700 dark:text-white/70 hover:bg-warm-100 dark:hover:bg-white/10 sm:inline-flex"
             >
               {t('nav.logout')}
             </button>
