@@ -14,7 +14,7 @@ import {
 import { getAILimits } from '@/lib/ai/limits';
 import type { StructuredClause } from '@/lib/supabase/types';
 
-// Analysis runs a single Claude call with up to 16384 output tokens — can
+// Analysis runs a single Claude call with up to 32768 output tokens — can
 // take 60–120s on large contracts. Allow 5 minutes to match OCR route.
 export const maxDuration = 300;
 
@@ -182,7 +182,10 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
         model: 'claude-haiku-4-5',
         // Output can be large: full Thai+English replacement text per risk +
         // full ready-to-insert clauses per missing clause + bilingual summary.
-        max_tokens: 16384,
+        // Bumped from 16384 to 32768 on 2026-04-17 after PO hit max_tokens
+        // truncation on a real Thai contract during Sprint 3 smoke test.
+        // Haiku 4.5 supports up to 64000; 32768 is a safe middle ground.
+        max_tokens: 32768,
         messages: [
           {
             role: 'user',
