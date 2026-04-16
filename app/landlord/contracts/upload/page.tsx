@@ -344,7 +344,7 @@ export default function ContractUploadPage() {
                   {jobProgress.message ? t(jobProgress.message) : t('ocr.parsing_contract')}
                 </p>
                 <div className="mb-1.5 flex justify-between text-xs text-charcoal-400 dark:text-white/40">
-                  <span>{jobProgress.progress}%</span>
+                  <span>{Math.round(jobProgress.progress)}%</span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-warm-200 dark:bg-charcoal-700">
                   <div

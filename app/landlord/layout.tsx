@@ -182,18 +182,14 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
                 )}
               </div>
             )}
-            {activeJob && activeJob.status === 'parsing' && (
-              <div
-                className="flex items-center gap-1.5 text-xs text-saffron-500"
-                title={`${activeJob.progress}%`}
-              >
-                <span className="h-2 w-2 rounded-full bg-saffron-500 animate-pulse" />
-                <span className="hidden sm:inline">
-                  {t('ocr.parsing_contract')} {activeJob.progress}%
-                </span>
-              </div>
-            )}
-            <NotificationBell role="landlord" />
+            <NotificationBell
+              role="landlord"
+              parsing={
+                activeJob && activeJob.status === 'parsing'
+                  ? { progress: activeJob.progress }
+                  : null
+              }
+            />
             <button
               type="button"
               onClick={() => setLocale(locale === 'th' ? 'en' : 'th')}
@@ -218,7 +214,7 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
         <div className="fixed top-14 left-0 right-0 z-20 h-1 bg-warm-200 dark:bg-charcoal-700 overflow-hidden">
           <div
             className="h-full bg-saffron-500 transition-all duration-700 ease-out"
-            style={{ width: `${activeJob.progress}%` }}
+            style={{ width: `${Math.round(activeJob.progress)}%` }}
           />
         </div>
       )}

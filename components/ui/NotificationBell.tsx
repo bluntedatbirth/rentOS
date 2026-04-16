@@ -11,6 +11,8 @@ import { NOTIFICATION_MODE } from '@/lib/notifications/mode';
 interface NotificationBellProps {
   /** Role determines which set of fallback routes to use and which /notifications/inbox page the "view all" link points at */
   role: 'landlord' | 'tenant';
+  /** If set, shows a saffron parsing indicator (with % label) in place of the red unread count */
+  parsing?: { progress: number } | null;
 }
 
 interface Notification {
@@ -56,7 +58,7 @@ function timeAgo(dateStr: string, t: (key: string) => string): string {
   return t('notifications.time_ago_days').replace('{}', String(diffDays));
 }
 
-export function NotificationBell({ role }: NotificationBellProps) {
+export function NotificationBell({ role, parsing }: NotificationBellProps) {
   const { user } = useAuth();
   const { t, locale } = useI18n();
   const router = useRouter();
@@ -191,10 +193,19 @@ export function NotificationBell({ role }: NotificationBellProps) {
         >
           <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
         </svg>
-        {count > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-            {count > 99 ? '99+' : count}
+        {parsing ? (
+          <span
+            className="absolute -right-1 -top-1 flex h-5 min-w-[28px] items-center justify-center rounded-full bg-saffron-500 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-charcoal-800 animate-pulse"
+            title={`${t('ocr.parsing_contract')} ${Math.round(parsing.progress)}%`}
+          >
+            {Math.round(parsing.progress)}%
           </span>
+        ) : (
+          count > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+              {count > 99 ? '99+' : count}
+            </span>
+          )
         )}
       </button>
 
@@ -202,7 +213,7 @@ export function NotificationBell({ role }: NotificationBellProps) {
         <div
           role="dialog"
           aria-label={t('notifications.inbox_title')}
-          className="absolute right-0 top-full z-50 mt-2 flex max-h-[70vh] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-charcoal-900 shadow-2xl dark:shadow-black/40"
+          className="fixed right-3 top-[60px] z-50 flex max-h-[70vh] w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-xl border border-warm-200 dark:border-white/10 bg-warm-50 dark:bg-charcoal-900 shadow-2xl dark:shadow-black/40 sm:absolute sm:right-0 sm:top-full sm:mt-2 sm:w-[22rem]"
         >
           <div className="flex items-center justify-between border-b border-warm-200 dark:border-white/10 bg-warm-100 dark:bg-charcoal-800 px-4 py-3">
             <h3 className="text-sm font-semibold text-charcoal-900 dark:text-white">

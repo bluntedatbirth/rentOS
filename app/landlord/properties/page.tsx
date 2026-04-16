@@ -204,7 +204,11 @@ function PropertyListRow({ property, overdueIds, onRemoved, activeJob }: Propert
             {/* Upload Contract — shows parse progress when this property's contract is being parsed */}
             {activeJob?.propertyId === property.id ? (
               activeJob.status === 'parsing' ? (
-                <div className="flex items-center gap-2 text-saffron-500">
+                <Link
+                  href={`/landlord/contracts/upload?property_id=${property.id}`}
+                  className="flex items-center gap-2 rounded-md border border-saffron-300 bg-saffron-50 px-3 py-1.5 text-saffron-600 hover:bg-saffron-100 dark:border-saffron-500/30 dark:bg-saffron-500/10 dark:hover:bg-saffron-500/20"
+                  title={t('ocr.view_progress') || 'View progress'}
+                >
                   <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                     <circle
                       className="opacity-25"
@@ -220,10 +224,10 @@ function PropertyListRow({ property, overdueIds, onRemoved, activeJob }: Propert
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                     />
                   </svg>
-                  <span className="text-sm">
-                    {t('ocr.parsing_contract')} {activeJob.progress}%
+                  <span className="text-xs font-medium">
+                    {t('ocr.parsing_contract')} {Math.round(activeJob.progress)}%
                   </span>
-                </div>
+                </Link>
               ) : activeJob.status === 'done' ? (
                 <span className="text-sm text-sage-600 dark:text-sage-400">
                   ✓ {t('ocr.parse_complete')}
@@ -324,7 +328,7 @@ function PropertyListRow({ property, overdueIds, onRemoved, activeJob }: Propert
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function PropertiesPage() {
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const { t } = useI18n();
   const { activeJob } = useContractParse();
   const router = useRouter();
@@ -336,7 +340,12 @@ export default function PropertiesPage() {
   const [showSlotModal, setShowSlotModal] = useState(false);
 
   const loadProperties = useCallback(async () => {
-    if (!user) return;
+    // If auth has resolved and there's no user, unstick the skeleton — middleware
+    // will handle redirect but we don't want to spin forever waiting.
+    if (!user) {
+      if (!authLoading) setLoading(false);
+      return;
+    }
 
     try {
       // Load properties — select all fields needed for status computation.
@@ -411,11 +420,23 @@ export default function PropertiesPage() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   useEffect(() => {
     loadProperties();
   }, [loadProperties]);
+
+  // Safety net: if loading is still true after 15s (query hung, auth stuck,
+  // etc.), force-release the skeleton so the user isn't trapped on hard
+  // refresh. Cleared on any successful state update.
+  useEffect(() => {
+    if (!loading) return;
+    const timeout = setTimeout(() => {
+      console.warn('[landlord/properties] loading safety timeout hit — releasing skeleton');
+      setLoading(false);
+    }, 15000);
+    return () => clearTimeout(timeout);
+  }, [loading]);
 
   const profileTier = profile?.tier ?? 'free';
   const profilePurchasedSlots = profile?.purchased_slots ?? 0;
