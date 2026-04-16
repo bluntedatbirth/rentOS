@@ -24,3 +24,7 @@ export function serverError(internalMessage?: string) {
   }
   return apiError('internal_error', 500);
 }
+
+export function conflict(message: string, code?: string) {
+  return Response.json({ error: code ?? 'conflict', message }, { status: 409 });
+}

@@ -5,6 +5,7 @@ import {
   badRequest,
   notFound,
   serverError,
+  conflict,
 } from '@/lib/supabase/api';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { sendNotification } from '@/lib/notifications/send';
@@ -72,6 +73,13 @@ export async function POST(_request: Request, { params }: { params: { id: string
   const result = await activateContract(admin, contract.id);
   if (!result.success) {
     console.error('[Activate] Failed:', result.error);
+    // Surface unique-index violations as a user-facing 409 rather than a 500.
+    if (result.error === 'property_has_active_contract') {
+      return conflict(
+        'This property already has an active or pending contract. Resolve the existing contract before activating a new one.',
+        'property_has_active_contract'
+      );
+    }
     return serverError(`Failed to activate contract: ${result.error}`);
   }
 

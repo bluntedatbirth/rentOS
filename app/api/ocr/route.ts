@@ -344,20 +344,36 @@ export async function POST(request: Request) {
           .eq('id', contract_id);
 
         if (updateError) {
+          // Postgres error 23505 = unique_violation. If the one-active-per-property
+          // index fires on the status update (e.g. another contract was activated
+          // between upload and OCR completion), surface a clear message.
+          const isUniqueViolation =
+            (updateError as { code?: string }).code === '23505' &&
+            updateError.message?.includes('contracts_one_active_per_property');
+
           await adminClient
             .from('contracts')
             .update({ status: 'parse_failed' })
             .eq('id', contract_id);
           await recoverPropertyOnFailure();
-          send({ step: 'error', error: 'Failed to save: ' + updateError.message });
+
+          const userFacingError = isUniqueViolation
+            ? 'property_has_active_contract'
+            : 'Failed to save: ' + updateError.message;
+
+          send({ step: 'error', error: userFacingError });
           try {
             safeNotify({
               recipientId: user.id,
               type: 'custom',
-              titleEn: 'Contract parsing failed',
-              titleTh: 'วิเคราะห์สัญญาล้มเหลว',
-              bodyEn: 'There was an error parsing your contract. Please try again.',
-              bodyTh: 'เกิดข้อผิดพลาดในการวิเคราะห์สัญญา กรุณาลองอีกครั้ง',
+              titleEn: isUniqueViolation ? 'Contract conflict' : 'Contract parsing failed',
+              titleTh: isUniqueViolation ? 'สัญญาซ้ำซ้อน' : 'วิเคราะห์สัญญาล้มเหลว',
+              bodyEn: isUniqueViolation
+                ? 'This property already has an active or pending contract. Resolve the existing contract before uploading a new one.'
+                : 'There was an error parsing your contract. Please try again.',
+              bodyTh: isUniqueViolation
+                ? 'พร็อพเพอร์ตี้นี้มีสัญญาที่ใช้งานอยู่แล้ว กรุณาจัดการสัญญาเดิมก่อน'
+                : 'เกิดข้อผิดพลาดในการวิเคราะห์สัญญา กรุณาลองอีกครั้ง',
               url: `/landlord/contracts/upload`,
             });
           } catch (notifErr) {

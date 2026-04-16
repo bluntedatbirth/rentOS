@@ -109,6 +109,21 @@ export async function POST(request: Request) {
       .single();
 
     if (contractError || !contract) {
+      // Postgres error 23505 = unique_violation. If the one-active-per-property
+      // index fires here (race between concurrent uploads), return a friendly 409.
+      if (
+        contractError?.code === '23505' &&
+        contractError?.message?.includes('contracts_one_active_per_property')
+      ) {
+        return NextResponse.json(
+          {
+            error: 'property_has_active_contract',
+            message:
+              'This property already has an active or pending contract. Resolve the existing contract before uploading a new one.',
+          },
+          { status: 409 }
+        );
+      }
       return serverError('Failed to create contract: ' + (contractError?.message ?? 'unknown'));
     }
 

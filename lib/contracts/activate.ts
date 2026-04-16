@@ -94,10 +94,17 @@ export async function activateContract(
       .eq('id', contractId);
 
     if (activateError) {
+      // Postgres error 23505 = unique_violation on contracts_one_active_per_property.
+      // Surfaces as a clear message rather than a generic DB error string.
+      const isUniqueViolation =
+        (activateError as { code?: string }).code === '23505' &&
+        activateError.message?.includes('contracts_one_active_per_property');
       return {
         success: false,
         seededCount: 0,
-        error: `Failed to activate: ${activateError.message}`,
+        error: isUniqueViolation
+          ? 'property_has_active_contract'
+          : `Failed to activate: ${activateError.message}`,
       };
     }
   }
@@ -167,7 +174,13 @@ export async function activateContract(
     });
   }
 
-  const { error: insertError } = await supabase.from('payments').insert(paymentRows);
+  // Idempotent upsert: if a row for (contract_id, due_date) already exists
+  // (e.g. activate was called twice), skip it rather than erroring.
+  // Requires the unique constraint payments_contract_id_due_date_unique
+  // added in migration 20260416000002_data_integrity.sql.
+  const { error: insertError } = await supabase
+    .from('payments')
+    .upsert(paymentRows, { onConflict: 'contract_id,due_date', ignoreDuplicates: true });
 
   if (insertError) {
     return {

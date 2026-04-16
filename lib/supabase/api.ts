@@ -48,5 +48,6 @@ export {
   notFound,
   forbidden,
   serverError,
+  conflict,
   apiError,
 } from '@/lib/apiErrors';
