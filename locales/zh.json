@@ -538,6 +538,7 @@
   "payments.due_today": "今日到期",
   "payments.confirm_payment": "确认付款",
   "payments.confirm_claim": "确认申报",
+  "payments.confirm_received": "确认已收款",
   "payments.confirmed_success": "付款已确认！",
   "payments.created_success": "付款已创建！",
   "payments.status_paid": "已付款",

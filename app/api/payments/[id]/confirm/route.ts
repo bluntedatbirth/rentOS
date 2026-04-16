@@ -14,9 +14,14 @@ import type { Database } from '@/lib/supabase/types';
 /**
  * POST /api/payments/[id]/confirm
  *
- * Landlord confirms they received a payment.
- * Updates status from 'pending' to 'paid', records confirmation metadata,
- * and notifies the tenant.
+ * Landlord confirms they received a payment (the "Confirm Received" button).
+ * Handles both plain pending/overdue payments and tenant-claimed payments
+ * (status = pending/overdue with claimed_at set).
+ *
+ * Idempotent: if the payment is already 'paid', returns 200 with the current
+ * row so double-clicks / retries are safe.
+ *
+ * Sets status → 'paid', stamps paid_date + confirmed_by, notifies the tenant.
  */
 export async function POST(_request: Request, { params }: { params: { id: string } }) {
   const { user } = await getAuthenticatedUser();
@@ -27,10 +32,10 @@ export async function POST(_request: Request, { params }: { params: { id: string
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  // Fetch payment
+  // Fetch payment (include claimed_at so we know if it's a tenant-claimed row)
   const { data: payment, error: fetchError } = await adminClient
     .from('payments')
-    .select('id, status, contract_id, amount, due_date')
+    .select('id, status, contract_id, amount, due_date, claimed_at')
     .eq('id', params.id)
     .single();
 
@@ -38,12 +43,18 @@ export async function POST(_request: Request, { params }: { params: { id: string
     return notFound('Payment not found');
   }
 
-  // Only pending or overdue payments can be confirmed
+  // Already paid — idempotent: return current row, no re-update.
+  if (payment.status === 'paid') {
+    return NextResponse.json(payment);
+  }
+
+  // Only pending/overdue (and claimed, which stays pending/overdue) can be confirmed.
+  // Disputed or other statuses are out of scope and must not be silently overwritten.
   if (payment.status !== 'pending' && payment.status !== 'overdue') {
     return badRequest(`Cannot confirm a payment with status '${payment.status}'`);
   }
 
-  // Verify the user is the landlord of this contract
+  // Verify the requesting user is the landlord of this contract.
   const { data: contract, error: contractError } = await adminClient
     .from('contracts')
     .select('landlord_id, tenant_id')
@@ -61,7 +72,7 @@ export async function POST(_request: Request, { params }: { params: { id: string
   const now = new Date().toISOString();
   const paidDate = now.split('T')[0]!;
 
-  // Update payment: mark as paid with confirmation metadata
+  // Mark as paid with confirmation metadata.
   const { data: updated, error: updateError } = await adminClient
     .from('payments')
     .update({
@@ -78,11 +89,15 @@ export async function POST(_request: Request, { params }: { params: { id: string
     return serverError(updateError.message);
   }
 
-  // Notify the tenant
+  // Notify the tenant that their payment has been confirmed.
+  // Using 'custom' because 'payment_confirmed' is not yet in the DB CHECK
+  // constraint. TODO: add 'payment_confirmed' to the constraint in a follow-up
+  // migration and switch this type then.
+  // TODO: switch to role-aware URL builder after sprint-5-flows-A merges.
   if (contract.tenant_id) {
     void sendNotification({
       recipientId: contract.tenant_id,
-      type: 'payment_due',
+      type: 'custom',
       titleEn: 'Payment Confirmed',
       titleTh: 'ยืนยันการชำระเงินแล้ว',
       bodyEn: `Your payment of ${payment.amount} THB has been confirmed by the landlord.`,

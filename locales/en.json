@@ -573,6 +573,7 @@
   "payments.due_today": "Due today",
   "payments.confirm_payment": "Confirm Payment",
   "payments.confirm_claim": "Confirm Claim",
+  "payments.confirm_received": "Confirm Received",
   "payments.confirmed_success": "Payment confirmed!",
   "payments.created_success": "Payment created!",
   "payments.status_paid": "Paid",

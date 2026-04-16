@@ -135,6 +135,52 @@ export function PropertyPaymentsTab({
   }
 
   // -------------------------------------------------------------------
+  // "Confirm Received" handler — for claimed payments only.
+  // Calls POST /api/payments/[id]/confirm which:
+  //   • sets status → 'paid', stamps confirmed_by + paid_date
+  //   • is idempotent (double-click safe)
+  //   • notifies the tenant
+  // Optimistic update: row flips to paid immediately; reverts on error.
+  // -------------------------------------------------------------------
+  async function handleConfirmReceived(paymentId: string) {
+    // Optimistically mark paid so double-clicks are visually blocked.
+    const todayStr = new Date().toISOString().slice(0, 10);
+    setPayments((prev) =>
+      prev.map((p) =>
+        p.id === paymentId ? { ...p, status: 'paid' as const, paid_date: todayStr } : p
+      )
+    );
+    setConfirmingId(paymentId);
+
+    try {
+      const res = await fetch(`/api/payments/${paymentId}/confirm`, { method: 'POST' });
+
+      if (res.ok) {
+        toast.success(t('payments.confirmed_success'));
+        onPaymentConfirmed?.();
+      } else {
+        // Revert optimistic update on failure.
+        setPayments((prev) =>
+          prev.map((p) =>
+            p.id === paymentId ? { ...p, status: 'pending' as const, paid_date: null } : p
+          )
+        );
+        toast.error(t('auth.error'));
+      }
+    } catch {
+      // Network error — revert.
+      setPayments((prev) =>
+        prev.map((p) =>
+          p.id === paymentId ? { ...p, status: 'pending' as const, paid_date: null } : p
+        )
+      );
+      toast.error(t('auth.error'));
+    } finally {
+      setConfirmingId(null);
+    }
+  }
+
+  // -------------------------------------------------------------------
   // Bucket + sort (identical logic to original page)
   // -------------------------------------------------------------------
   const duePayments = payments
@@ -184,9 +230,26 @@ export function PropertyPaymentsTab({
           </div>
           <div className="flex items-center gap-2">
             <StatusBadge status={isOverdue ? 'overdue' : payment.status} />
-            {/* Confirm button: only when within the payable window */}
             {payment.status !== 'paid' &&
-              (isPayableWindow(payment) ? (
+              (isClaimed ? (
+                /* Claimed payment: green "Confirm Received" button.
+                   Uses the dedicated /confirm route which is idempotent
+                   and notifies the tenant. Always shown (no payable-window
+                   restriction) so the landlord can confirm as soon as the
+                   tenant marks the payment. */
+                <button
+                  type="button"
+                  aria-label={t('payments.confirm_received')}
+                  onClick={() => void handleConfirmReceived(payment.id)}
+                  disabled={confirmingId === payment.id}
+                  className="min-h-[44px] rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                >
+                  {confirmingId === payment.id
+                    ? t('common.loading')
+                    : t('payments.confirm_received')}
+                </button>
+              ) : isPayableWindow(payment) ? (
+                /* Non-claimed payment within the payable window: standard confirm. */
                 <button
                   type="button"
                   onClick={() => {
@@ -194,17 +257,11 @@ export function PropertyPaymentsTab({
                     void handleConfirmPayment(payment.id);
                   }}
                   disabled={confirmingId === payment.id}
-                  className={`min-h-[44px] rounded-lg px-3 py-2 text-xs font-medium text-white disabled:opacity-50 ${
-                    isClaimed
-                      ? 'bg-amber-600 hover:bg-amber-700'
-                      : 'bg-green-600 hover:bg-green-700'
-                  }`}
+                  className="min-h-[44px] rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
                 >
                   {confirmingId === payment.id
                     ? t('common.loading')
-                    : isClaimed
-                      ? t('payments.confirm_claim')
-                      : t('payments.confirm_payment')}
+                    : t('payments.confirm_payment')}
                 </button>
               ) : (
                 <span className="text-xs text-charcoal-400">
