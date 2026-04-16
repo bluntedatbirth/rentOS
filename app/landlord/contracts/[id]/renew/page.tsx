@@ -9,7 +9,6 @@ import { useToast } from '@/components/ui/ToastProvider';
 import { createClient } from '@/lib/supabase/client';
 import { PdfPreview } from '@/components/landlord/PdfPreview';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
-import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
 import { ProRibbon } from '@/components/ui/ProRibbon';
 import type { StructuredClause } from '@/lib/supabase/types';
 
@@ -118,7 +117,7 @@ const SEVERITY_STYLES: Record<
 export default function ContractRenewPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const { t, locale } = useI18n();
   const { toast } = useToast();
 
@@ -157,11 +156,6 @@ export default function ContractRenewPage() {
   const [showPreview, setShowPreview] = useState(false);
   // Terms editing toggle — collapsed (summary) by default
   const [editingTerms, setEditingTerms] = useState(false);
-
-  // Pro gate
-  const [showUpgrade, setShowUpgrade] = useState(false);
-  const isPro =
-    profile?.tier === 'pro' || process.env.NEXT_PUBLIC_DEFER_TIER_ENFORCEMENT === 'true';
 
   // Load contract on mount
   useEffect(() => {
@@ -626,10 +620,6 @@ export default function ContractRenewPage() {
               <button
                 type="button"
                 onClick={() => {
-                  if (!isPro) {
-                    setShowUpgrade(true);
-                    return;
-                  }
                   runAnalysis();
                 }}
                 disabled={analysisLoading}
@@ -899,14 +889,6 @@ export default function ContractRenewPage() {
           </div>
         )}
       </div>
-
-      {/* Pro upgrade modal */}
-      {showUpgrade && (
-        <UpgradePrompt
-          feature={t('renewal.pro_ai_analysis')}
-          onDismiss={() => setShowUpgrade(false)}
-        />
-      )}
     </div>
   );
 }
