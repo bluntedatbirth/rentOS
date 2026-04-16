@@ -12,7 +12,6 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { RenewalNotice } from '@/components/tenant/RenewalNotice';
 import type { StructuredClause } from '@/lib/supabase/types';
-import { formatDisplayDate } from '@/lib/format/date';
 
 interface ContractDetail {
   id: string;
@@ -44,7 +43,7 @@ interface AddLeaseForm {
 
 export default function TenantContractViewPage() {
   const { user } = useAuth();
-  const { t, locale } = useI18n();
+  const { t, locale, formatDate } = useI18n();
   const [contract, setContract] = useState<ContractDetail | null>(null);
   const [originalClauses, setOriginalClauses] = useState<StructuredClause[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -431,8 +430,8 @@ export default function TenantContractViewPage() {
             {t('contract.lease_period')}
           </p>
           <p className="break-all text-sm font-medium text-charcoal-900 dark:text-white">
-            {contract.lease_start ? formatDisplayDate(contract.lease_start) : '—'} →{' '}
-            {contract.lease_end ? formatDisplayDate(contract.lease_end) : '—'}
+            {contract.lease_start ? formatDate(contract.lease_start) : '—'} →{' '}
+            {contract.lease_end ? formatDate(contract.lease_end) : '—'}
           </p>
         </div>
         <div>

@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/i18n/context';
 import { Card } from '@/components/ui/Card';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { formatDisplayDate } from '@/lib/format/date';
 import type { ShellProperty } from './page';
 
 interface ContractSummary {
@@ -42,7 +41,7 @@ export function TenantDashboardClient({
   allPayments,
   shellProperties: initialShellProperties,
 }: TenantDashboardClientProps) {
-  const { t } = useI18n();
+  const { t, formatDate } = useI18n();
   const router = useRouter();
   const [shellProperties, setShellProperties] = useState<ShellProperty[]>(initialShellProperties);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -221,8 +220,8 @@ export function TenantDashboardClient({
                   {t('contract.lease_period')}
                 </p>
                 <p className="text-sm text-charcoal-900 dark:text-white">
-                  {activeContract.lease_start ? formatDisplayDate(activeContract.lease_start) : '—'}{' '}
-                  → {activeContract.lease_end ? formatDisplayDate(activeContract.lease_end) : '—'}
+                  {activeContract.lease_start ? formatDate(activeContract.lease_start) : '—'} →{' '}
+                  {activeContract.lease_end ? formatDate(activeContract.lease_end) : '—'}
                 </p>
               </div>
               <div>
@@ -258,7 +257,7 @@ export function TenantDashboardClient({
               </p>
               {globalNextPayment ? (
                 <p className="text-sm font-semibold text-charcoal-900 dark:text-white">
-                  {formatDisplayDate(globalNextPayment.due_date)}
+                  {formatDate(globalNextPayment.due_date)}
                 </p>
               ) : (
                 <p className="text-sm text-charcoal-500 dark:text-white/50">
@@ -292,9 +291,9 @@ export function TenantDashboardClient({
                   </div>
                   {(prop.lease_start || prop.lease_end) && (
                     <p className="mt-1.5 text-xs text-charcoal-500 dark:text-white/50">
-                      {prop.lease_start ? formatDisplayDate(prop.lease_start) : '—'}
+                      {prop.lease_start ? formatDate(prop.lease_start) : '—'}
                       {' → '}
-                      {prop.lease_end ? formatDisplayDate(prop.lease_end) : '—'}
+                      {prop.lease_end ? formatDate(prop.lease_end) : '—'}
                     </p>
                   )}
                   {prop.monthly_rent && (

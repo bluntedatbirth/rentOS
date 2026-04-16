@@ -7,7 +7,6 @@ import { useToast } from '@/components/ui/ToastProvider';
 import { createClient } from '@/lib/supabase/client';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
-import { formatDisplayDate } from '@/lib/format/date';
 import { EmptyState, IconHouseMid } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 
@@ -359,7 +358,7 @@ function AddBillModal({
 
 export default function TenantPaymentsPage() {
   const { user } = useAuth();
-  const { t } = useI18n();
+  const { t, formatDate } = useI18n();
   const { toast } = useToast();
 
   // Contract payments state
@@ -587,7 +586,7 @@ export default function TenantPaymentsPage() {
 
         <div className="mt-2 flex flex-wrap gap-4 text-sm text-charcoal-500 dark:text-white/50">
           <span>
-            {t('payments.due_date')}: {formatDisplayDate(payment.due_date)}
+            {t('payments.due_date')}: {formatDate(payment.due_date)}
           </span>
           {payment.status !== 'paid' && !isOverdue && daysUntil >= 0 && (
             <span className={daysUntil <= 3 ? 'text-amber-600 font-medium' : ''}>
@@ -598,8 +597,7 @@ export default function TenantPaymentsPage() {
           )}
           {payment.paid_date && (
             <span>
-              {t('payments.paid_date')}:{' '}
-              {payment.paid_date ? formatDisplayDate(payment.paid_date) : ''}
+              {t('payments.paid_date')}: {payment.paid_date ? formatDate(payment.paid_date) : ''}
             </span>
           )}
         </div>
@@ -818,8 +816,7 @@ export default function TenantPaymentsPage() {
                   {t('payments.lease_period')}
                 </p>
                 <p className="text-sm font-semibold text-charcoal-900 dark:text-white">
-                  {formatDisplayDate(activeContract.lease_start)} →{' '}
-                  {formatDisplayDate(activeContract.lease_end)}
+                  {formatDate(activeContract.lease_start)} → {formatDate(activeContract.lease_end)}
                 </p>
               </div>
             </div>

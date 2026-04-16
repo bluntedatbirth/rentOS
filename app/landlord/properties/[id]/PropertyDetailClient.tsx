@@ -9,7 +9,6 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { PropertyImageGallery } from '@/components/landlord/PropertyImageGallery';
 import { PairShareModal } from '@/components/landlord/PairShareModal';
 import { QRCodeSVG } from 'qrcode.react';
-import { formatDisplayDate } from '@/lib/format/date';
 import { computePropertyStatus } from '@/lib/properties/status';
 import {
   PropertyPaymentsTab,
@@ -268,7 +267,7 @@ function PropertyDetailInner({
 }: PropertyDetailClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t, formatPhone } = useI18n();
+  const { t, formatPhone, formatDate } = useI18n();
 
   const [property, setProperty] = useState<PropertyDetail>(initialProperty);
   const [contracts, setContracts] = useState<LinkedContract[]>(initialContracts);
@@ -530,7 +529,7 @@ function PropertyDetailInner({
   // Format lease date range for display
   const leaseDateRange =
     property.lease_start || property.lease_end
-      ? `${formatDisplayDate(property.lease_start) || '—'} – ${formatDisplayDate(property.lease_end) || '—'}`
+      ? `${formatDate(property.lease_start) || '—'} – ${formatDate(property.lease_end) || '—'}`
       : null;
 
   return (
@@ -1010,8 +1009,8 @@ function PropertyDetailInner({
                       </div>
                       {(c.lease_start || c.lease_end) && (
                         <p className="mt-1.5 text-xs text-charcoal-500 dark:text-white/50">
-                          {formatDisplayDate(c.lease_start) || '\u2014'} &rarr;{' '}
-                          {formatDisplayDate(c.lease_end) || '\u2014'}
+                          {formatDate(c.lease_start) || '\u2014'} &rarr;{' '}
+                          {formatDate(c.lease_end) || '\u2014'}
                         </p>
                       )}
                       {tenant && (

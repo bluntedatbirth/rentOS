@@ -1,6 +1,6 @@
 // verified:
 //   formatDate('2026-04-09', 'th') === '9 เม.ย. 2569'
-//   formatDate('2026-04-09', 'en') === '9/4/2026'
+//   formatDate('2026-04-09', 'en') === '9 Apr 2026'
 //   formatDate(null, 'th') === ''
 
 const THAI_MONTHS_SHORT = [
@@ -16,6 +16,21 @@ const THAI_MONTHS_SHORT = [
   'ต.ค.',
   'พ.ย.',
   'ธ.ค.',
+];
+
+const EN_MONTHS_SHORT = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 function toDate(d: Date | string | null | undefined): Date | null {
@@ -38,10 +53,11 @@ export function formatDate(
     const yearBE = year + 543;
     return `${day} ${THAI_MONTHS_SHORT[month]} ${yearBE}`;
   }
-  // en / zh: DD/MM/YYYY
-  const mm = String(month + 1).padStart(2, '0');
-  const dd = String(day).padStart(2, '0');
-  return `${dd}/${mm}/${year}`;
+  if (locale === 'zh') {
+    return `${year}年${month + 1}月${day}日`;
+  }
+  // en: "17 Apr 2026"
+  return `${day} ${EN_MONTHS_SHORT[month]} ${year}`;
 }
 
 export function formatDateTime(

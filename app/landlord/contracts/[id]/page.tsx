@@ -8,7 +8,6 @@ import { useI18n } from '@/lib/i18n/context';
 import { createClient } from '@/lib/supabase/client';
 import { ContractClauseCard } from '@/components/landlord/ContractClauseCard';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { formatDisplayDate } from '@/lib/format/date';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ContractAnalysis } from '@/components/landlord/ContractAnalysis';
 import { RenewalBanner } from '@/components/landlord/RenewalBanner';
@@ -240,7 +239,7 @@ function ContractReviewPageInner() {
   const fromUpload = searchParams.get('from') === 'upload';
 
   const { user, loading: authLoading } = useAuth();
-  const { t, locale } = useI18n();
+  const { t, locale, formatDate } = useI18n();
   const [contract, setContract] = useState<ContractData | null>(null);
   const [pendingRenewal, setPendingRenewal] = useState<{
     id: string;
@@ -434,8 +433,7 @@ function ContractReviewPageInner() {
             {t('contract.lease_period')}
           </p>
           <p className="break-all text-sm font-medium text-charcoal-900 dark:text-white">
-            {formatDisplayDate(contract.lease_start) || '—'} →{' '}
-            {formatDisplayDate(contract.lease_end) || '—'}
+            {formatDate(contract.lease_start) || '—'} → {formatDate(contract.lease_end) || '—'}
           </p>
         </div>
         <div>
@@ -491,7 +489,7 @@ function ContractReviewPageInner() {
               href={signedFileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 inline-block text-sm font-medium text-saffron-600 hover:underline"
+              className="mt-2 inline-block text-sm font-medium text-saffron-700 hover:underline"
             >
               {t('contract.open_in_new_tab')} ↗
             </a>
