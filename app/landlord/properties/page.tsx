@@ -50,7 +50,7 @@ function statusLabel(status: PropertyStatus, t: (k: string) => string): string {
     case 'active':
       return t('contract.status_active');
     case 'expiring':
-      return t('tier.expiring_soon').split(' ')[0] + '…'; // fallback — overridden below
+      return t('properties.status.expiring');
     case 'vacant':
       return t('properties.vacant');
     case 'upcoming':
@@ -103,7 +103,7 @@ function PropertyListRow({ property, overdueIds, onRemoved, activeJob }: Propert
 
   // Resolve the display label for the expiring status
   const resolvedStatusLabel = (s: PropertyStatus) => {
-    if (s === 'expiring') return 'Expiring';
+    if (s === 'expiring') return t('properties.status.expiring');
     return statusLabel(s, t);
   };
 
@@ -185,7 +185,7 @@ function PropertyListRow({ property, overdueIds, onRemoved, activeJob }: Propert
             {/* Property detail — always */}
             <Link
               href={`/landlord/properties/${property.id}`}
-              className="w-full text-xs font-medium text-saffron-600 hover:text-saffron-800 sm:w-auto"
+              className="w-full text-xs font-medium text-saffron-700 hover:text-saffron-800 sm:w-auto"
             >
               {t('property.detail_title')} &rarr;
             </Link>
@@ -194,7 +194,7 @@ function PropertyListRow({ property, overdueIds, onRemoved, activeJob }: Propert
             {!property.current_tenant_id && (
               <Link
                 href={`/landlord/properties/${property.id}`}
-                className="w-full rounded-md border border-saffron-500 px-3 py-1.5 text-xs font-medium text-saffron-600 hover:bg-saffron-50 sm:w-auto"
+                className="w-full rounded-md border border-saffron-500 px-3 py-1.5 text-xs font-medium text-saffron-700 hover:bg-saffron-50 sm:w-auto"
               >
                 {t('properties.action_pair_tenant')}
               </Link>
@@ -205,7 +205,7 @@ function PropertyListRow({ property, overdueIds, onRemoved, activeJob }: Propert
               activeJob.status === 'parsing' ? (
                 <Link
                   href={`/landlord/contracts/upload?property_id=${property.id}`}
-                  className="flex items-center gap-2 rounded-md border border-saffron-300 bg-saffron-50 px-3 py-1.5 text-saffron-600 hover:bg-saffron-100 dark:border-saffron-500/30 dark:bg-saffron-500/10 dark:hover:bg-saffron-500/20"
+                  className="flex items-center gap-2 rounded-md border border-saffron-300 bg-saffron-50 px-3 py-1.5 text-saffron-700 hover:bg-saffron-100 dark:border-saffron-500/30 dark:bg-saffron-500/10 dark:hover:bg-saffron-500/20"
                   title={t('ocr.view_progress') || 'View progress'}
                 >
                   <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -538,7 +538,7 @@ export default function PropertiesPage() {
             {overdueCount > 0 && (
               <Link
                 href="/landlord/payments"
-                className="mt-2 inline-block text-xs font-semibold text-saffron-600 hover:text-saffron-700"
+                className="mt-2 inline-block text-xs font-semibold text-saffron-700 hover:text-saffron-800"
               >
                 {t('dashboard.card_unpaid_rent_action')} →
               </Link>
@@ -568,7 +568,7 @@ export default function PropertiesPage() {
             {expiringCount > 0 && (
               <Link
                 href="/landlord/contracts"
-                className="mt-2 inline-block text-xs font-semibold text-saffron-600 hover:text-saffron-700"
+                className="mt-2 inline-block text-xs font-semibold text-saffron-700 hover:text-saffron-800"
               >
                 {t('dashboard.card_contracts_expiring_action')} →
               </Link>
