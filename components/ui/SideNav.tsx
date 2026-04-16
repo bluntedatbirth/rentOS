@@ -30,6 +30,7 @@ function NavLinks({ items, onLinkClick }: { items: SideNavItem[]; onLinkClick?: 
             key={item.href}
             href={item.href}
             onClick={onLinkClick}
+            aria-current={isActive ? 'page' : undefined}
             className={`relative overflow-hidden flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
               isActive
                 ? 'bg-saffron-50 dark:bg-saffron-500/15 text-saffron-600'

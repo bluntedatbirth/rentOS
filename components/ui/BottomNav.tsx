@@ -42,9 +42,13 @@ export function BottomNav({ items, action }: BottomNavProps) {
             <Link
               key={item.href}
               href={item.href}
+              aria-label={item.label}
+              aria-current={isActive ? 'page' : undefined}
               className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
             >
-              <span className="text-xl">{item.icon}</span>
+              <span className="text-xl" aria-hidden="true">
+                {item.icon}
+              </span>
               <span className="truncate">{item.label}</span>
             </Link>
           );
@@ -53,9 +57,13 @@ export function BottomNav({ items, action }: BottomNavProps) {
           <button
             type="button"
             onClick={action.onClick}
+            aria-label={action.label}
+            aria-current={action.isActive ? 'true' : undefined}
             className={`${baseClasses} ${action.isActive ? activeClasses : inactiveClasses}`}
           >
-            <span className="text-xl">{action.icon}</span>
+            <span className="text-xl" aria-hidden="true">
+              {action.icon}
+            </span>
             <span className="truncate">{action.label}</span>
           </button>
         )}
