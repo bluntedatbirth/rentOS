@@ -573,6 +573,7 @@
   "payments.due_today": "ครบกำหนดวันนี้",
   "payments.confirm_payment": "ยืนยันการชำระเงิน",
   "payments.confirm_claim": "ยืนยันการแจ้งชำระ",
+  "payments.confirm_received": "ยืนยันรับเงินแล้ว",
   "payments.confirmed_success": "ยืนยันการชำระเงินแล้ว!",
   "payments.created_success": "สร้างรายการชำระเงินแล้ว!",
   "payments.status_paid": "ชำระแล้ว",

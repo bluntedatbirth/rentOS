@@ -13,6 +13,7 @@ import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { ContractAnalysis } from '@/components/landlord/ContractAnalysis';
 import { RenewalBanner } from '@/components/landlord/RenewalBanner';
 import { useAutoDismissNotifications } from '@/lib/hooks/useAutoDismissNotifications';
+import { useSignedContractUrl } from '@/lib/hooks/useSignedContractUrl';
 import type { StructuredClause } from '@/lib/supabase/types';
 const supabase = createClient();
 
@@ -252,8 +253,11 @@ function ContractReviewPageInner() {
   const [reparseLoading, setReparseLoading] = useState(false);
   const [reparseError, setReparseError] = useState<string | null>(null);
   const [isPollingCheck, setIsPollingCheck] = useState(false);
-  const [signedFileUrl, setSignedFileUrl] = useState<string | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Auto-refresh signed URL every 45 min so the iframe never hits a 403
+  // after the 1h Supabase Storage TTL elapses on a long-open tab.
+  const { url: signedFileUrl } = useSignedContractUrl(id ?? null, !!contract?.original_file_url);
 
   // Auto-dismiss notifications related to this contract
   useAutoDismissNotifications({ url: `/contracts/${id}` });
@@ -319,27 +323,6 @@ function ContractReviewPageInner() {
   useEffect(() => {
     loadContract();
   }, [loadContract]);
-
-  // Fetch a signed URL for the original file preview. The contracts bucket
-  // is private (PDPA), so the stored public URL no longer works in iframes.
-  useEffect(() => {
-    if (!contract?.original_file_url || !id) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/contracts/${id}/file-url`);
-        if (res.ok) {
-          const data = (await res.json()) as { url: string };
-          if (!cancelled) setSignedFileUrl(data.url);
-        }
-      } catch {
-        // Silent — user still sees "Open in new tab" link as fallback
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [contract?.original_file_url, id]);
 
   // Poll every 5s while contract status is 'pending'.
   // Reduced from 10s → 5s for snappier transition to the full view.
