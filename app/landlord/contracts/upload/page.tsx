@@ -109,7 +109,7 @@ export default function ContractUploadPage() {
   useEffect(() => {
     if (pageState === 'done' && doneContractId) {
       const timer = setTimeout(() => {
-        router.push(`/landlord/contracts/${doneContractId}`);
+        router.push(`/landlord/contracts/${doneContractId}?from=upload`);
       }, 2000);
       return () => clearTimeout(timer);
     }
