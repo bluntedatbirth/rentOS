@@ -1,5 +1,3 @@
-import { FEATURE_CONTRACT_GENERATE, FEATURE_MAINTENANCE, FEATURE_PENALTIES } from '@/lib/features';
-
 type Role = 'tenant' | 'landlord';
 
 interface RouteEntry {
@@ -34,12 +32,10 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   'contract.view': {
     tenant: () => '/tenant/contract/view',
     landlord: (id) => (id ? `/landlord/contracts/${id}` : '/landlord/contracts'),
-    enabled: FEATURE_CONTRACT_GENERATE,
   },
   'contract.list': {
     tenant: () => '/tenant/contract/view',
     landlord: () => '/landlord/contracts',
-    enabled: FEATURE_CONTRACT_GENERATE,
   },
 
   // ── Properties ────────────────────────────────────────────────────────────
@@ -51,27 +47,6 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   'properties.list': {
     tenant: () => '/tenant/dashboard',
     landlord: () => '/landlord/properties',
-  },
-
-  // ── Maintenance ───────────────────────────────────────────────────────────
-  'maintenance.list': {
-    tenant: () => '/tenant/maintenance',
-    landlord: () => '/landlord/maintenance',
-    enabled: FEATURE_MAINTENANCE,
-  },
-
-  // ── Penalties ─────────────────────────────────────────────────────────────
-  'penalties.list': {
-    tenant: () => '/tenant/penalties/appeal',
-    landlord: () => '/landlord/penalties',
-    enabled: FEATURE_PENALTIES,
-  },
-
-  // ── Billing ───────────────────────────────────────────────────────────────
-  'billing.overview': {
-    // Billing is landlord-only.
-    tenant: null,
-    landlord: () => '/landlord/billing',
   },
 
   // ── Dashboards ────────────────────────────────────────────────────────────

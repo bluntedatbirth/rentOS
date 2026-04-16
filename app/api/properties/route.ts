@@ -75,8 +75,6 @@ export async function POST(request: Request) {
           error: 'property_limit_reached',
           limit,
           purchased_slots: purchasedSlots,
-          upgrade_url: '/landlord/billing/upgrade',
-          unlock_slots_url: '/landlord/billing/slots',
         },
         { status: 403 }
       );

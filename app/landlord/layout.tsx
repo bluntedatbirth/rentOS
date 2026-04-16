@@ -167,7 +167,7 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
                 </span>
                 {profile.tier === 'pro' && (
                   <span className="rounded-full bg-saffron-500 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white">
-                    {t('billing.pro_badge')}
+                    PRO
                   </span>
                 )}
               </div>

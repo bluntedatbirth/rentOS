@@ -7,8 +7,6 @@ import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { createClient } from '@/lib/supabase/client';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
-import { UpgradePrompt } from '@/components/ui/UpgradePrompt';
-import { useProGate } from '@/lib/hooks/useProGate';
 import { useToast } from '@/components/ui/ToastProvider';
 import { getPropertyLimit } from '@/lib/tier';
 import { computePropertyStatus, type PropertyStatus } from '@/lib/properties/status';
@@ -332,12 +330,10 @@ export default function PropertiesPage() {
   const { t } = useI18n();
   const { activeJob } = useContractParse();
   const router = useRouter();
-  const { PromptModal } = useProGate('slot_limit', { showSlotUnlock: true });
   const [properties, setProperties] = useState<PropertyRow[]>([]);
   const [overduePropertyIds, setOverduePropertyIds] = useState<Set<string>>(new Set());
   const [unpaidRentTotal, setUnpaidRentTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [showSlotModal, setShowSlotModal] = useState(false);
 
   const loadProperties = useCallback(async () => {
     // If auth has resolved and there's no user, unstick the skeleton — middleware
@@ -471,15 +467,6 @@ export default function PropertiesPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      {PromptModal}
-      {showSlotModal && (
-        <UpgradePrompt
-          feature="slot_limit"
-          showSlotUnlock={true}
-          onDismiss={() => setShowSlotModal(false)}
-        />
-      )}
-
       {/* Dashboard stat cards */}
       {properties.length > 0 && (
         <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -592,9 +579,7 @@ export default function PropertiesPage() {
                       .replace('{limit}', String(slotLimit))}
               </span>
               {(slotState === 'at' || slotState === 'over') && (
-                <Link href="/landlord/billing/slots" className="font-medium underline">
-                  {t('properties.unlock_more_slots')}
-                </Link>
+                <span className="font-medium">Contact us to add more slots</span>
               )}
             </div>
           )}
@@ -602,10 +587,6 @@ export default function PropertiesPage() {
         <button
           type="button"
           onClick={() => {
-            if (slotState !== 'under') {
-              setShowSlotModal(true);
-              return;
-            }
             router.push('/landlord/properties/new');
           }}
           className="min-h-[44px] rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600 disabled:cursor-not-allowed disabled:opacity-50"

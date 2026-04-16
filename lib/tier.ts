@@ -1,6 +1,6 @@
 export type TierCheckResult =
   | { allowed: true }
-  | { allowed: false; reason: string; upgradeUrl: string };
+  | { allowed: false; reason: string; upgradeUrl: string | null };
 
 export const PRO_FEATURES = [
   'contract_generation',
@@ -38,7 +38,7 @@ export function requirePro(
       const now = new Date();
       const gracePeriodEnd = new Date(expiry.getTime() + 3 * 24 * 60 * 60 * 1000);
       if (now > gracePeriodEnd) {
-        return { allowed: false, reason: feature, upgradeUrl: '/landlord/billing/upgrade' };
+        return { allowed: false, reason: feature, upgradeUrl: null };
       }
     }
     return { allowed: true };
@@ -46,7 +46,7 @@ export function requirePro(
   return {
     allowed: false,
     reason: feature,
-    upgradeUrl: '/landlord/billing/upgrade',
+    upgradeUrl: null,
   };
 }
 

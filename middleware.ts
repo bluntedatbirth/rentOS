@@ -252,7 +252,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Block wrong-role access
-  // Landlord-only routes: /landlord/*, including /landlord/dashboard, /landlord/billing/*, /landlord/onboarding
+  // Landlord-only routes: /landlord/*, including /landlord/dashboard, /landlord/onboarding
   if (pathname.startsWith('/landlord') && (profile.active_mode ?? profile.role) !== 'landlord') {
     if (process.env.NODE_ENV === 'development') {
       console.log('[middleware]', {

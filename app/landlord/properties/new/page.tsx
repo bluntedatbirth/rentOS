@@ -160,18 +160,9 @@ export default function NewPropertyPage() {
             {t('property.slots_full_body')}
           </p>
           <div className="flex flex-col gap-3">
-            <a
-              href="/landlord/billing/slots"
-              className="block rounded-xl bg-saffron-500 py-3 text-center text-sm font-bold text-white hover:bg-saffron-600"
-            >
-              {t('property.unlock_slots')}
-            </a>
-            <a
-              href="/landlord/billing/upgrade"
-              className="block rounded-xl border border-sage-500 py-3 text-center text-sm font-bold text-sage-700 hover:bg-sage-50 dark:text-sage-400 dark:hover:bg-sage-500/10"
-            >
-              {t('property.upgrade_pro')}
-            </a>
+            <p className="text-sm text-charcoal-600 dark:text-white/60">
+              Contact us to add more slots.
+            </p>
             <Link
               href="/landlord/properties"
               className="text-sm text-charcoal-400 hover:text-charcoal-600 dark:text-white/40 dark:hover:text-white/60"
