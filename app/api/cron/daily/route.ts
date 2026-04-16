@@ -47,26 +47,47 @@ export async function GET(request: Request) {
   };
 
   // ----------------------------------------------------------------
-  // Pre-fetch recent notifications for dedup (replaces per-payment SELECTs)
-  // Key: `${recipient_id}:${body}` — same logic as the inline dedup queries below.
+  // Pre-fetch recent notifications for dedup (Pattern B idempotency guard).
+  //
+  // Key format: `${recipient_id}:${body_variant}` where body_variant is the
+  // localized body stored at send time.  We index all three body columns
+  // (body, body_en, body_th) so the check works regardless of the recipient's
+  // language at the time the original notification was sent.
+  //
+  // Usage: before every sendNotification call, check
+  //   isAlreadySent(recipientId, bodyEn, bodyTh)
+  // If true → skip.  After sending → add both variants to the set so that
+  // a cron re-run within the same 24-hour window also skips them.
   // ----------------------------------------------------------------
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const dedupSet = new Set<string>();
   try {
     const { data: recentNotifs } = await supabase
       .from('notifications')
-      .select('recipient_id, body')
+      .select('recipient_id, body, body_en, body_th')
       .gte('sent_at', oneDayAgo);
 
     for (const n of recentNotifs ?? []) {
-      if (n.recipient_id && n.body) {
-        dedupSet.add(`${n.recipient_id}:${n.body}`);
-      }
+      if (!n.recipient_id) continue;
+      if (n.body) dedupSet.add(`${n.recipient_id}:${n.body}`);
+      if (n.body_en) dedupSet.add(`${n.recipient_id}:${n.body_en}`);
+      if (n.body_th) dedupSet.add(`${n.recipient_id}:${n.body_th}`);
     }
   } catch (dedupErr) {
     // Non-fatal: log and continue with an empty dedup set (may send duplicates)
     const msg = dedupErr instanceof Error ? dedupErr.message : String(dedupErr);
     console.warn('[Cron] Could not pre-fetch dedup set:', msg);
+  }
+
+  /** Returns true if this notification was already sent today. */
+  function isAlreadySent(recipientId: string, bodyEn: string, bodyTh: string): boolean {
+    return dedupSet.has(`${recipientId}:${bodyEn}`) || dedupSet.has(`${recipientId}:${bodyTh}`);
+  }
+
+  /** Record a just-sent notification so same-run duplicates are also blocked. */
+  function markSent(recipientId: string, bodyEn: string, bodyTh: string): void {
+    dedupSet.add(`${recipientId}:${bodyEn}`);
+    dedupSet.add(`${recipientId}:${bodyTh}`);
   }
 
   // ----------------------------------------------------------------
@@ -86,16 +107,21 @@ export async function GET(request: Request) {
       const contract = payment.contracts as unknown as { tenant_id: string | null };
       if (!contract?.tenant_id) continue;
 
+      const bodyEn = `Payment of ${payment.amount} THB is due on ${payment.due_date}.`;
+      const bodyTh = `ยอดชำระ ${payment.amount} บาท ครบกำหนดวันที่ ${payment.due_date}`;
+      if (isAlreadySent(contract.tenant_id, bodyEn, bodyTh)) continue;
+
       await sendNotification({
         recipientId: contract.tenant_id,
         type: 'payment_due',
         titleEn: 'Payment Due Soon',
         titleTh: 'ใกล้ถึงกำหนดชำระเงิน',
-        bodyEn: `Payment of ${payment.amount} THB is due on ${payment.due_date}.`,
-        bodyTh: `ยอดชำระ ${payment.amount} บาท ครบกำหนดวันที่ ${payment.due_date}`,
+        bodyEn,
+        bodyTh,
         url: '/tenant/payments',
         payload: { target_route: 'payments.list' },
       });
+      markSent(contract.tenant_id, bodyEn, bodyTh);
       summary.paymentDueReminders++;
     }
   } catch (err) {
@@ -131,16 +157,21 @@ export async function GET(request: Request) {
       const contract = payment.contracts as unknown as { tenant_id: string | null };
       if (!contract?.tenant_id) continue;
 
+      const bodyEn = `Payment of ${payment.amount} THB was due on ${payment.due_date} and is now overdue.`;
+      const bodyTh = `ยอดชำระ ${payment.amount} บาท ครบกำหนดวันที่ ${payment.due_date} เลยกำหนดชำระแล้ว`;
+      if (isAlreadySent(contract.tenant_id, bodyEn, bodyTh)) continue;
+
       await sendNotification({
         recipientId: contract.tenant_id,
         type: 'payment_overdue',
         titleEn: 'Payment Overdue',
         titleTh: 'ค้างชำระเงิน',
-        bodyEn: `Payment of ${payment.amount} THB was due on ${payment.due_date} and is now overdue.`,
-        bodyTh: `ยอดชำระ ${payment.amount} บาท ครบกำหนดวันที่ ${payment.due_date} เลยกำหนดชำระแล้ว`,
+        bodyEn,
+        bodyTh,
         url: '/tenant/payments',
         payload: { target_route: 'payments.list' },
       });
+      markSent(contract.tenant_id, bodyEn, bodyTh);
       summary.overdueUpdates++;
     }
   } catch (err) {
@@ -247,30 +278,40 @@ export async function GET(request: Request) {
 
       // Notify tenant
       if (contract.tenant_id) {
-        await sendNotification({
-          recipientId: contract.tenant_id,
-          type: 'lease_expiry',
-          titleEn: 'Lease Expiring Soon',
-          titleTh: 'สัญญาเช่าใกล้หมดอายุ',
-          bodyEn: `Your lease expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`,
-          bodyTh: `สัญญาเช่าของคุณจะหมดอายุในอีก ${daysLeft} วัน`,
-          url: '/tenant/contract/view',
-          payload: { target_route: 'contract.view', fallback_route: 'dashboard' },
-        });
+        const tenantBodyEn = `Your lease expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`;
+        const tenantBodyTh = `สัญญาเช่าของคุณจะหมดอายุในอีก ${daysLeft} วัน`;
+        if (!isAlreadySent(contract.tenant_id, tenantBodyEn, tenantBodyTh)) {
+          await sendNotification({
+            recipientId: contract.tenant_id,
+            type: 'lease_expiry',
+            titleEn: 'Lease Expiring Soon',
+            titleTh: 'สัญญาเช่าใกล้หมดอายุ',
+            bodyEn: tenantBodyEn,
+            bodyTh: tenantBodyTh,
+            url: '/tenant/contract/view',
+            payload: { target_route: 'contract.view', fallback_route: 'dashboard' },
+          });
+          markSent(contract.tenant_id, tenantBodyEn, tenantBodyTh);
+        }
       }
 
       // Notify landlord
       if (contract.landlord_id) {
-        await sendNotification({
-          recipientId: contract.landlord_id,
-          type: 'lease_expiry',
-          titleEn: 'Tenant Lease Expiring Soon',
-          titleTh: 'สัญญาเช่าผู้เช่าใกล้หมดอายุ',
-          bodyEn: `A tenant lease expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`,
-          bodyTh: `สัญญาเช่าผู้เช่าจะหมดอายุในอีก ${daysLeft} วัน`,
-          url: '/landlord/contracts',
-          payload: { target_route: 'contract.list' },
-        });
+        const landlordBodyEn = `A tenant lease expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}.`;
+        const landlordBodyTh = `สัญญาเช่าผู้เช่าจะหมดอายุในอีก ${daysLeft} วัน`;
+        if (!isAlreadySent(contract.landlord_id, landlordBodyEn, landlordBodyTh)) {
+          await sendNotification({
+            recipientId: contract.landlord_id,
+            type: 'lease_expiry',
+            titleEn: 'Tenant Lease Expiring Soon',
+            titleTh: 'สัญญาเช่าผู้เช่าใกล้หมดอายุ',
+            bodyEn: landlordBodyEn,
+            bodyTh: landlordBodyTh,
+            url: '/landlord/contracts',
+            payload: { target_route: 'contract.list' },
+          });
+          markSent(contract.landlord_id, landlordBodyEn, landlordBodyTh);
+        }
       }
 
       summary.leaseExpiryWarnings++;
