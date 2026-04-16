@@ -337,171 +337,174 @@ export default function ContractUploadPage() {
         </div>
       )}
 
-      {/* Main card */}
-      <div className="rounded-2xl border border-warm-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-charcoal-800 dark:shadow-black/20">
-        {/* ── STATE: READY ── */}
-        {guardChecking && (
-          <div className="flex items-center justify-center py-14">
-            <Loader2 className="h-6 w-6 animate-spin text-charcoal-300 dark:text-white/30" />
-          </div>
-        )}
-        {pageState === 'ready' && !hasActiveContract && !guardChecking && (
-          <>
-            {/* Drop zone */}
-            <div
-              role="button"
-              tabIndex={0}
-              aria-label={t('contract.upload_dropzone_hint')}
-              onClick={() => fileInputRef.current?.click()}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
-              }}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-14 text-center transition-colors ${
-                isDragging
-                  ? 'border-saffron-400 bg-saffron-50 dark:bg-saffron-500/10'
-                  : 'border-warm-300 bg-warm-50 hover:border-saffron-300 hover:bg-saffron-50 dark:border-white/15 dark:bg-charcoal-900 dark:hover:border-saffron-400 dark:hover:bg-saffron-500/10'
-              }`}
-            >
-              <Upload
-                className={`mb-4 h-10 w-10 transition-colors ${
-                  isDragging ? 'text-saffron-500' : 'text-charcoal-300 dark:text-white/40'
+      {/* Main card — hidden when the active-contract guard is tripped
+          so we don't show an empty shell under the error banner. */}
+      {!hasActiveContract && (
+        <div className="rounded-2xl border border-warm-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-charcoal-800 dark:shadow-black/20">
+          {/* ── STATE: READY ── */}
+          {guardChecking && (
+            <div className="flex items-center justify-center py-14">
+              <Loader2 className="h-6 w-6 animate-spin text-charcoal-300 dark:text-white/30" />
+            </div>
+          )}
+          {pageState === 'ready' && !hasActiveContract && !guardChecking && (
+            <>
+              {/* Drop zone */}
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label={t('contract.upload_dropzone_hint')}
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
+                }}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-14 text-center transition-colors ${
+                  isDragging
+                    ? 'border-saffron-400 bg-saffron-50 dark:bg-saffron-500/10'
+                    : 'border-warm-300 bg-warm-50 hover:border-saffron-300 hover:bg-saffron-50 dark:border-white/15 dark:bg-charcoal-900 dark:hover:border-saffron-400 dark:hover:bg-saffron-500/10'
                 }`}
-              />
-              <p className="text-sm text-charcoal-600 dark:text-white/60">
-                {t('contract.upload_dropzone_hint')}{' '}
-                <span className="font-semibold text-saffron-600 hover:text-saffron-700">
-                  {t('contract.upload_browse')}
-                </span>
-              </p>
-              <p className="mt-2 text-xs text-charcoal-400 dark:text-white/40">
-                {t('contract.upload_formats')}
-              </p>
-            </div>
-
-            {/* File error */}
-            {fileError && (
-              <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/15 dark:text-red-400">
-                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                <span>{fileError}</span>
-              </div>
-            )}
-
-            {/* Hidden input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.webp"
-              className="hidden"
-              onChange={handleInputChange}
-            />
-          </>
-        )}
-
-        {/* ── STATE: UPLOADING ── */}
-        {pageState === 'uploading' && (
-          <div className="flex flex-col items-center justify-center py-14 text-center">
-            <Loader2 className="mb-4 h-10 w-10 animate-spin text-saffron-500" />
-            <p className="text-sm font-medium text-charcoal-700 dark:text-white/70">
-              {t('contract.uploading')}
-            </p>
-          </div>
-        )}
-
-        {/* ── STATE: STARTED ── */}
-        {pageState === 'started' && startedContractId && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            {/* Pulse ring */}
-            <div className="relative mb-6">
-              <span className="absolute inset-0 animate-ping rounded-full bg-saffron-200 opacity-60 dark:bg-saffron-500/30" />
-              <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-saffron-100 dark:bg-saffron-500/15">
-                <Loader2 className="h-7 w-7 animate-spin text-saffron-600" />
-              </div>
-            </div>
-
-            <h2 className="mb-2 text-lg font-bold text-charcoal-900 dark:text-white">
-              {t('ocr.parse_started')}
-            </h2>
-            <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
-              {t('ocr.parse_started_desc')}
-            </p>
-
-            {/* Live progress bar — visible when user stays on page */}
-            {jobProgress && jobProgress.status === 'parsing' && (
-              <div className="mb-6 w-full max-w-xs">
-                <p className="mb-3 text-sm text-charcoal-600 dark:text-white/60">
-                  {jobProgress.message ? t(jobProgress.message) : t('ocr.parsing_contract')}
-                </p>
-                <div className="mb-1.5 flex justify-between text-xs text-charcoal-400 dark:text-white/40">
-                  <span>{Math.round(jobProgress.progress)}%</span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-warm-200 dark:bg-charcoal-700">
-                  <div
-                    className="h-full rounded-full bg-saffron-500 transition-all duration-500 ease-out"
-                    style={{ width: `${jobProgress.progress}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/landlord/properties"
-                className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-saffron-500 px-5 text-sm font-semibold text-white hover:bg-saffron-600"
               >
-                {t('ocr.back_to_properties')} →
+                <Upload
+                  className={`mb-4 h-10 w-10 transition-colors ${
+                    isDragging ? 'text-saffron-500' : 'text-charcoal-300 dark:text-white/40'
+                  }`}
+                />
+                <p className="text-sm text-charcoal-600 dark:text-white/60">
+                  {t('contract.upload_dropzone_hint')}{' '}
+                  <span className="font-semibold text-saffron-600 hover:text-saffron-700">
+                    {t('contract.upload_browse')}
+                  </span>
+                </p>
+                <p className="mt-2 text-xs text-charcoal-400 dark:text-white/40">
+                  {t('contract.upload_formats')}
+                </p>
+              </div>
+
+              {/* File error */}
+              {fileError && (
+                <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/15 dark:text-red-400">
+                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  <span>{fileError}</span>
+                </div>
+              )}
+
+              {/* Hidden input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.webp"
+                className="hidden"
+                onChange={handleInputChange}
+              />
+            </>
+          )}
+
+          {/* ── STATE: UPLOADING ── */}
+          {pageState === 'uploading' && (
+            <div className="flex flex-col items-center justify-center py-14 text-center">
+              <Loader2 className="mb-4 h-10 w-10 animate-spin text-saffron-500" />
+              <p className="text-sm font-medium text-charcoal-700 dark:text-white/70">
+                {t('contract.uploading')}
+              </p>
+            </div>
+          )}
+
+          {/* ── STATE: STARTED ── */}
+          {pageState === 'started' && startedContractId && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              {/* Pulse ring */}
+              <div className="relative mb-6">
+                <span className="absolute inset-0 animate-ping rounded-full bg-saffron-200 opacity-60 dark:bg-saffron-500/30" />
+                <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-saffron-100 dark:bg-saffron-500/15">
+                  <Loader2 className="h-7 w-7 animate-spin text-saffron-600" />
+                </div>
+              </div>
+
+              <h2 className="mb-2 text-lg font-bold text-charcoal-900 dark:text-white">
+                {t('ocr.parse_started')}
+              </h2>
+              <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
+                {t('ocr.parse_started_desc')}
+              </p>
+
+              {/* Live progress bar — visible when user stays on page */}
+              {jobProgress && jobProgress.status === 'parsing' && (
+                <div className="mb-6 w-full max-w-xs">
+                  <p className="mb-3 text-sm text-charcoal-600 dark:text-white/60">
+                    {jobProgress.message ? t(jobProgress.message) : t('ocr.parsing_contract')}
+                  </p>
+                  <div className="mb-1.5 flex justify-between text-xs text-charcoal-400 dark:text-white/40">
+                    <span>{Math.round(jobProgress.progress)}%</span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-warm-200 dark:bg-charcoal-700">
+                    <div
+                      className="h-full rounded-full bg-saffron-500 transition-all duration-500 ease-out"
+                      style={{ width: `${jobProgress.progress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/landlord/properties"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-saffron-500 px-5 text-sm font-semibold text-white hover:bg-saffron-600"
+                >
+                  {t('ocr.back_to_properties')} →
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* ── STATE: DONE ── */}
+          {pageState === 'done' && doneContractId && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-500/15">
+                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+              </div>
+              <h2 className="mb-1 text-lg font-bold text-charcoal-900 dark:text-white">
+                {t('contract.done_title')}
+              </h2>
+              <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
+                {t('contract.done_subtitle')}
+              </p>
+              <Link
+                href={`/landlord/contracts/${doneContractId}`}
+                className="inline-flex min-h-[44px] items-center rounded-xl bg-saffron-500 px-6 text-sm font-semibold text-white hover:bg-saffron-600"
+              >
+                {t('contract.view_results')}
               </Link>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ── STATE: DONE ── */}
-        {pageState === 'done' && doneContractId && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-500/15">
-              <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+          {/* ── STATE: ERROR ── */}
+          {pageState === 'error' && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-500/15">
+                <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
+              </div>
+              <h2 className="mb-1 text-lg font-bold text-charcoal-900 dark:text-white">
+                {t('contract.upload_error_title')}
+              </h2>
+              {errorMessage && (
+                <p className="mb-6 max-w-xs text-sm text-charcoal-500 dark:text-white/50">
+                  {errorMessage}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={handleReset}
+                className="inline-flex min-h-[44px] items-center rounded-xl bg-saffron-500 px-6 text-sm font-semibold text-white hover:bg-saffron-600"
+              >
+                {t('contract.upload_try_again')}
+              </button>
             </div>
-            <h2 className="mb-1 text-lg font-bold text-charcoal-900 dark:text-white">
-              {t('contract.done_title')}
-            </h2>
-            <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
-              {t('contract.done_subtitle')}
-            </p>
-            <Link
-              href={`/landlord/contracts/${doneContractId}`}
-              className="inline-flex min-h-[44px] items-center rounded-xl bg-saffron-500 px-6 text-sm font-semibold text-white hover:bg-saffron-600"
-            >
-              {t('contract.view_results')}
-            </Link>
-          </div>
-        )}
-
-        {/* ── STATE: ERROR ── */}
-        {pageState === 'error' && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-500/15">
-              <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
-            </div>
-            <h2 className="mb-1 text-lg font-bold text-charcoal-900 dark:text-white">
-              {t('contract.upload_error_title')}
-            </h2>
-            {errorMessage && (
-              <p className="mb-6 max-w-xs text-sm text-charcoal-500 dark:text-white/50">
-                {errorMessage}
-              </p>
-            )}
-            <button
-              type="button"
-              onClick={handleReset}
-              className="inline-flex min-h-[44px] items-center rounded-xl bg-saffron-500 px-6 text-sm font-semibold text-white hover:bg-saffron-600"
-            >
-              {t('contract.upload_try_again')}
-            </button>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
