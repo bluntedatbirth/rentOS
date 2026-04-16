@@ -8,8 +8,6 @@ import { useToast } from '@/components/ui/ToastProvider';
 import { createClient } from '@/lib/supabase/client';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { formatDisplayDate } from '@/lib/format/date';
-import { FEATURE_MAINTENANCE } from '@/lib/features';
-
 const supabase = createClient();
 
 type OnboardingStep = 'welcome' | 'pair' | 'review' | 'done';
@@ -165,7 +163,6 @@ export default function TenantOnboardingPage() {
             {[
               t('tenant_onboarding.feature_view_contract'),
               t('tenant_onboarding.feature_track_payments'),
-              ...(FEATURE_MAINTENANCE ? [t('tenant_onboarding.feature_submit_maintenance')] : []),
             ].map((feature) => (
               <li
                 key={feature}

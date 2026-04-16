@@ -23,7 +23,7 @@ interface ContractClauseCardProps {
   onRaisePenalty?: (clause: StructuredClause) => void;
 }
 
-export function ContractClauseCard({ clause, showLang, onRaisePenalty }: ContractClauseCardProps) {
+export function ContractClauseCard({ clause, showLang }: ContractClauseCardProps) {
   const { t } = useI18n();
 
   return (
@@ -59,15 +59,6 @@ export function ContractClauseCard({ clause, showLang, onRaisePenalty }: Contrac
       <p className="whitespace-pre-wrap text-sm text-charcoal-600 dark:text-white/60">
         {showLang === 'th' ? clause.text_th : clause.text_en}
       </p>
-      {onRaisePenalty && clause.penalty_defined && (
-        <button
-          type="button"
-          onClick={() => onRaisePenalty(clause)}
-          className="mt-3 min-h-[44px] rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
-        >
-          {t('penalties.raise_from_clause')}
-        </button>
-      )}
     </div>
   );
 }

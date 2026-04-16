@@ -14,8 +14,6 @@ import { ContractAnalysis } from '@/components/landlord/ContractAnalysis';
 import { RenewalBanner } from '@/components/landlord/RenewalBanner';
 import { useAutoDismissNotifications } from '@/lib/hooks/useAutoDismissNotifications';
 import type { StructuredClause } from '@/lib/supabase/types';
-import { FEATURE_PENALTIES } from '@/lib/features';
-
 const supabase = createClient();
 
 interface ContractData {
@@ -259,13 +257,6 @@ function ContractReviewPageInner() {
 
   // Auto-dismiss notifications related to this contract
   useAutoDismissNotifications({ url: `/contracts/${id}` });
-
-  const handleRaisePenalty = useCallback(
-    (clause: StructuredClause) => {
-      router.push(`/landlord/penalties?contract_id=${id}&clause_id=${clause.clause_id}`);
-    },
-    [id, router]
-  );
 
   const loadContract = useCallback(async () => {
     // Wait until auth resolves — don't run with a stale null user during
@@ -570,7 +561,7 @@ function ContractReviewPageInner() {
               key={clause.clause_id}
               clause={clause}
               showLang={locale === 'th' ? 'th' : 'en'}
-              onRaisePenalty={FEATURE_PENALTIES ? handleRaisePenalty : undefined}
+              onRaisePenalty={undefined}
             />
           ))}
         </div>

@@ -3,7 +3,6 @@ import { getServerSession } from '@/lib/supabase/server-session';
 import { redirect } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { PropertyDetailClient } from './PropertyDetailClient';
-import { FEATURE_MAINTENANCE } from '@/lib/features';
 
 interface PropertyDetail {
   id: string;
@@ -30,14 +29,6 @@ interface LinkedContract {
   monthly_rent: number | null;
   tenant_id: string | null;
   created_at: string;
-}
-
-interface MaintenanceRequest {
-  id: string;
-  title: string;
-  status: string;
-  created_at: string;
-  contract_id: string;
 }
 
 interface PaymentRecord {
@@ -95,7 +86,7 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
   const property = propRes.data as unknown as PropertyDetail;
   const contractList = (contractsRes.data ?? []) as LinkedContract[];
 
-  // Fetch maintenance and tenant profiles in parallel
+  // Fetch tenant profiles and payments in parallel
   const contractIds = contractList.map((c) => c.id);
   const tenantIds = Array.from(
     new Set(contractList.map((c) => c.tenant_id).filter(Boolean))
@@ -106,14 +97,7 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
     tenantIds.push(property.current_tenant_id);
   }
 
-  const [maintenanceRes, tenantsRes, paymentsRes] = await Promise.all([
-    FEATURE_MAINTENANCE && contractIds.length > 0
-      ? supabase
-          .from('maintenance_requests')
-          .select('id, title, status, created_at, contract_id')
-          .in('contract_id', contractIds)
-          .order('created_at', { ascending: false })
-      : Promise.resolve({ data: [] }),
+  const [tenantsRes, paymentsRes] = await Promise.all([
     tenantIds.length > 0
       ? supabase.from('profiles').select('id, full_name, phone').in('id', tenantIds)
       : Promise.resolve({ data: [] }),
@@ -128,7 +112,6 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
       : Promise.resolve({ data: [] }),
   ]);
 
-  const maintenance = (maintenanceRes.data ?? []) as MaintenanceRequest[];
   const payments = (paymentsRes.data ?? []) as unknown as PaymentRecord[];
 
   const tenantMap: Record<string, TenantProfile> = {};
@@ -140,7 +123,6 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
     <PropertyDetailClient
       property={property}
       initialContracts={contractList}
-      initialMaintenance={maintenance}
       initialTenants={tenantMap}
       initialPayments={payments}
     />

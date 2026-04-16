@@ -3,9 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
 import { AlertCircle, CheckCircle, Loader2, Upload } from 'lucide-react';
-import { FEATURE_CONTRACT_GENERATE } from '@/lib/features';
 import { useI18n } from '@/lib/i18n/context';
 import { useContractParse } from '@/components/providers/ContractParseProvider';
 import { createClient } from '@/lib/supabase/client';
@@ -29,8 +27,6 @@ const MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function ContractUploadPage() {
-  if (!FEATURE_CONTRACT_GENERATE) notFound();
-
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useI18n();

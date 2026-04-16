@@ -9,7 +9,6 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { PropertyImageGallery } from '@/components/landlord/PropertyImageGallery';
 import { PairShareModal } from '@/components/landlord/PairShareModal';
 import { QRCodeSVG } from 'qrcode.react';
-import { FEATURE_MAINTENANCE } from '@/lib/features';
 import { formatDisplayDate } from '@/lib/format/date';
 import { computePropertyStatus } from '@/lib/properties/status';
 import {
@@ -50,26 +49,17 @@ interface LinkedContract {
   created_at: string;
 }
 
-interface MaintenanceRequest {
-  id: string;
-  title: string;
-  status: string;
-  created_at: string;
-  contract_id: string;
-}
-
 interface TenantProfile {
   id: string;
   full_name: string | null;
   phone: string | null;
 }
 
-type Tab = 'contracts' | 'payments' | 'maintenance' | 'notify';
+type Tab = 'contracts' | 'payments' | 'notify';
 
 interface PropertyDetailClientProps {
   property: PropertyDetail;
   initialContracts: LinkedContract[];
-  initialMaintenance: MaintenanceRequest[];
   initialTenants: Record<string, TenantProfile>;
   initialPayments: PaymentRecord[];
 }
@@ -273,17 +263,15 @@ function PropertyQRSection({
 function PropertyDetailInner({
   property: initialProperty,
   initialContracts,
-  initialMaintenance,
   initialTenants,
   initialPayments,
 }: PropertyDetailClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t, formatDate, formatPhone } = useI18n();
+  const { t, formatPhone } = useI18n();
 
   const [property, setProperty] = useState<PropertyDetail>(initialProperty);
   const [contracts, setContracts] = useState<LinkedContract[]>(initialContracts);
-  const [maintenance] = useState<MaintenanceRequest[]>(initialMaintenance);
   const [tenants] = useState<Record<string, TenantProfile>>(initialTenants);
   const [payments] = useState<PaymentRecord[]>(initialPayments);
 
@@ -521,11 +509,7 @@ function PropertyDetailInner({
     }
   };
 
-  // Show maintenance first if there are open requests (only when feature is enabled)
-  const hasOpenMaintenance =
-    FEATURE_MAINTENANCE &&
-    maintenance.some((m) => m.status === 'open' || m.status === 'in_progress');
-  const defaultTab: Tab = hasOpenMaintenance ? 'maintenance' : 'contracts';
+  const defaultTab: Tab = 'contracts';
 
   const tabs: { key: Tab; label: string; count?: number; alert?: boolean }[] = [
     { key: 'contracts', label: t('nav.contracts'), count: contracts.length },
@@ -534,16 +518,6 @@ function PropertyDetailInner({
       label: t('property.tab_payments'),
       count: payments.length > 0 ? payments.length : undefined,
     },
-    ...(FEATURE_MAINTENANCE
-      ? [
-          {
-            key: 'maintenance' as Tab,
-            label: t('nav.maintenance'),
-            count: maintenance.length,
-            alert: hasOpenMaintenance,
-          },
-        ]
-      : []),
     ...(uniqueTenantIds.length > 0
       ? [{ key: 'notify' as Tab, label: t('property.send_notification') }]
       : []),
@@ -1074,36 +1048,6 @@ function PropertyDetailInner({
       {/* ----------------------------------------------------------------- */}
       {/* Tab: Maintenance                                                    */}
       {/* ----------------------------------------------------------------- */}
-      {FEATURE_MAINTENANCE && (tab ?? defaultTab) === 'maintenance' && (
-        <>
-          {maintenance.length === 0 ? (
-            <div className="rounded-lg bg-white dark:bg-charcoal-800 p-8 text-center shadow-sm">
-              <p className="text-sm text-charcoal-500 dark:text-white/50">
-                {t('maintenance.no_requests')}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {maintenance.map((m) => (
-                <Link key={m.id} href="/landlord/maintenance">
-                  <div className="rounded-lg bg-white dark:bg-charcoal-800 p-4 shadow-sm transition-shadow hover:shadow-md">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-charcoal-900 dark:text-white">
-                        {m.title}
-                      </p>
-                      <StatusBadge status={m.status} />
-                    </div>
-                    <p className="mt-1.5 text-xs text-charcoal-500 dark:text-white/50">
-                      {formatDate(m.created_at)}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
       {/* ----------------------------------------------------------------- */}
       {/* Tab: Send Notification                                              */}
       {/* ----------------------------------------------------------------- */}
