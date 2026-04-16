@@ -1626,6 +1626,15 @@
   "contract.background_leave": "ไปที่รายการที่พัก",
   "contract.background_note": "คุณสามารถออกจากหน้านี้ได้อย่างปลอดภัย การประมวลผลจะดำเนินต่อในพื้นหลัง",
 
+  "contract.analyzing.heading": "เรากำลังอ่านสัญญาของคุณ",
+  "contract.analyzing.subheading": "โดยปกติจะใช้เวลา 1–2 นาที คุณสามารถออกจากหน้านี้และกลับมาใหม่ได้ — ระบบจะดำเนินการต่อในพื้นหลัง",
+  "contract.analyzing.step_ocr": "กำลังดึงข้อความจากไฟล์",
+  "contract.analyzing.step_translate": "กำลังแปลและจัดโครงสร้างข้อสัญญา",
+  "contract.analyzing.step_save": "กำลังบันทึกผลลัพธ์",
+  "contract.analyzing.status_check": "กำลังตรวจสอบความคืบหน้า…",
+  "contract.analyzing.go_to_properties": "ไปที่รายการที่พัก",
+  "contract.analyzing.go_back": "กลับไปที่สัญญา",
+
   "bills.section_title": "บิลของฉัน",
   "bills.add_bill": "เพิ่มบิล",
   "bills.empty_state": "เพิ่มบิลแรกของคุณเพื่อติดตามค่าใช้จ่ายรายเดือน",

@@ -1626,6 +1626,15 @@
   "contract.background_leave": "Go to my properties",
   "contract.background_note": "You can safely leave this page. Processing continues in the background.",
 
+  "contract.analyzing.heading": "We're reading your contract",
+  "contract.analyzing.subheading": "This usually takes 1–2 minutes. You can leave this page and come back — we'll keep going in the background.",
+  "contract.analyzing.step_ocr": "Extracting text from your file",
+  "contract.analyzing.step_translate": "Translating and structuring clauses",
+  "contract.analyzing.step_save": "Saving results",
+  "contract.analyzing.status_check": "Checking progress…",
+  "contract.analyzing.go_to_properties": "Go to my properties",
+  "contract.analyzing.go_back": "Back to contracts",
+
   "bills.section_title": "My Bills",
   "bills.add_bill": "Add Bill",
   "bills.empty_state": "Add your first bill to track monthly expenses",

@@ -1545,5 +1545,14 @@
   "property.daily_rate_placeholder": "例如 500",
   "property.duration_1mo": "1个月",
   "property.duration_3mo": "3个月",
-  "property.per_night": "/晚"
+  "property.per_night": "/晚",
+
+  "contract.analyzing.heading": "正在读取您的合同",
+  "contract.analyzing.subheading": "通常需要 1–2 分钟。您可以离开此页面稍后返回 — 我们会在后台继续处理。",
+  "contract.analyzing.step_ocr": "正在从文件中提取文本",
+  "contract.analyzing.step_translate": "正在翻译和整理条款",
+  "contract.analyzing.step_save": "正在保存结果",
+  "contract.analyzing.status_check": "正在检查进度…",
+  "contract.analyzing.go_to_properties": "前往我的房产",
+  "contract.analyzing.go_back": "返回合同列表"
 }
