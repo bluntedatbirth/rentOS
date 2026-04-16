@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/ToastProvider';
 import { getPropertyLimit } from '@/lib/tier';
 import { computePropertyStatus, type PropertyStatus } from '@/lib/properties/status';
 import { useContractParse, type ParseJob } from '@/components/providers/ContractParseProvider';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 const supabase = createClient();
 
@@ -334,6 +335,7 @@ export default function PropertiesPage() {
   const [overduePropertyIds, setOverduePropertyIds] = useState<Set<string>>(new Set());
   const [unpaidRentTotal, setUnpaidRentTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
   const loadProperties = useCallback(async () => {
     // If auth has resolved and there's no user, unstick the skeleton — middleware
@@ -407,12 +409,14 @@ export default function PropertiesPage() {
       setProperties(props);
       setOverduePropertyIds(overdueSet);
       setUnpaidRentTotal(unpaidTotal);
+      setFetchError(false);
     } catch (err) {
       console.error('[landlord/properties] loadProperties failed:', err);
-      // Ensure UI unsticks even on error — show empty state rather than infinite skeleton.
+      // Ensure UI unsticks on error and show the error state.
       setProperties([]);
       setOverduePropertyIds(new Set());
       setUnpaidRentTotal(0);
+      setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -458,6 +462,21 @@ export default function PropertiesPage() {
   ).length;
 
   if (loading) return <LoadingSkeleton count={3} />;
+
+  if (fetchError) {
+    return (
+      <div className="mx-auto max-w-3xl py-16">
+        <ErrorState
+          kind="network"
+          onRetry={() => {
+            setFetchError(false);
+            setLoading(true);
+            void loadProperties();
+          }}
+        />
+      </div>
+    );
+  }
 
   // Pill styling by slot state
   const pillStyles =
