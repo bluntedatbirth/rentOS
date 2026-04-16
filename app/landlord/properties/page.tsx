@@ -338,69 +338,79 @@ export default function PropertiesPage() {
   const loadProperties = useCallback(async () => {
     if (!user) return;
 
-    // Load properties — select all fields needed for status computation.
-    // lease_start, lease_end, monthly_rent, current_tenant_id, pair_code, is_shell
-    // are not yet in generated types, so we cast via unknown.
-    const { data: propData } = await (supabase
-      .from('properties')
-      .select(
-        'id, name, address, unit_number, cover_image_url, lease_start, lease_end, monthly_rent, daily_rate, current_tenant_id, pair_code, created_at, is_shell'
-      )
-      .eq('landlord_id', user.id)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false }) as unknown as Promise<{
-      data: Array<PropertyRow & { is_shell: boolean }> | null;
-    }>);
+    try {
+      // Load properties — select all fields needed for status computation.
+      // lease_start, lease_end, monthly_rent, current_tenant_id, pair_code, is_shell
+      // are not yet in generated types, so we cast via unknown.
+      const { data: propData } = await (supabase
+        .from('properties')
+        .select(
+          'id, name, address, unit_number, cover_image_url, lease_start, lease_end, monthly_rent, daily_rate, current_tenant_id, pair_code, created_at, is_shell'
+        )
+        .eq('landlord_id', user.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false }) as unknown as Promise<{
+        data: Array<PropertyRow & { is_shell: boolean }> | null;
+      }>);
 
-    const props = (propData ?? []).filter((p) => !p.is_shell) as PropertyRow[];
+      const props = (propData ?? []).filter((p) => !p.is_shell) as PropertyRow[];
 
-    if (props.length === 0) {
-      setProperties([]);
-      setOverduePropertyIds(new Set());
-      setLoading(false);
-      return;
-    }
+      if (props.length === 0) {
+        setProperties([]);
+        setOverduePropertyIds(new Set());
+        setUnpaidRentTotal(0);
+        setLoading(false);
+        return;
+      }
 
-    const propIds = props.map((p) => p.id);
+      const propIds = props.map((p) => p.id);
 
-    // Load active contracts so we can resolve which properties have overdue payments
-    const { data: contractData } = (await supabase
-      .from('contracts')
-      .select('id, property_id')
-      .in('property_id', propIds)
-      .eq('status', 'active')) as {
-      data: Array<{ id: string; property_id: string }> | null;
-    };
-
-    const contracts = contractData ?? [];
-    const contractIds = contracts.map((c) => c.id);
-    const contractToProperty: Record<string, string> = {};
-    for (const c of contracts) {
-      contractToProperty[c.id] = c.property_id;
-    }
-
-    const overdueSet = new Set<string>();
-    let unpaidTotal = 0;
-    if (contractIds.length > 0) {
-      const { data: overdueData } = (await supabase
-        .from('payments')
-        .select('contract_id, amount')
-        .in('contract_id', contractIds)
-        .eq('status', 'overdue')) as {
-        data: Array<{ contract_id: string; amount: number | null }> | null;
+      // Load active contracts so we can resolve which properties have overdue payments
+      const { data: contractData } = (await supabase
+        .from('contracts')
+        .select('id, property_id')
+        .in('property_id', propIds)
+        .eq('status', 'active')) as {
+        data: Array<{ id: string; property_id: string }> | null;
       };
 
-      for (const r of overdueData ?? []) {
-        const propId = contractToProperty[r.contract_id];
-        if (propId) overdueSet.add(propId);
-        unpaidTotal += r.amount ?? 0;
+      const contracts = contractData ?? [];
+      const contractIds = contracts.map((c) => c.id);
+      const contractToProperty: Record<string, string> = {};
+      for (const c of contracts) {
+        contractToProperty[c.id] = c.property_id;
       }
-    }
 
-    setProperties(props);
-    setOverduePropertyIds(overdueSet);
-    setUnpaidRentTotal(unpaidTotal);
-    setLoading(false);
+      const overdueSet = new Set<string>();
+      let unpaidTotal = 0;
+      if (contractIds.length > 0) {
+        const { data: overdueData } = (await supabase
+          .from('payments')
+          .select('contract_id, amount')
+          .in('contract_id', contractIds)
+          .eq('status', 'overdue')) as {
+          data: Array<{ contract_id: string; amount: number | null }> | null;
+        };
+
+        for (const r of overdueData ?? []) {
+          const propId = contractToProperty[r.contract_id];
+          if (propId) overdueSet.add(propId);
+          unpaidTotal += r.amount ?? 0;
+        }
+      }
+
+      setProperties(props);
+      setOverduePropertyIds(overdueSet);
+      setUnpaidRentTotal(unpaidTotal);
+    } catch (err) {
+      console.error('[landlord/properties] loadProperties failed:', err);
+      // Ensure UI unsticks even on error — show empty state rather than infinite skeleton.
+      setProperties([]);
+      setOverduePropertyIds(new Set());
+      setUnpaidRentTotal(0);
+    } finally {
+      setLoading(false);
+    }
   }, [user]);
 
   useEffect(() => {

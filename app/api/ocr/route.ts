@@ -5,6 +5,10 @@ import { extractContractWithProgress, ContractValidationError } from '@/lib/clau
 import { checkRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
 import { sendNotification } from '@/lib/notifications/send';
 
+// Contract parsing runs two Claude passes (90s + 180s SDK timeouts) plus
+// storage download + DB writes. Allow up to 5 minutes on Vercel.
+export const maxDuration = 300;
+
 /** Fire-and-forget notification — NEVER crashes the caller */
 function safeNotify(params: Parameters<typeof sendNotification>[0]) {
   setTimeout(() => {

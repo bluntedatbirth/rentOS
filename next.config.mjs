@@ -59,6 +59,8 @@ const nextConfig = {
               "img-src 'self' data: blob: https://*.supabase.co",
               "font-src 'self'",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+              // Allow Supabase storage iframes for contract preview (PDF embed)
+              "frame-src 'self' https://*.supabase.co",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
