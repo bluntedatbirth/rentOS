@@ -1202,5 +1202,20 @@
   "ocr.parse_started": "เริ่มวิเคราะห์สัญญาแล้ว",
   "ocr.parse_started_desc": "คุณสามารถไปหน้าอื่นได้ — ความคืบหน้าจะแสดงที่แถบด้านบน",
   "ocr.watch_progress": "ดูความคืบหน้า",
-  "ocr.back_to_properties": "กลับไปหน้าอสังหาริมทรัพย์"
+  "ocr.back_to_properties": "กลับไปหน้าอสังหาริมทรัพย์",
+
+  "empty.payments.landlord.heading": "ยังไม่มีรายการชำระเงิน",
+  "empty.payments.landlord.context": "รายการจะปรากฏเมื่อสัญญาแรกของคุณเริ่มใช้งาน",
+  "empty.payments.landlord.next_step": "ไปที่แท็บ \"สัญญา\" เพื่อเปิดใช้งานสัญญาก่อนนะ",
+  "empty.payments.tenant.heading": "ยังไม่มีรายการค่าเช่า",
+  "empty.payments.tenant.context": "เจ้าของจะเพิ่มรายการค่าเช่าที่นี่ คุณจะเห็นเมื่อพวกเขาเพิ่มแล้ว",
+  "empty.payments.tenant.next_step": "ยังไม่มีอะไรต้องทำในตอนนี้",
+
+  "error.network.heading": "โหลดข้อมูลไม่ได้",
+  "error.network.body": "ดูเหมือนการเชื่อมต่อขัดข้อง ขอโทษสำหรับความไม่สะดวก",
+  "error.timeout.heading": "ใช้เวลานานเกินไป",
+  "error.timeout.body": "คำขอหมดเวลา กรุณาลองอีกครั้งในอีกสักครู่",
+  "error.server.heading": "เกิดข้อผิดพลาดจากระบบ",
+  "error.server.body": "ทีมงานรับทราบแล้ว กรุณาลองใหม่อีกครั้ง",
+  "error.retry": "ลองใหม่"
 }

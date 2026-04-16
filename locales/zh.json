@@ -1105,5 +1105,20 @@
   "contract.analyzing.step_save": "正在保存结果",
   "contract.analyzing.status_check": "正在检查进度…",
   "contract.analyzing.go_to_properties": "前往我的房产",
-  "contract.analyzing.go_back": "返回合同列表"
+  "contract.analyzing.go_back": "返回合同列表",
+
+  "empty.payments.landlord.heading": "暂无付款记录",
+  "empty.payments.landlord.context": "您的第一份合同生效后，租金记录将显示在这里。",
+  "empty.payments.landlord.next_step": "请前往「合同」标签页激活合同以开始使用。",
+  "empty.payments.tenant.heading": "暂无租金记录",
+  "empty.payments.tenant.context": "您的房东会在这里添加租金记录，届时您将看到相关信息。",
+  "empty.payments.tenant.next_step": "您目前无需操作，稍等即可。",
+
+  "error.network.heading": "加载失败",
+  "error.network.body": "网络连接似乎中断了，请检查连接后重试，给您带来不便深感抱歉。",
+  "error.timeout.heading": "请求超时",
+  "error.timeout.body": "请求用时过长，非常抱歉。请稍后再试。",
+  "error.server.heading": "服务器出现问题",
+  "error.server.body": "很抱歉出现了故障，我们的团队已收到通知。请稍后重试。",
+  "error.retry": "重试"
 }

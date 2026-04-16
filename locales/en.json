@@ -1202,5 +1202,20 @@
   "ocr.parse_started": "Contract parsing started",
   "ocr.parse_started_desc": "You can navigate away — progress will show in the header bar.",
   "ocr.watch_progress": "Watch progress",
-  "ocr.back_to_properties": "Back to properties"
+  "ocr.back_to_properties": "Back to properties",
+
+  "empty.payments.landlord.heading": "No payments recorded yet",
+  "empty.payments.landlord.context": "Rent records will appear here once your first contract goes active.",
+  "empty.payments.landlord.next_step": "Activate a contract in the Contracts tab to get started.",
+  "empty.payments.tenant.heading": "No rent records yet",
+  "empty.payments.tenant.context": "Your landlord will add your first rent record here. You'll see it when they do.",
+  "empty.payments.tenant.next_step": "Nothing to do on your end — just sit tight.",
+
+  "error.network.heading": "We couldn't load this",
+  "error.network.body": "It looks like your connection dropped. We're sorry for the interruption.",
+  "error.timeout.heading": "This is taking too long",
+  "error.timeout.body": "We're sorry — the request timed out. Please try again in a moment.",
+  "error.server.heading": "Something went wrong on our end",
+  "error.server.body": "We're sorry about that. Our team has been notified. Please try again shortly.",
+  "error.retry": "Try again"
 }

@@ -8,6 +8,8 @@ import { createClient } from '@/lib/supabase/client';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { formatDisplayDate } from '@/lib/format/date';
+import { EmptyState, IconHouseMid } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 const supabase = createClient();
 
@@ -364,6 +366,7 @@ export default function TenantPaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [activeContract, setActiveContract] = useState<ActiveContract | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [activeClaimId, setActiveClaimId] = useState<string | null>(null);
   const [claimNote, setClaimNote] = useState('');
@@ -379,54 +382,61 @@ export default function TenantPaymentsPage() {
   const load = async () => {
     if (!user) return;
 
-    // Run both fetches in parallel
-    const [contractResult, billsResult] = await Promise.all([
-      supabase
-        .from('contracts')
-        .select('id, monthly_rent, lease_start, lease_end, properties(name)')
-        .eq('tenant_id', user.id)
-        .eq('status', 'active')
-        .limit(1),
-      fetch('/api/tenant-bills').then((r) => (r.ok ? r.json() : [])),
-    ]);
+    try {
+      // Run both fetches in parallel
+      const [contractResult, billsResult] = await Promise.all([
+        supabase
+          .from('contracts')
+          .select('id, monthly_rent, lease_start, lease_end, properties(name)')
+          .eq('tenant_id', user.id)
+          .eq('status', 'active')
+          .limit(1),
+        fetch('/api/tenant-bills').then((r) => (r.ok ? r.json() : [])),
+      ]);
 
-    // Handle contract + payments
-    const raw = contractResult.data?.[0];
-    if (raw) {
-      const propertiesData = raw.properties as { name: string } | { name: string }[] | null;
-      const propertyName =
-        propertiesData == null
-          ? null
-          : Array.isArray(propertiesData)
-            ? (propertiesData[0]?.name ?? null)
-            : propertiesData.name;
+      // Handle contract + payments
+      const raw = contractResult.data?.[0];
+      if (raw) {
+        const propertiesData = raw.properties as { name: string } | { name: string }[] | null;
+        const propertyName =
+          propertiesData == null
+            ? null
+            : Array.isArray(propertiesData)
+              ? (propertiesData[0]?.name ?? null)
+              : propertiesData.name;
 
-      const contract: ActiveContract = {
-        id: raw.id as string,
-        monthly_rent: raw.monthly_rent as number,
-        lease_start: raw.lease_start as string,
-        lease_end: raw.lease_end as string,
-        property_name: propertyName,
-      };
-      setActiveContract(contract);
+        const contract: ActiveContract = {
+          id: raw.id as string,
+          monthly_rent: raw.monthly_rent as number,
+          lease_start: raw.lease_start as string,
+          lease_end: raw.lease_end as string,
+          property_name: propertyName,
+        };
+        setActiveContract(contract);
 
-      const { data: paymentData } = await supabase
-        .from('payments')
-        .select(
-          'id, contract_id, amount, due_date, paid_date, payment_type, status, promptpay_ref, notes, claimed_by, claimed_at, claimed_note'
-        )
-        .eq('contract_id', contract.id)
-        .order('due_date', { ascending: false });
+        const { data: paymentData } = await supabase
+          .from('payments')
+          .select(
+            'id, contract_id, amount, due_date, paid_date, payment_type, status, promptpay_ref, notes, claimed_by, claimed_at, claimed_note'
+          )
+          .eq('contract_id', contract.id)
+          .order('due_date', { ascending: false });
 
-      setPayments((paymentData ?? []) as unknown as Payment[]);
-    } else {
-      setActiveContract(null);
-      setPayments([]);
+        setPayments((paymentData ?? []) as unknown as Payment[]);
+      } else {
+        setActiveContract(null);
+        setPayments([]);
+      }
+
+      // Handle bills
+      setBills(Array.isArray(billsResult) ? (billsResult as TenantBill[]) : []);
+      setFetchError(false);
+    } catch (err) {
+      console.error('[tenant/payments] load failed:', err);
+      setFetchError(true);
+    } finally {
+      setLoading(false);
     }
-
-    // Handle bills
-    setBills(Array.isArray(billsResult) ? (billsResult as TenantBill[]) : []);
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -498,6 +508,21 @@ export default function TenantPaymentsPage() {
   // ---------------------------------------------------------------------------
 
   if (loading) return <LoadingSkeleton count={4} />;
+
+  if (fetchError) {
+    return (
+      <div className="mx-auto max-w-3xl py-16">
+        <ErrorState
+          kind="network"
+          onRetry={() => {
+            setFetchError(false);
+            setLoading(true);
+            void load();
+          }}
+        />
+      </div>
+    );
+  }
 
   // ---------------------------------------------------------------------------
   // Derive contract payment buckets
@@ -749,15 +774,13 @@ export default function TenantPaymentsPage() {
 
       {/* ── Global empty state ── */}
       {nothingAtAll && (
-        <div className="rounded-xl bg-white dark:bg-charcoal-800 border border-warm-200 dark:border-white/10 p-8 text-center shadow-sm dark:shadow-black/20 mb-6">
-          <p className="text-base font-semibold text-charcoal-700 dark:text-white/70">
-            {t('payments.no_active_lease')}
-          </p>
-          {t('payments.no_active_lease_hint') && (
-            <p className="mt-1 text-sm text-charcoal-500 dark:text-white/50">
-              {t('payments.no_active_lease_hint')}
-            </p>
-          )}
+        <div className="mb-6">
+          <EmptyState
+            icon={<IconHouseMid size={48} />}
+            heading={t('empty.payments.tenant.heading')}
+            context={t('empty.payments.tenant.context')}
+            nextStep={t('empty.payments.tenant.next_step')}
+          />
         </div>
       )}
 
@@ -803,14 +826,12 @@ export default function TenantPaymentsPage() {
           </div>
 
           {contractPaymentsEmpty ? (
-            <div className="rounded-xl bg-white dark:bg-charcoal-800 border border-warm-200 dark:border-white/10 p-8 text-center shadow-sm dark:shadow-black/20">
-              <p className="text-base font-semibold text-charcoal-700 dark:text-white/70">
-                {t('payments.no_payments_yet_heading')}
-              </p>
-              <p className="mt-1 text-sm text-charcoal-500 dark:text-white/50">
-                {t('payments.no_payments_yet_desc')}
-              </p>
-            </div>
+            <EmptyState
+              icon={<IconHouseMid size={48} />}
+              heading={t('empty.payments.tenant.heading')}
+              context={t('empty.payments.tenant.context')}
+              nextStep={t('empty.payments.tenant.next_step')}
+            />
           ) : (
             <>
               {/* Total due summary card */}

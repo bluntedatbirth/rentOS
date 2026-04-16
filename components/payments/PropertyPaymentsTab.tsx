@@ -5,6 +5,7 @@ import { useI18n } from '@/lib/i18n/context';
 import { useToast } from '@/components/ui/ToastProvider';
 import { formatDisplayDate } from '@/lib/format/date';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { EmptyState, IconReceiptMid } from '@/components/ui/EmptyState';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -300,9 +301,12 @@ export function PropertyPaymentsTab({
   // -------------------------------------------------------------------
   if (allEmpty) {
     return (
-      <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-        <p className="text-sm text-charcoal-500">{t('property.payments_empty')}</p>
-      </div>
+      <EmptyState
+        icon={<IconReceiptMid size={48} />}
+        heading={t('empty.payments.landlord.heading')}
+        context={t('empty.payments.landlord.context')}
+        nextStep={t('empty.payments.landlord.next_step')}
+      />
     );
   }
 
