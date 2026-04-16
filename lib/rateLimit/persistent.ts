@@ -242,14 +242,23 @@ export async function getRateLimitUsage(
   }
 }
 
+// Claude Haiku 4.5 pricing as of 2026-04-16. Update if the model switches.
+// Docs: https://www.anthropic.com/pricing
+const HAIKU_4_5_PRICING = {
+  inputPerMillion: 1, // USD
+  outputPerMillion: 5, // USD
+};
+
 export async function logAISpend(
   userId: string,
   endpoint: string,
   inputTokens: number,
   outputTokens: number
 ): Promise<void> {
-  // Claude Sonnet 4 pricing: $3/M input, $15/M output
-  const costUsd = (inputTokens / 1_000_000) * 3 + (outputTokens / 1_000_000) * 15;
+  // Cost calculated using HAIKU_4_5_PRICING above — update the constant if the model switches.
+  const costUsd =
+    (inputTokens / 1_000_000) * HAIKU_4_5_PRICING.inputPerMillion +
+    (outputTokens / 1_000_000) * HAIKU_4_5_PRICING.outputPerMillion;
 
   try {
     const supabase = createServiceRoleClient();
