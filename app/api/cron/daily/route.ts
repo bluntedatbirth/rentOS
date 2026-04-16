@@ -42,6 +42,7 @@ export async function GET(request: Request) {
     scheduledContractsActivated: 0,
     paymentsSeeded: 0,
     leaseEndTransitions: 0,
+    expiredPairingCodesCleared: 0,
     errors: [] as string[],
   };
 
@@ -563,6 +564,50 @@ export async function GET(request: Request) {
     const msg = err instanceof Error ? err.message : String(err);
     summary.errors.push(`lease_end_transitions: ${msg}`);
     console.error('[Cron] Lease-end transitions error:', msg);
+  }
+
+  // ----------------------------------------------------------------
+  // 7b. Expired pairing_code cleanup (Task 2, Sprint 3)
+  //
+  // contracts.pairing_code / pairing_expires_at are set when a landlord
+  // generates a contract-specific pairing code (distinct from the permanent
+  // pair_code on properties). When the code expires AND the contract still
+  // has no tenant assigned (tenant_id IS NULL), the code is stale and safe
+  // to clear. We null out the columns rather than deleting the row so the
+  // contract record (and any metadata) is preserved.
+  //
+  // We intentionally do NOT clear codes where tenant_id IS NOT NULL: if a
+  // tenant already redeemed the code the pairing_code column is historical
+  // context, not a security surface.
+  // ----------------------------------------------------------------
+  try {
+    const { data: expiredCodes, error: expiredCodesError } = await supabase
+      .from('contracts')
+      .select('id')
+      .not('pairing_code', 'is', null)
+      .lt('pairing_expires_at', new Date().toISOString())
+      .is('tenant_id', null);
+
+    if (expiredCodesError) throw expiredCodesError;
+
+    if (expiredCodes && expiredCodes.length > 0) {
+      const expiredIds = expiredCodes.map((c) => c.id);
+      const { error: clearError } = await supabase
+        .from('contracts')
+        .update({ pairing_code: null, pairing_expires_at: null })
+        .in('id', expiredIds);
+
+      if (clearError) throw clearError;
+
+      summary.expiredPairingCodesCleared = expiredIds.length;
+      console.log(
+        `[Cron] Cleared ${expiredIds.length} expired pairing code(s) from contracts with no tenant`
+      );
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    summary.errors.push(`expired_pairing_codes: ${msg}`);
+    console.error('[Cron] Expired pairing code cleanup error:', msg);
   }
 
   // ----------------------------------------------------------------
