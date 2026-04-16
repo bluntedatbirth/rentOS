@@ -62,7 +62,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const acceptLang = request.headers.get('accept-language') ?? '';
   const userLanguage: 'th' | 'en' = acceptLang.startsWith('th') ? 'th' : 'en';
 
-  const clauses = (contract.structured_clauses ?? []) as StructuredClause[];
+  // JSONB column populated by analyze pipeline — always StructuredClause[] when present
+  const clauses = (contract.structured_clauses ?? []) as unknown as StructuredClause[];
 
   try {
     const result = await answerContractQuestion(

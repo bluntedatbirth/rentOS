@@ -229,7 +229,8 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
       </div>
 
       <BottomNav items={bottomNavItems} />
-      <SimulationPanel role={profile.active_mode ?? profile.role} />
+      {/* DB CHECK constraint guarantees this is 'tenant' | 'landlord' */}
+      <SimulationPanel role={(profile.active_mode ?? profile.role) as 'tenant' | 'landlord'} />
     </div>
   );
 }

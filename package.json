@@ -16,6 +16,7 @@
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
     "generate:images": "npx tsx scripts/generate-marketing-images.ts",
+    "gen:types": "npx supabase gen types typescript --project-id wrjdguepemkhjyfrnvdx > lib/supabase/types.generated.ts",
     "prepare": "husky"
   },
   "dependencies": {

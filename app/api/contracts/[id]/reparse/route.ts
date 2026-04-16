@@ -3,7 +3,7 @@ import { getAuthenticatedUser, unauthorized, notFound, serverError } from '@/lib
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { reparseContractText } from '@/lib/claude/extractContract';
 import { checkRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
-import type { StructuredClause } from '@/lib/supabase/types';
+import type { Json } from '@/lib/supabase/types';
 
 /**
  * POST /api/contracts/[id]/reparse
@@ -64,7 +64,8 @@ export async function POST(_request: Request, { params }: { params: { id: string
     // Update the contract's structured_clauses
     const { error: updateError } = await admin
       .from('contracts')
-      .update({ structured_clauses: clauses as StructuredClause[] })
+      // JSONB column populated by analyze pipeline — always StructuredClause[] when present
+      .update({ structured_clauses: clauses as unknown as Json })
       .eq('id', params.id);
 
     if (updateError) {

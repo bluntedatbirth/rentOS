@@ -130,7 +130,9 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     return unauthorized();
   }
 
-  const clauses: StructuredClause[] = (contract.structured_clauses as StructuredClause[]) ?? [];
+  // JSONB column populated by analyze pipeline — always StructuredClause[] when present
+  const clauses: StructuredClause[] =
+    (contract.structured_clauses as unknown as StructuredClause[]) ?? [];
 
   // Check cache first — return existing analysis if present
   const { data: cached } = (await (serviceClient as unknown as AnyClient)
