@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useI18n } from '@/lib/i18n/context';
 import ProfileForm from '@/components/profile/ProfileForm';
 import SecuritySettings from '@/components/security/SecuritySettings';
@@ -22,21 +21,7 @@ export default function LandlordSettingsPage() {
         <ProfileForm />
       </section>
 
-      {/* Section 2: Documents — link card fallback (DocumentsClient requires server-fetched props) */}
-      <section className="rounded-2xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 p-6 shadow-sm">
-        <h2 className="mb-2 text-lg font-semibold text-charcoal-900 dark:text-white">
-          {t('settings.section_documents')}
-        </h2>
-        <p className="mb-4 text-sm text-charcoal-500 dark:text-white/50">{t('documents.title')}</p>
-        <Link
-          href="/landlord/documents"
-          className="inline-flex min-h-[44px] items-center rounded-lg border border-saffron-300 px-4 py-2 text-sm font-medium text-saffron-600 hover:bg-saffron-50"
-        >
-          {t('settings.manage_documents')} →
-        </Link>
-      </section>
-
-      {/* Section 3: Security */}
+      {/* Section 2: Security */}
       <section className="rounded-2xl border border-warm-200 dark:border-white/10 bg-white dark:bg-charcoal-800 p-6 shadow-sm">
         <h2 className="mb-4 text-lg font-semibold text-charcoal-900 dark:text-white">
           {t('settings.section_security')}
