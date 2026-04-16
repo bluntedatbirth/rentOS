@@ -46,6 +46,44 @@ export async function POST(request: Request) {
         { status: 409 }
       );
     }
+
+    // Task 3 (Sprint 3): clean up orphaned parse_failed contracts on this property
+    // before inserting the new one. parse_failed rows have no payments, no active
+    // tenant assignment, and no financial history — hard-deleting is safe and is the
+    // least-surprising outcome for the landlord (the failed attempt is gone, not
+    // silently lingering). This keeps the one-contract-per-property invariant clean
+    // without touching the DB unique partial index (which already excludes parse_failed).
+    const { data: failedContracts } = await adminClient
+      .from('contracts')
+      .select('id')
+      .eq('property_id', propertyId)
+      .eq('status', 'parse_failed');
+
+    if (failedContracts && failedContracts.length > 0) {
+      const failedIds = failedContracts.map((c) => c.id);
+      const { error: deleteError } = await adminClient
+        .from('contracts')
+        .delete()
+        .in('id', failedIds);
+
+      if (deleteError) {
+        // Non-fatal: log and continue. A stale parse_failed row won't block the
+        // upload (it's excluded from the unique index), but it will be an orphan.
+        console.warn(
+          '[upload] Failed to delete parse_failed orphan(s):',
+          deleteError.message,
+          'ids:',
+          failedIds.join(',')
+        );
+      } else {
+        console.log(
+          '[upload] Deleted',
+          failedIds.length,
+          'parse_failed orphan(s) for property',
+          propertyId
+        );
+      }
+    }
   }
 
   try {
