@@ -147,9 +147,34 @@ export async function POST(request: Request) {
 
   // Stream progress via SSE
   const encoder = new TextEncoder();
+
+  // Internal timeout: 180 s — fires before Vercel's 300 s maxDuration so the
+  // stream closes cleanly rather than being killed mid-SSE-frame.
+  const OCR_TIMEOUT_MS = 180_000;
+
   const stream = new ReadableStream({
     async start(controller) {
+      // Timeout guard: if the Claude call hangs longer than OCR_TIMEOUT_MS,
+      // we send a structured error event and close the stream cleanly.
+      let timedOut = false;
+      const timeoutId = setTimeout(() => {
+        timedOut = true;
+        try {
+          // Send in the same shape the client parser expects (step:'error')
+          // so ContractParseProvider shows the error toast and exits cleanly.
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ step: 'error', error: 'Analysis timed out — please try again' })}\n\n`
+            )
+          );
+          controller.close();
+        } catch {
+          // controller may already be closed — safe to ignore
+        }
+      }, OCR_TIMEOUT_MS);
+
       function send(data: Record<string, unknown>) {
+        if (timedOut) return; // stream already closed by timeout
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       }
 
@@ -448,7 +473,10 @@ export async function POST(request: Request) {
           });
         }
       } finally {
-        controller.close();
+        clearTimeout(timeoutId);
+        if (!timedOut) {
+          controller.close();
+        }
       }
     },
   });
