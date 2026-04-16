@@ -25,8 +25,8 @@
 
 ## Clean Up After Stripping
 
-- [x] Clean up landlord navigation (only show: Dashboard, Properties, Contracts, Payments, Settings)
-- [x] Clean up tenant navigation (only show: Dashboard, Contract, Payments, Settings)
+- [x] Clean up landlord navigation (only show: Dashboard, Settings — Properties/Contracts/Payments are surfaced from the Dashboard page)
+- [x] Clean up tenant navigation (only show: Dashboard, Payments, Settings — Contract is surfaced from the Dashboard page)
 - [x] Remove unused translation keys from en.json, th.json, zh.json
 - [x] Remove or update feature flags in lib/features.ts
 - [x] Clean up landlord dashboard (remove references to cut features)
