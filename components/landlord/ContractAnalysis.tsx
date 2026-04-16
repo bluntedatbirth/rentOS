@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/lib/i18n/context';
 
 interface RiskItem {
@@ -55,12 +55,72 @@ const RATING_STYLES: Record<string, string> = {
   unusual: 'bg-purple-50 text-purple-700',
 };
 
+// Client-side simulated progress: the analyze endpoint is a one-shot POST
+// (no SSE), so we creep a faux progress bar while the request is in flight.
+// Typical analyses take 20–60s; we ease toward 92% and never reach 100%
+// until the response actually returns.
+function useFakeProgress(active: boolean): { progress: number; label: string } {
+  const [progress, setProgress] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!active) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
+      setProgress(0);
+      return;
+    }
+    setProgress(5);
+    timerRef.current = setInterval(() => {
+      setProgress((p) => {
+        const cap = 92;
+        if (p >= cap) return p;
+        // Ease: close ~3% of remaining gap per tick
+        return Math.min(cap, p + Math.max(0.3, (cap - p) * 0.03));
+      });
+    }, 500);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
+    };
+  }, [active]);
+
+  return {
+    progress,
+    label: progress < 30 ? 'reading' : progress < 70 ? 'assessing' : 'finalizing',
+  };
+}
+
 export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps) {
   const { t } = useI18n();
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [ran, setRan] = useState(false);
+  const { progress: fakeProgress, label: fakeLabel } = useFakeProgress(loading);
+
+  // Prefetch existing analysis on mount — if one already exists, show it
+  // immediately and lock out any "run" affordances. Only one successful
+  // run per contract is allowed; subsequent visits always serve cache.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/contracts/${contractId}/analyze/cached`, { method: 'GET' });
+        if (!res.ok) return; // No cached analysis yet — leave UI in "not run" state
+        const data = (await res.json()) as AnalysisData | null;
+        if (data && !cancelled) {
+          setAnalysis(data);
+          setRan(true);
+        }
+      } catch {
+        // Silent — user can still run manually
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [contractId]);
 
   const runAnalysis = async () => {
     setLoading(true);
@@ -68,14 +128,22 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
     try {
       const res = await fetch(`/api/contracts/${contractId}/analyze`, { method: 'POST' });
       if (!res.ok) {
-        const body = (await res.json()) as { error?: string };
-        throw new Error(body.error ?? 'Analysis failed');
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        const code = body.error ?? '';
+        // Map API error codes to friendly i18n strings rather than raw "internal_error"
+        let friendly = t('ai_analysis.error_generic');
+        if (code === 'ai_unavailable' || res.status === 429) {
+          friendly = t('ai_analysis.error_rate_limit');
+        } else if (res.status === 403) {
+          friendly = t('ai_analysis.error_not_pro');
+        }
+        throw new Error(friendly);
       }
       const data = (await res.json()) as AnalysisData;
       setAnalysis(data);
       setRan(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : t('ai_analysis.error_generic'));
     } finally {
       setLoading(false);
     }
@@ -86,12 +154,12 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
   const lowCount = analysis?.risks.filter((r) => r.severity === 'low').length ?? 0;
 
   return (
-    <div className="rounded-xl border border-purple-200 bg-white dark:bg-charcoal-800 shadow-sm">
+    <div className="rounded-xl border border-purple-200 dark:border-purple-500/30 bg-white dark:bg-charcoal-800 shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between rounded-t-xl border-b border-purple-100 bg-purple-50 px-4 py-3">
+      <div className="flex items-center justify-between rounded-t-xl border-b border-purple-100 dark:border-purple-500/20 bg-purple-50 dark:bg-purple-900/30 px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="text-lg">🤖</span>
-          <h3 className="font-semibold text-charcoal-900 dark:text-white">
+          <h3 className="font-semibold text-charcoal-900 dark:text-purple-100">
             {t('ai_analysis.title')}
           </h3>
           <span className="rounded-full bg-purple-600 px-2 py-0.5 text-xs font-bold text-white">
@@ -99,7 +167,7 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
           </span>
         </div>
         {analysis && (
-          <span className="text-xs text-charcoal-500 dark:text-white/50">
+          <span className="text-xs text-charcoal-500 dark:text-purple-200/70">
             {analysis.from_cache ? t('ai_analysis.from_cache') : t('ai_analysis.fresh')}
           </span>
         )}
@@ -122,13 +190,24 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
           </div>
         )}
 
-        {/* Loading */}
+        {/* Loading — progress bar matches the contract-upload style */}
         {loading && (
           <div className="flex flex-col items-center gap-3 py-8 text-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-200 border-t-purple-600" />
             <p className="text-sm text-charcoal-500 dark:text-white/50">
-              {t('ai_analysis.analyzing')}
+              {t(`ai_analysis.progress_${fakeLabel}`) || t('ai_analysis.analyzing')}
             </p>
+            <div className="w-full max-w-xs">
+              <div className="mb-1.5 flex justify-between text-xs text-charcoal-400 dark:text-white/40">
+                <span>{Math.round(fakeProgress)}%</span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-warm-200 dark:bg-charcoal-700">
+                <div
+                  className="h-full rounded-full bg-purple-500 transition-all duration-500 ease-out"
+                  style={{ width: `${Math.round(fakeProgress)}%` }}
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -254,16 +333,8 @@ export function ContractAnalysis({ contractId, showLang }: ContractAnalysisProps
               </div>
             )}
 
-            {/* Re-run */}
-            <div className="flex justify-end border-t border-warm-100 dark:border-white/5 pt-3">
-              <button
-                type="button"
-                onClick={runAnalysis}
-                className="min-h-[44px] rounded-lg border border-warm-300 dark:border-white/15 px-4 py-2 text-sm font-medium text-charcoal-600 dark:text-white/60 hover:bg-warm-50 dark:hover:bg-white/5"
-              >
-                {t('ai_analysis.re_run')}
-              </button>
-            </div>
+            {/* Analysis is a one-shot per contract — no re-run button. The
+                cached result is always served on subsequent visits. */}
           </div>
         )}
       </div>

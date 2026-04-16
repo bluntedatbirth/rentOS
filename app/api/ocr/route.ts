@@ -91,6 +91,29 @@ export async function POST(request: Request) {
   }
 
   const adminClient = createServiceRoleClient();
+  const contractPropertyId = contract.property_id as string | null;
+
+  // On parse failure, don't orphan the property in the "Detecting from
+  // contract..." placeholder state. Rename it to something editable so the
+  // user can still manage the property and re-upload if they want.
+  async function recoverPropertyOnFailure() {
+    if (!contractPropertyId) return;
+    try {
+      const { data: prop } = await adminClient
+        .from('properties')
+        .select('name')
+        .eq('id', contractPropertyId)
+        .single();
+      if (prop?.name === 'Detecting from contract...') {
+        await adminClient
+          .from('properties')
+          .update({ name: 'Unnamed property' })
+          .eq('id', contractPropertyId);
+      }
+    } catch (err) {
+      console.error('[OCR] recoverPropertyOnFailure failed (non-blocking):', err);
+    }
+  }
 
   // Stream progress via SSE
   const encoder = new TextEncoder();
@@ -113,6 +136,7 @@ export async function POST(request: Request) {
             .from('contracts')
             .update({ status: 'parse_failed' })
             .eq('id', contract_id);
+          await recoverPropertyOnFailure();
           send({ step: 'error', error: 'Failed to download file' });
           try {
             safeNotify({
@@ -136,6 +160,7 @@ export async function POST(request: Request) {
             .from('contracts')
             .update({ status: 'parse_failed' })
             .eq('id', contract_id);
+          await recoverPropertyOnFailure();
           send({ step: 'error', error: 'File too large' });
           try {
             safeNotify({
@@ -184,6 +209,7 @@ export async function POST(request: Request) {
             .from('contracts')
             .update({ status: 'parse_failed' })
             .eq('id', contract_id);
+          await recoverPropertyOnFailure();
           const failReason = extracted.warnings?.length
             ? extracted.warnings[0]
             : 'No contract clauses could be extracted. Please upload a valid rental contract.';
@@ -292,6 +318,7 @@ export async function POST(request: Request) {
             .from('contracts')
             .update({ status: 'parse_failed' })
             .eq('id', contract_id);
+          await recoverPropertyOnFailure();
           send({ step: 'error', error: 'Failed to save: ' + updateError.message });
           try {
             safeNotify({
@@ -337,6 +364,7 @@ export async function POST(request: Request) {
           .from('contracts')
           .update({ status: 'parse_failed' })
           .eq('id', contract_id);
+        await recoverPropertyOnFailure();
         const isValidationErr = err instanceof ContractValidationError;
         if (isValidationErr) {
           send({ step: 'error', error: err.code });

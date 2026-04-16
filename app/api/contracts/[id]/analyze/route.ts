@@ -106,20 +106,11 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     .eq('contract_id', params.id)
     .single()) as { data: CachedAnalysis | null; error: unknown };
 
-  // Return cache only if it has the new fields (clause_text + suggested_text); otherwise re-analyze
-  const hasMissingFormat =
-    cached?.missing_clauses?.every?.(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (mc: any) => mc.clause_text_en || mc.clause_text_th
-    ) ?? true;
-  const hasRiskFormat =
-    cached?.risks?.every?.(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (r: any) => 'suggested_text_th' in r
-    ) ?? true;
-  const hasNewFormat = hasMissingFormat && hasRiskFormat;
-
-  if (cached && hasNewFormat) {
+  // Idempotency: one successful analysis per contract. If a cached row
+  // exists (regardless of schema vintage), always return it and never
+  // re-run Claude. This prevents users from spamming the endpoint and
+  // from burning AI spend on repeat requests.
+  if (cached) {
     return NextResponse.json({
       risks: cached.risks,
       missing_clauses: cached.missing_clauses,

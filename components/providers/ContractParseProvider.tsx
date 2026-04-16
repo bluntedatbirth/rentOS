@@ -46,6 +46,35 @@ interface WakeLockNavigator {
   };
 }
 
+// ── Poll parse status after an SSE disconnect ──────────────────────────────
+
+/**
+ * Poll the server for the contract's final parse status. Used after the SSE
+ * stream dies (mobile screen lock, network drop) — the Vercel OCR function
+ * keeps running server-side, so we can recover by checking the DB.
+ *
+ * Polls every 4s for up to 5 minutes (matches OCR maxDuration=300).
+ * Returns 'done' on success, 'parse_failed' on explicit failure, or
+ * 'timeout' if the parse never finishes within the window.
+ */
+async function pollParseStatus(contractId: string): Promise<'done' | 'parse_failed' | 'timeout'> {
+  const deadline = Date.now() + 5 * 60 * 1000; // 5 minutes
+  while (Date.now() < deadline) {
+    try {
+      const res = await fetch(`/api/contracts/${contractId}/parse-status`);
+      if (res.ok) {
+        const data = (await res.json()) as { status: 'parsing' | 'done' | 'parse_failed' };
+        if (data.status === 'done') return 'done';
+        if (data.status === 'parse_failed') return 'parse_failed';
+      }
+    } catch {
+      // Network still flaky — keep trying
+    }
+    await new Promise((r) => setTimeout(r, 4000));
+  }
+  return 'timeout';
+}
+
 // ── Progress creep caps (below next milestone to avoid overshoot) ──────────
 
 // Server emits discrete milestones: downloading(5) → pass1(15) → pass2(40)
@@ -204,10 +233,18 @@ export function ContractParseProvider({ children }: { children: React.ReactNode 
         const decoder = new TextDecoder();
         let buffer = '';
 
+        // If we ever hit `done: true` on the reader without having received
+        // a `done` or `error` event from the server, fall through to the
+        // same polling recovery as the catch branch below.
+        let streamClosedCleanly = false;
+
         try {
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            if (done) {
+              streamClosedCleanly = true;
+              break;
+            }
 
             buffer += decoder.decode(value, { stream: true });
 
@@ -277,11 +314,40 @@ export function ContractParseProvider({ children }: { children: React.ReactNode 
               }
             }
           }
+          // Stream closed without us ever seeing a terminal event — the
+          // SSE connection dropped silently (common on mobile suspend).
+          // Fall through to the same polling recovery as the catch block.
+          if (streamClosedCleanly) {
+            throw new Error('Stream closed without terminal event');
+          }
         } catch (err) {
           // Stream was cancelled (e.g. component unmount) — do not surface as error
           if (err instanceof Error && err.name === 'AbortError') return;
 
-          const errText = err instanceof Error ? err.message : 'Processing failed';
+          // SSE stream died (mobile screen lock, network hiccup, etc.) but
+          // the Vercel OCR function keeps running server-side. Poll the DB
+          // to find out whether the parse ultimately succeeded or failed
+          // before giving up and surfacing an error to the user.
+          const finalStatus = await pollParseStatus(contractId);
+          if (finalStatus === 'done') {
+            setActiveJob((prev) => (prev ? { ...prev, status: 'done', progress: 100 } : prev));
+            toast.success('Contract parsed successfully');
+            stopCreep();
+            releaseWakeLock();
+            clearTimerRef.current = setTimeout(() => {
+              setActiveJob(null);
+              clearTimerRef.current = null;
+            }, 3000);
+            readerRef.current = null;
+            return;
+          }
+
+          const errText =
+            finalStatus === 'parse_failed'
+              ? 'Parse failed'
+              : err instanceof Error
+                ? err.message
+                : 'Processing failed';
           setActiveJob((prev) =>
             prev ? { ...prev, status: 'error', errorMessage: errText } : prev
           );
