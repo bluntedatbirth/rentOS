@@ -106,7 +106,7 @@ async function preScreenDocument(
 ): Promise<boolean> {
   const response = await client.messages.create(
     {
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-haiku-4-5',
       max_tokens: 20,
       messages: [
         {
@@ -149,7 +149,7 @@ async function runPass1(
   const response = await withRetry(() =>
     client.messages.create(
       {
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-haiku-4-5',
         max_tokens: 8192,
         messages: [
           {
@@ -273,7 +273,7 @@ Add to the top-level JSON:
   const response = await withRetry(() =>
     client.messages.create(
       {
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-haiku-4-5',
         max_tokens: 16384,
         messages: [
           {
@@ -536,7 +536,7 @@ export async function reparseContractText(
   const response = await withRetry(() =>
     client.messages.create(
       {
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-haiku-4-5',
         max_tokens: 16384,
         messages: [
           {
