@@ -116,6 +116,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       bodyEn,
       bodyTh,
       url: '/landlord/payments',
+      payload: { target_route: 'payments.list' },
     });
   }
 
