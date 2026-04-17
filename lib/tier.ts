@@ -57,7 +57,8 @@ export function getPropertyLimit(tier: string, purchasedSlots: number = 0): numb
   ) {
     return Infinity;
   }
-  if (tier === 'pro') return Infinity;
+  // Pro unlocks features, NOT unlimited slots. Slots are always
+  // one-time purchases independent of subscription tier.
   return 2 + purchasedSlots;
 }
 
