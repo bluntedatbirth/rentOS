@@ -23,15 +23,28 @@ export default function CheckoutPage() {
 
   // Omise.js script
   const [omiseReady, setOmiseReady] = useState(false);
+  const [omiseError, setOmiseError] = useState<string | null>(null);
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://cdn.omise.co/omise.js';
     script.async = true;
     script.onload = () => {
-      const key = process.env.NEXT_PUBLIC_OMISE_PUBLIC_KEY;
-      if (key) {
-        window.Omise.setPublicKey(key);
+      try {
+        const key = process.env.NEXT_PUBLIC_OMISE_PUBLIC_KEY;
+        if (key && window.Omise) {
+          window.Omise.setPublicKey(key);
+        } else if (!key) {
+          console.warn('[checkout] NEXT_PUBLIC_OMISE_PUBLIC_KEY not set');
+        }
+      } catch (err) {
+        console.error('[checkout] Omise init error:', err);
       }
+      setOmiseReady(true);
+    };
+    script.onerror = () => {
+      console.error('[checkout] Failed to load Omise.js CDN');
+      setOmiseError('Payment system failed to load. Please refresh the page.');
+      // Still mark ready so the button is clickable — we show the error on submit
       setOmiseReady(true);
     };
     document.head.appendChild(script);
@@ -112,9 +125,21 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pack || !omiseReady) return;
+    console.log('[checkout] form submitted', {
+      pack: pack?.packIndex,
+      omiseReady,
+      omiseAvailable: !!window.Omise,
+    });
+    if (!pack) return;
     setStatus('submitting');
     setErrorMsg('');
+
+    // Check Omise is actually available before attempting token creation
+    if (!window.Omise || typeof window.Omise.createToken !== 'function') {
+      setStatus('failed');
+      setErrorMsg(omiseError ?? 'Payment system not loaded. Please refresh and try again.');
+      return;
+    }
 
     try {
       const token = await createToken();
@@ -325,6 +350,13 @@ export default function CheckoutPage() {
         </div>
       </div>
 
+      {/* Omise CDN error banner */}
+      {omiseError && (
+        <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400">
+          {omiseError}
+        </div>
+      )}
+
       {/* Card form */}
       <div className="rounded-2xl border border-warm-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-charcoal-800">
         <form
@@ -439,7 +471,7 @@ export default function CheckoutPage() {
           {/* Submit */}
           <button
             type="submit"
-            disabled={isSubmitting || !omiseReady}
+            disabled={isSubmitting}
             className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-saffron-500 px-4 py-3 text-sm font-semibold text-white hover:bg-saffron-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? (
