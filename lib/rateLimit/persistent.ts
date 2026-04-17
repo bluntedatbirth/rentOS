@@ -59,6 +59,12 @@ export interface RateLimitOptions {
    * count successful completions against the limit.
    */
   skipIncrement?: boolean;
+  /**
+   * Optional user email to check against the RATE_LIMIT_BYPASS list.
+   * Allows bypass matching by email in addition to userId, so the env var
+   * works regardless of whether it contains UUIDs or email addresses.
+   */
+  userEmail?: string;
 }
 
 export async function checkRateLimit(
@@ -68,8 +74,17 @@ export async function checkRateLimit(
   maxPerDay: number,
   options: RateLimitOptions = {}
 ): Promise<RateLimitResult> {
-  // Dev/test accounts bypass all rate limits
-  if (BYPASS_LIST.includes(userId.toLowerCase())) {
+  // Dev/test accounts bypass all rate limits (match by UUID or email)
+  const bypassedById = BYPASS_LIST.includes(userId.toLowerCase());
+  const bypassedByEmail = !!(
+    options.userEmail && BYPASS_LIST.includes(options.userEmail.toLowerCase())
+  );
+  if (bypassedById || bypassedByEmail) {
+    console.info('[rateLimit] bypass activated', {
+      userId,
+      email: options.userEmail ?? '(none)',
+      endpoint,
+    });
     return { allowed: true };
   }
 
