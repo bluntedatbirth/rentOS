@@ -8,6 +8,8 @@ import { FAQAccordion } from '@/components/landing/FAQAccordion';
 import type { FAQItem } from '@/components/landing/FAQAccordion';
 import { CTABand } from '@/components/landing/CTABand';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+import { AuroraBackground } from '@/components/ui/aurora-background';
+import { HeroScrollDemo } from '@/components/landing/HeroScrollDemo';
 
 // ─── Landing Page — Variant C "Numbers Hero"
 // Design: Action-oriented, left-aligned hero with stat strip, dark features section,
@@ -54,8 +56,19 @@ export default function LandingPage() {
 
   return (
     <div className="font-[var(--font-plus-jakarta)] bg-warm-50 dark:bg-charcoal-900 text-charcoal-800 dark:text-warm-100 min-h-screen">
-      <LandingNav />
-      <LandingHero t={t} />
+      <AuroraBackground className="!h-auto !bg-warm-50 dark:!bg-charcoal-900">
+        <div className="w-full">
+          <LandingNav />
+          <LandingHero t={t} />
+        </div>
+      </AuroraBackground>
+      <HeroScrollDemo
+        labels={{
+          headline: t('landing.scroll_headline'),
+          subheadline: t('landing.scroll_subheadline'),
+          badge: t('landing.scroll_badge'),
+        }}
+      />
       <FeaturesGrid t={t} features={features} />
       <BuiltForThailand t={t} />
       <StepStrip t={t} />
