@@ -109,7 +109,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
   if (textChanged) {
     // Persistent rate limit: 5/hour, 10/day per user (matches reparse route)
     // Only gates the Claude path — unchanged-text renewals are not rate-limited.
-    const rl = await checkRateLimit(user.id, 'renew', 5, 10);
+    const rl = await checkRateLimit(user.id, 'renew', 5, 10, {
+      userEmail: user.email ?? undefined,
+    });
     if (!rl.allowed) {
       console.warn('[rateLimit] renew blocked, reason:', rl.reason, 'user:', user.id);
       return new Response(

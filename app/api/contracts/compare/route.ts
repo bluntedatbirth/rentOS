@@ -22,7 +22,9 @@ export async function POST(request: Request) {
   if (!user) return unauthorized();
 
   // Persistent rate limit: 5/hour, 10/day per user
-  const rl = await checkRateLimit(user.id, 'compare', 5, 10);
+  const rl = await checkRateLimit(user.id, 'compare', 5, 10, {
+    userEmail: user.email ?? undefined,
+  });
   if (!rl.allowed) {
     console.warn('[rateLimit] compare blocked, reason:', rl.reason, 'user:', user.id);
     return new Response(

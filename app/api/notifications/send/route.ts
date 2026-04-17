@@ -15,7 +15,9 @@ export async function POST(request: Request) {
   if (!user) return unauthorized();
 
   // Rate limit: 20/hour, 100/day per landlord
-  const rl = await checkRateLimit(user.id, 'notifications-send', 20, 100);
+  const rl = await checkRateLimit(user.id, 'notifications-send', 20, 100, {
+    userEmail: user.email ?? undefined,
+  });
   if (!rl.allowed) {
     console.warn('[rateLimit] notifications-send blocked, reason:', rl.reason, 'user:', user.id);
     return new Response(

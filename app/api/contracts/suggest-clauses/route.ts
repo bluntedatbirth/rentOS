@@ -17,7 +17,9 @@ export async function POST(request: Request) {
   if (!user) return unauthorized();
 
   // Persistent rate limit: 10/hour, 20/day per user
-  const rl = await checkRateLimit(user.id, 'suggest-clauses', 10, 20);
+  const rl = await checkRateLimit(user.id, 'suggest-clauses', 10, 20, {
+    userEmail: user.email ?? undefined,
+  });
   if (!rl.allowed) {
     console.warn('[rateLimit] suggest-clauses blocked, reason:', rl.reason, 'user:', user.id);
     return new Response(

@@ -33,9 +33,13 @@ export async function GET() {
   const [ocrUsage, analyzeUsage, ocrCheck, analyzeCheck] = await Promise.all([
     getRateLimitUsage(user.id, 'ocr'),
     getRateLimitUsage(user.id, 'analyze'),
-    checkRateLimit(user.id, 'ocr', limits.hourlyOcr, limits.dailyOcr, { skipIncrement: true }),
+    checkRateLimit(user.id, 'ocr', limits.hourlyOcr, limits.dailyOcr, {
+      skipIncrement: true,
+      userEmail: user.email ?? undefined,
+    }),
     checkRateLimit(user.id, 'analyze', limits.hourlyAnalyze, limits.dailyAnalyze, {
       skipIncrement: true,
+      userEmail: user.email ?? undefined,
     }),
   ]);
 
