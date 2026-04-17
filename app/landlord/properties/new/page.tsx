@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/supabase/useAuth';
 import { useI18n } from '@/lib/i18n/context';
 import { useToast } from '@/components/ui/ToastProvider';
 import { getPropertyLimit } from '@/lib/tier';
+import { UpgradePrompt } from '@/components/slots/UpgradePrompt';
 
 export default function NewPropertyPage() {
   const router = useRouter();
@@ -26,6 +27,7 @@ export default function NewPropertyPage() {
   const [dailyRate, setDailyRate] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ leaseEnd?: string; monthlyRent?: string }>({});
+  const [limitHit, setLimitHit] = useState(false);
 
   // Auto-compute lease end from start + duration (UTC to avoid timezone shifts)
   function computeLeaseEnd(start: string, months: number): string {
@@ -118,7 +120,8 @@ export default function NewPropertyPage() {
         try {
           const json = (await res.json()) as { error?: string; message?: string };
           if (json.error === 'property_limit_reached') {
-            errorMessage = t('properties.slots_full_toast');
+            setLimitHit(true);
+            return;
           } else if (json.message) {
             errorMessage = json.message;
           }
@@ -134,44 +137,14 @@ export default function NewPropertyPage() {
     }
   }
 
-  // Slot-limit gate — shown instead of form when limit is known to be hit client-side
-  if (atSlotLimit) {
+  // Slot-limit gate — shown when the server returned property_limit_reached (403)
+  // or when limit is known client-side from profile data
+  if (atSlotLimit || limitHit) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-10">
-        <div className="rounded-2xl border border-warm-200 bg-warm-50 p-8 text-center shadow-sm dark:border-white/10 dark:bg-charcoal-900 dark:shadow-black/20">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-500/15">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="h-7 w-7 text-amber-500 dark:text-amber-400"
-            >
-              <path
-                fillRule="evenodd"
-                d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 1.998-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
-          <h2 className="mb-2 text-lg font-bold text-charcoal-900 dark:text-white">
-            {t('property.slots_full_title')}
-          </h2>
-          <p className="mb-6 text-sm text-charcoal-500 dark:text-white/50">
-            {t('property.slots_full_body')}
-          </p>
-          <div className="flex flex-col gap-3">
-            <p className="text-sm text-charcoal-600 dark:text-white/60">
-              Contact us to add more slots.
-            </p>
-            <Link
-              href="/landlord/properties"
-              className="text-sm text-charcoal-400 hover:text-charcoal-600 dark:text-white/40 dark:hover:text-white/60"
-            >
-              {t('common.cancel')}
-            </Link>
-          </div>
-        </div>
-      </div>
+      <UpgradePrompt
+        currentSlots={propertyCount}
+        totalSlots={slotLimit === Infinity ? propertyCount : slotLimit}
+      />
     );
   }
 

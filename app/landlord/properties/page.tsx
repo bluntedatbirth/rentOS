@@ -12,6 +12,7 @@ import { getPropertyLimit } from '@/lib/tier';
 import { computePropertyStatus, type PropertyStatus } from '@/lib/properties/status';
 import { useContractParse, type ParseJob } from '@/components/providers/ContractParseProvider';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { UpgradePrompt } from '@/components/slots/UpgradePrompt';
 
 const supabase = createClient();
 
@@ -336,6 +337,7 @@ export default function PropertiesPage() {
   const [unpaidRentTotal, setUnpaidRentTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   const loadProperties = useCallback(async () => {
     // If auth has resolved and there's no user, unstick the skeleton — middleware
@@ -598,7 +600,13 @@ export default function PropertiesPage() {
                       .replace('{limit}', String(slotLimit))}
               </span>
               {(slotState === 'at' || slotState === 'over') && (
-                <span className="font-medium">Contact us to add more slots</span>
+                <button
+                  type="button"
+                  onClick={() => setShowUpgradePrompt(true)}
+                  className="font-medium text-saffron-700 hover:text-saffron-800 dark:text-saffron-400 dark:hover:text-saffron-300"
+                >
+                  {t('slots.limit_desc')} →
+                </button>
               )}
             </div>
           )}
@@ -606,13 +614,51 @@ export default function PropertiesPage() {
         <button
           type="button"
           onClick={() => {
-            router.push('/landlord/properties/new');
+            if (slotState === 'at' || slotState === 'over') {
+              setShowUpgradePrompt(true);
+            } else {
+              router.push('/landlord/properties/new');
+            }
           }}
           className="min-h-[44px] rounded-lg bg-saffron-500 px-4 py-2 text-sm font-medium text-white hover:bg-saffron-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {t('property.add')}
         </button>
       </div>
+
+      {/* Upgrade prompt — shown as an inline modal when user hits the slot cap */}
+      {showUpgradePrompt && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 px-4 py-10"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowUpgradePrompt(false);
+          }}
+        >
+          <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-charcoal-900 shadow-xl">
+            <div className="flex items-center justify-end px-6 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowUpgradePrompt(false)}
+                className="rounded-lg p-1.5 text-charcoal-400 hover:bg-warm-100 hover:text-charcoal-600 dark:text-white/40 dark:hover:bg-white/10 dark:hover:text-white/60"
+                aria-label={t('common.cancel')}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="h-5 w-5"
+                >
+                  <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                </svg>
+              </button>
+            </div>
+            <UpgradePrompt
+              currentSlots={slotsUsed}
+              totalSlots={slotLimit === Infinity ? slotsUsed : slotLimit}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Summary bar — only shown when there are properties */}
       {properties.length > 0 && (overdueCount > 0 || expiringCount > 0 || vacantCount > 0) && (
