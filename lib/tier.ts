@@ -63,9 +63,9 @@ export function getPropertyLimit(tier: string, purchasedSlots: number = 0): numb
 }
 
 export const SLOT_UNLOCK_PACKS = [
-  { packIndex: 0, slots: 1, thb: 99 },
-  { packIndex: 1, slots: 5, thb: 399 },
-  { packIndex: 2, slots: 10, thb: 699 },
+  { packIndex: 0, slots: 1, thb: 149 },
+  { packIndex: 1, slots: 5, thb: 599 },
+  { packIndex: 2, slots: 10, thb: 999 },
 ] as const;
 
 export const PRO_MONTHLY_THB = 199;
