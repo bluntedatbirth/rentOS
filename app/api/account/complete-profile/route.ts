@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorized, badRequest } from '@/lib/supabase/api';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { serverError } from '@/lib/apiErrors';
 
 /**
  * POST /api/account/complete-profile
@@ -53,8 +54,7 @@ export async function POST(request: Request) {
   });
 
   if (error) {
-    console.error('[complete-profile] insert failed', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return serverError('[complete-profile] ' + error.message);
   }
 
   return NextResponse.json({ ok: true });
