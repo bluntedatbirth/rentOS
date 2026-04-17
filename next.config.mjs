@@ -13,8 +13,8 @@ const isDev = process.env.NODE_ENV !== 'production';
 //     modern browsers to ignore 'self' and 'unsafe-inline' entirely, blocking
 //     every script on the page.
 const scriptSrc = isDev
-  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-  : "script-src 'self' 'unsafe-inline'";
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.omise.co"
+  : "script-src 'self' 'unsafe-inline' https://cdn.omise.co";
 
 const nextConfig = {
   experimental: {
@@ -58,7 +58,7 @@ const nextConfig = {
               // *.supabase.co covers storage + image transform endpoints
               "img-src 'self' data: blob: https://*.supabase.co",
               "font-src 'self'",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://vault.omise.co https://api.omise.co",
               // Allow Supabase storage iframes for contract preview (PDF embed)
               "frame-src 'self' https://*.supabase.co",
               "frame-ancestors 'none'",
