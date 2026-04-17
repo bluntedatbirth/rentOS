@@ -5,12 +5,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { requirePro } from '@/lib/tier';
 import { withRetry } from '@/lib/claude/retry';
 import { trackTokenUsage } from '@/lib/claude/tokenTracker';
-import {
-  checkRateLimit,
-  incrementRateLimit,
-  isRateLimitBypassed,
-  logAISpend,
-} from '@/lib/rateLimit/persistent';
+import { checkRateLimit, incrementRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
 import { getAILimits } from '@/lib/ai/limits';
 import type { StructuredClause } from '@/lib/supabase/types';
 
@@ -72,16 +67,13 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
 
   const limits = getAILimits(propertyCount ?? 0);
 
-  // Dev/test bypass — skip ALL rate limit checks
-  const bypassed = isRateLimitBypassed(user.id) || isRateLimitBypassed(user.email ?? '');
-
   // skipIncrement so only SUCCESSFUL analyses count — we increment after the
   // analysis parses + caches cleanly.
-  const rl = bypassed
-    ? ({ allowed: true } as const)
-    : await checkRateLimit(user.id, 'analyze', limits.hourlyAnalyze, limits.dailyAnalyze, {
-        skipIncrement: true,
-      });
+  // Dev/test bypass is handled inside checkRateLimit via userEmail option.
+  const rl = await checkRateLimit(user.id, 'analyze', limits.hourlyAnalyze, limits.dailyAnalyze, {
+    skipIncrement: true,
+    userEmail: user.email ?? undefined,
+  });
   if (!rl.allowed) {
     console.warn('[rateLimit] analyze blocked, reason:', rl.reason, 'user:', user.id);
     return new Response(

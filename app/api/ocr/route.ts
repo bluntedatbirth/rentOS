@@ -2,12 +2,7 @@ import { z } from 'zod';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getAuthenticatedUser, unauthorized, badRequest, forbidden } from '@/lib/supabase/api';
 import { extractContractWithProgress, ContractValidationError } from '@/lib/claude/extractContract';
-import {
-  checkRateLimit,
-  incrementRateLimit,
-  isRateLimitBypassed,
-  logAISpend,
-} from '@/lib/rateLimit/persistent';
+import { checkRateLimit, incrementRateLimit, logAISpend } from '@/lib/rateLimit/persistent';
 import { getAILimits } from '@/lib/ai/limits';
 import { sendNotification } from '@/lib/notifications/send';
 
@@ -45,12 +40,8 @@ export async function POST(request: Request) {
   const { user, supabase: sessionClient } = await getAuthenticatedUser();
   if (!user) return unauthorized();
 
-  // Dev/test bypass — skip ALL rate limit checks
-  const bypassed = isRateLimitBypassed(user.id) || isRateLimitBypassed(user.email ?? '');
-
   // Per-user daily AI limit scales with property slots: 4 successful parses/day
-  // for a basic 2-slot landlord, 2× slots for larger accounts. Count property
-  // rows owned by the user to size the budget.
+  // for 2-slot users, scaling up to 20/day for 10-slot users. hourly = daily / 2.
   const budgetClient = createServiceRoleClient();
   const { count: propertyCount } = await budgetClient
     .from('properties')
@@ -59,13 +50,13 @@ export async function POST(request: Request) {
 
   const limits = getAILimits(propertyCount ?? 0);
 
-  // Persistent rate limit — skipIncrement so only SUCCESSFUL parses count.
-  // We call incrementRateLimit(user.id, 'ocr') at the end of the success path.
-  const rl = bypassed
-    ? ({ allowed: true } as const)
-    : await checkRateLimit(user.id, 'ocr', limits.hourlyOcr, limits.dailyOcr, {
-        skipIncrement: true,
-      });
+  // skipIncrement so only SUCCESSFUL parses count — we increment after the
+  // success path via incrementRateLimit(user.id, 'ocr').
+  // Dev/test bypass is handled inside checkRateLimit via userEmail option.
+  const rl = await checkRateLimit(user.id, 'ocr', limits.hourlyOcr, limits.dailyOcr, {
+    skipIncrement: true,
+    userEmail: user.email ?? undefined,
+  });
   if (!rl.allowed) {
     console.warn('[rateLimit] ocr blocked, reason:', rl.reason, 'user:', user.id);
     return new Response(
