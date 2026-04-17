@@ -444,10 +444,8 @@ export async function POST(request: Request) {
         if (isValidationErr) {
           send({ step: 'error', error: err.code });
         } else {
-          send({
-            step: 'error',
-            error: err instanceof Error ? err.message : 'OCR processing failed',
-          });
+          console.error('[ocr] non-validation error:', err instanceof Error ? err.message : err);
+          send({ step: 'error', error: 'processing_failed' });
         }
         // Use "wrong format" messaging for validation errors, generic for others
         if (isValidationErr) {
