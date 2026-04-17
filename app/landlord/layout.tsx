@@ -9,6 +9,7 @@ import { NotificationBell } from '@/components/ui/NotificationBell';
 import { useContractParse } from '@/components/providers/ContractParseProvider';
 import { BottomNav, type NavItem } from '@/components/ui/BottomNav';
 import { SideNav, type SideNavItem } from '@/components/ui/SideNav';
+import { OfflineGuard } from '@/components/ui/OfflineGuard';
 
 // SimulationPanel removed (beta module deleted in Sprint 4)
 
@@ -214,7 +215,7 @@ export default function LandlordLayout({ children }: { children: React.ReactNode
       <div className="mx-auto flex max-w-7xl">
         <SideNav items={sideNavItems} />
         <main className="min-h-[calc(100vh-64px)] min-w-0 flex-1 overflow-x-hidden px-4 py-6 pb-20 md:pb-6">
-          {children}
+          <OfflineGuard>{children}</OfflineGuard>
         </main>
       </div>
 
