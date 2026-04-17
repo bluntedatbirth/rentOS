@@ -1038,6 +1038,10 @@ export type Database = {
         Args: { p_endpoint: string; p_user_id: string; p_window_start: string };
         Returns: undefined;
       };
+      increment_purchased_slots: {
+        Args: { p_user_id: string; p_slots: number };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;
